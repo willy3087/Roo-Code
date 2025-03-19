@@ -1,5 +1,13 @@
 # Roo Code Changelog
 
+## 3.9.2
+
+### Patch Changes
+
+- Update GitHub Actions workflow to automatically create GitHub Releases
+- VSCode theme fixes for select, dropdown and command
+- Allow manually selecting a model in the model picker
+
 ## [3.9.1] - 2025-03-18
 
 - Pass current language to system prompt correctly so Roo thinks and speaks in the selected language
