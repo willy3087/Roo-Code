@@ -1,12 +1,14 @@
 # Roo Code Changelog
 
-## 3.9.2
+## [3.9.2] - 2025-03-19
 
-### Patch Changes
-
-- Update GitHub Actions workflow to automatically create GitHub Releases
-- VSCode theme fixes for select, dropdown and command
-- Allow manually selecting a model in the model picker
+- Update GitHub Actions workflow to automatically create GitHub Releases (thanks @pdecat!)
+- Correctly persist the text-to-speech speed state (thanks @heyseth!)
+- Fixes to French translations (thanks @arthurauffray!)
+- Optimize build time for local development (thanks @KJ7LNW!)
+- VSCode theme fixes for select, dropdown and command components
+- Bring back the ability to manually enter a model name in the model picker
+- Fix internationalization of the announcement title and the browser
 
 ## [3.9.1] - 2025-03-18
 
