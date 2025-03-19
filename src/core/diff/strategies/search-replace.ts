@@ -10,7 +10,13 @@ function getSimilarity(original: string, search: string): number {
 	}
 
 	// Normalize strings by removing extra whitespace but preserve case
-	const normalizeStr = (str: string) => str.replace(/\s+/g, " ").trim()
+	const normalizeStr = (str: string) =>
+		str
+			.replace(/\r\n/g, "\n") // Standardize line endings
+			.replace(/\t/g, " ") // Convert tabs to spaces
+			.replace(/\s+/g, " ") // Replace all whitespace sequences with a single space
+			.replace(/\u200B/g, "") // Remove zero-width spaces
+			.trim() // Remove leading/trailing whitespace
 
 	const normalizedOriginal = normalizeStr(original)
 	const normalizedSearch = normalizeStr(search)
