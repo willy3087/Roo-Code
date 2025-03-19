@@ -5,31 +5,62 @@ import { distance } from "fastest-levenshtein"
 const BUFFER_LINES = 20 // Number of extra context lines to show before and after matches
 
 function getSimilarity(original: string, search: string): number {
-	if (search === "") {
+	// If there's no search text, treat it as a perfect match
+	if (search.trim() === "") {
 		return 1
 	}
 
-	// Normalize strings by removing extra whitespace but preserve case
-	const normalizeStr = (str: string) =>
-		str
-			.replace(/\r\n/g, "\n") // Standardize line endings
-			.replace(/\t/g, " ") // Convert tabs to spaces
-			.replace(/\s+/g, " ") // Replace all whitespace sequences with a single space
-			.replace(/\u200B/g, "") // Remove zero-width spaces
-			.trim() // Remove leading/trailing whitespace
+	const normalizeStr = (input: string) => {
+		let str = input
 
+		// 1) Unicode normalization for consistent codepoints
+		//    (helps unify visually identical characters, e.g. different emoji variants)
+		str = str.normalize("NFKC")
+
+		// 2) Standardize line endings: convert \r\n -> \n
+		str = str.replace(/\r\n/g, "\n")
+
+		// 3) Remove zero-width spaces or other invisible chars
+		//    (Add more if you suspect other hidden chars)
+		str = str.replace(/\u200B/g, "")
+		str = str.replace(/\u00A0/g, " ") // Non-breaking space -> normal space
+		// str = str.replace(/\u00AD/g, ""); // Soft hyphen (optional)
+
+		// 4) Trim trailing spaces from each line
+		//    (Removes leftover spaces at line ends)
+		str = str.replace(/[ \t]+$/gm, "")
+
+		// 5) Convert tabs to single spaces (adjust if you prefer 2 or 4)
+		str = str.replace(/\t/g, " ")
+
+		// 6) Collapse multiple spaces into a single space
+		//    (You can do this per line or across the whole string)
+		str = str.replace(/\s+/g, " ")
+
+		// 7) Optional: remove lines containing only triple backticks
+		//    If you don't want to treat them as differences:
+		// str = str.replace(/^```$/gm, "");
+
+		// 8) Final trim to remove any leading/trailing whitespace
+		str = str.trim()
+
+		return str
+	}
+
+	// Normalize both original and search
 	const normalizedOriginal = normalizeStr(original)
 	const normalizedSearch = normalizeStr(search)
 
+	// If they're now identical, perfect match
 	if (normalizedOriginal === normalizedSearch) {
 		return 1
 	}
 
-	// Calculate Levenshtein distance using fastest-levenshtein's distance function
+	// Otherwise compute Levenshtein distance
 	const dist = distance(normalizedOriginal, normalizedSearch)
-
-	// Calculate similarity ratio (0 to 1, where 1 is an exact match)
 	const maxLength = Math.max(normalizedOriginal.length, normalizedSearch.length)
+
+	// Similarity from 0 to 1 (1 = exact match)
 	return 1 - dist / maxLength
 }
 
