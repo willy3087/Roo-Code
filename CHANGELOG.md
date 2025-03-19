@@ -1,8 +1,6 @@
 # Roo Code Changelog
 
-## 3.9.1
-
-### Patch Changes
+## [3.9.1]
 
 - Pass current language to system prompt correctly
 
