@@ -1,5 +1,11 @@
 # Roo Code Changelog
 
+## 3.9.1
+
+### Patch Changes
+
+- Pass current language to system prompt correctly
+
 ## 3.9.0 - 2025-03-18
 
 - Internationalize Roo Code into Catalan, German, Spanish, French, Hindi, Italian, Japanese, Korean, Polish, Portuguese, Turkish, Vietnamese, Simplified Chinese, and Traditional Chinese (thanks @feifei325!)
