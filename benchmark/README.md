@@ -2,7 +2,13 @@
 
 ## Get Started
 
-[Install](https://docs.docker.com/desktop/) Docker Desktop.
+[Install](https://docs.docker.com/desktop/) and run Docker Desktop.
+
+Build a container to run the Roo Code benchmarks:
+
+```sh
+docker build -f Dockerfile -t roo-code-benchmark ..
+```
 
 ## Local Debugging
 
