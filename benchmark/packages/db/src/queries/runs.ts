@@ -1,9 +1,9 @@
 import { desc, eq, sql } from "drizzle-orm"
 
-import { db } from "../db"
-import { InsertRun, insertRunSchema, runs, tasks } from "../schema"
+import { db } from "../db.js"
+import { type InsertRun, insertRunSchema, runs, tasks } from "../schema.js"
 
-import { RecordNotFoundError } from "./errors"
+import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
 
 export const findRun = async (id: number) => {
 	const run = await db.query.runs.findFirst({ where: eq(runs.id, id) })
@@ -24,7 +24,13 @@ export const createRun = async (args: InsertRun) => {
 		})
 		.returning()
 
-	return result[0]
+	const run = result[0]
+
+	if (!run) {
+		throw new RecordNotCreatedError()
+	}
+
+	return run
 }
 
 export const getRuns = () =>

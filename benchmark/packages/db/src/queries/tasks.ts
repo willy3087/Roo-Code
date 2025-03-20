@@ -1,10 +1,10 @@
 import { and, eq } from "drizzle-orm"
 
-import { db } from "../db"
-import { InsertTask, insertTaskSchema, tasks } from "../schema"
+import { db } from "../db.js"
+import { type InsertTask, insertTaskSchema, tasks } from "../schema.js"
 
-import { RecordNotFoundError } from "./errors"
-import { Language } from "../enums"
+import { type Language } from "../enums.js"
+import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
 
 export const findTask = async (id: number) => {
 	const run = await db.query.tasks.findFirst({ where: eq(tasks.id, id) })
@@ -25,7 +25,13 @@ export const createTask = async (args: InsertTask) => {
 		})
 		.returning()
 
-	return result[0]
+	const task = result[0]
+
+	if (!task) {
+		throw new RecordNotCreatedError()
+	}
+
+	return task
 }
 
 export const getTask = async ({ runId, language, exercise }: { runId: number; language: Language; exercise: string }) =>

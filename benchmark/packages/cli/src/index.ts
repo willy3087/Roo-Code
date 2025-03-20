@@ -81,7 +81,6 @@ const runExercise = async ({ run, language, exercise }: { run: Run; language: La
 	}
 
 	console.log(`Running ${language} / ${exercise}`)
-	return true
 
 	await runTests({
 		extensionDevelopmentPath,

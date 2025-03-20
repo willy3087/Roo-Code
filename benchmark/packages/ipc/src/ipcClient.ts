@@ -1,6 +1,6 @@
 import ipc from "node-ipc"
 
-import { ClientMessage, ClientMessageType, ServerMessageType, serverMessageSchema } from "./schemas"
+import { ClientMessage, ClientMessageType, ServerMessageType, serverMessageSchema } from "./types.js"
 
 export class IpcClient {
 	private readonly _socketPath: string
@@ -15,9 +15,9 @@ export class IpcClient {
 		ipc.config.silent = true
 
 		ipc.connectTo("benchmarkServer", this.socketPath, () => {
-			ipc.of.benchmarkServer.on("connect", (args) => this.onConnect(args))
-			ipc.of.benchmarkServer.on("message", (data) => this.onMessage(data))
-			ipc.of.benchmarkServer.on("disconnect", (args) => this.onDisconnect(args))
+			ipc.of.benchmarkServer?.on("connect", (args) => this.onConnect(args))
+			ipc.of.benchmarkServer?.on("message", (data) => this.onMessage(data))
+			ipc.of.benchmarkServer?.on("disconnect", (args) => this.onDisconnect(args))
 		})
 	}
 
@@ -58,7 +58,7 @@ export class IpcClient {
 	}
 
 	public sendMessage(message: ClientMessage) {
-		ipc.of.benchmarkServer.emit("message", message)
+		ipc.of.benchmarkServer?.emit("message", message)
 	}
 
 	public ping() {

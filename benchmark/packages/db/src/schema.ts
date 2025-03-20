@@ -3,7 +3,7 @@ import * as t from "drizzle-orm/sqlite-core"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
 
-import { languages } from "./enums"
+import { languages } from "./enums.js"
 
 /**
  * runs
