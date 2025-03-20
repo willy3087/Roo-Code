@@ -206,8 +206,6 @@ importers:
         specifier: ^0.30.5
         version: 0.30.5
 
-  packages/docker: {}
-
   packages/ipc:
     dependencies:
       node-ipc:

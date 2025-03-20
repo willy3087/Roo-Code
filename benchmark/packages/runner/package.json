@@ -1,8 +1,6 @@
 {
 	"name": "@benchmark/runner",
-	"version": "0.1.0",
 	"private": true,
-	"packageManager": "pnpm@10.6.5",
 	"scripts": {
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",

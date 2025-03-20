@@ -1,8 +1,6 @@
 {
 	"name": "@benchmark/web",
-	"version": "0.1.0",
 	"private": true,
-	"packageManager": "pnpm@10.6.5",
 	"scripts": {
 		"lint": "next lint",
 		"check-types": "tsc -b",
