@@ -10,7 +10,7 @@
 	"scripts": {
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
-		"format": "prettier --write .",
+		"format": "prettier --write src",
 		"drizzle-kit": "dotenvx run -f ../../.env -- tsx node_modules/drizzle-kit/bin.cjs",
 		"db:generate": "pnpm drizzle-kit generate",
 		"db:migrate": "pnpm drizzle-kit migrate",

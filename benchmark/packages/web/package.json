@@ -9,7 +9,7 @@
 		"start": "next start",
 		"lint": "next lint",
 		"check-types": "tsc -b",
-		"format": "prettier --write ."
+		"format": "prettier --write src"
 	},
 	"dependencies": {
 		"@benchmark/db": "workspace:^",

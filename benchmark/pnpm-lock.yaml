@@ -39,59 +39,7 @@ importers:
         specifier: ^8.26.0
         version: 8.26.1(eslint@9.22.0(jiti@2.4.2))(typescript@5.8.2)
 
-  packages/cli:
-    dependencies:
-      '@benchmark/db':
-        specifier: workspace:^
-        version: link:../db
-      '@vscode/test-electron':
-        specifier: ^2.4.0
-        version: 2.4.1
-      gluegun:
-        specifier: ^5.1.2
-        version: 5.2.0
-      p-map:
-        specifier: ^7.0.3
-        version: 7.0.3
-    devDependencies:
-      '@benchmark/eslint-config':
-        specifier: workspace:^
-        version: link:../eslint-config
-      '@benchmark/typescript-config':
-        specifier: workspace:^
-        version: link:../typescript-config
-
-  packages/db:
-    dependencies:
-      '@libsql/client':
-        specifier: ^0.14.0
-        version: 0.14.0
-      drizzle-orm:
-        specifier: ^0.40.0
-        version: 0.40.1(@libsql/client@0.14.0)(gel@2.0.1)
-      drizzle-zod:
-        specifier: ^0.7.0
-        version: 0.7.0(drizzle-orm@0.40.1(@libsql/client@0.14.0)(gel@2.0.1))(zod@3.24.2)
-      libsql:
-        specifier: ^0.5.1
-        version: 0.5.1
-      zod:
-        specifier: ^3.24.2
-        version: 3.24.2
-    devDependencies:
-      '@benchmark/eslint-config':
-        specifier: workspace:^
-        version: link:../eslint-config
-      '@benchmark/typescript-config':
-        specifier: workspace:^
-        version: link:../typescript-config
-      drizzle-kit:
-        specifier: ^0.30.5
-        version: 0.30.5
-
-  packages/docker: {}
-
-  packages/eslint-config:
+  config/eslint:
     devDependencies:
       '@eslint/js':
         specifier: ^9.22.0
@@ -127,6 +75,60 @@ importers:
         specifier: ^8.26.0
         version: 8.26.1(eslint@9.22.0(jiti@2.4.2))(typescript@5.8.2)
 
+  config/typescript: {}
+
+  packages/cli:
+    dependencies:
+      '@benchmark/db':
+        specifier: workspace:^
+        version: link:../db
+      '@vscode/test-electron':
+        specifier: ^2.4.0
+        version: 2.4.1
+      gluegun:
+        specifier: ^5.1.2
+        version: 5.2.0
+      p-map:
+        specifier: ^7.0.3
+        version: 7.0.3
+    devDependencies:
+      '@benchmark/eslint-config':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@benchmark/typescript-config':
+        specifier: workspace:^
+        version: link:../../config/typescript
+
+  packages/db:
+    dependencies:
+      '@libsql/client':
+        specifier: ^0.14.0
+        version: 0.14.0
+      drizzle-orm:
+        specifier: ^0.40.0
+        version: 0.40.1(@libsql/client@0.14.0)(gel@2.0.1)
+      drizzle-zod:
+        specifier: ^0.7.0
+        version: 0.7.0(drizzle-orm@0.40.1(@libsql/client@0.14.0)(gel@2.0.1))(zod@3.24.2)
+      libsql:
+        specifier: ^0.5.1
+        version: 0.5.1
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+    devDependencies:
+      '@benchmark/eslint-config':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@benchmark/typescript-config':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      drizzle-kit:
+        specifier: ^0.30.5
+        version: 0.30.5
+
+  packages/docker: {}
+
   packages/ipc:
     dependencies:
       node-ipc:
@@ -138,10 +140,10 @@ importers:
     devDependencies:
       '@benchmark/eslint-config':
         specifier: workspace:^
-        version: link:../eslint-config
+        version: link:../../config/eslint
       '@benchmark/typescript-config':
         specifier: workspace:^
-        version: link:../typescript-config
+        version: link:../../config/typescript
       '@types/node-ipc':
         specifier: ^9.2.3
         version: 9.2.3
@@ -150,12 +152,10 @@ importers:
     devDependencies:
       '@benchmark/eslint-config':
         specifier: workspace:^
-        version: link:../eslint-config
+        version: link:../../config/eslint
       '@types/vscode':
         specifier: ^1.98.0
         version: 1.98.0
-
-  packages/typescript-config: {}
 
   packages/web:
     dependencies:
@@ -198,10 +198,10 @@ importers:
     devDependencies:
       '@benchmark/eslint-config':
         specifier: workspace:^
-        version: link:../eslint-config
+        version: link:../../config/eslint
       '@benchmark/typescript-config':
         specifier: workspace:^
-        version: link:../typescript-config
+        version: link:../../config/typescript
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.0.14
