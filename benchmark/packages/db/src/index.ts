@@ -6,12 +6,12 @@ export { schema } from "./schema.js"
  * runs
  */
 
-export { type Run, insertRunSchema } from "./schema.js"
+export { type Run, type InsertRun, insertRunSchema } from "./schema.js"
 export { findRun, createRun, getRuns } from "./queries/runs.js"
 
 /**
  * tasks
  */
 
-export { type Task, insertTaskSchema } from "./schema.js"
+export { type Task, type InsertTask, insertTaskSchema } from "./schema.js"
 export { findTask, createTask, getTask } from "./queries/tasks.js"
