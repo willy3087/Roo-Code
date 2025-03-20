@@ -1,5 +1,15 @@
 # Roo Code Changelog
 
+## 3.10.0
+
+### Minor Changes
+
+- v3.10
+
+### Patch Changes
+
+- Adds a function to add temperature setting based on the model id
+
 ## [3.9.2] - 2025-03-19
 
 - Update GitHub Actions workflow to automatically create GitHub Releases (thanks @pdecat!)
