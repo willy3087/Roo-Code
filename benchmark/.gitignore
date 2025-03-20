@@ -19,12 +19,15 @@ coverage
 # Vercel
 .vercel
 
+# Next.js
+next-env.d.ts
+
 # Build Outputs
 .next/
 out/
 build
 dist
-
+*.tsbuildinfo
 
 # Debug
 npm-debug.log*
@@ -37,4 +40,3 @@ yarn-error.log*
 
 # Roo-Code-Benchmark
 exercises
-
