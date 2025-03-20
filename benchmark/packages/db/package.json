@@ -1,0 +1,26 @@
+{
+	"name": "@benchmark/db",
+	"version": "0.1.0",
+	"private": true,
+	"packageManager": "pnpm@10.6.5",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"lint": "eslint src --ext ts --max-warnings=0",
+		"check-types": "tsc --noEmit",
+		"format": "prettier --write .",
+		"db:migrate": "dotenvx run -f ../../.env -- drizzle-kit push"
+	},
+	"dependencies": {
+		"@libsql/client": "^0.14.0",
+		"drizzle-orm": "^0.40.0",
+		"drizzle-zod": "^0.7.0",
+		"libsql": "^0.5.1",
+		"zod": "^3.24.2"
+	},
+	"devDependencies": {
+		"@benchmark/eslint-config": "workspace:^",
+		"drizzle-kit": "^0.30.5"
+	}
+}
