@@ -11,7 +11,14 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write .",
-		"db:migrate": "dotenvx run -f ../../.env -- drizzle-kit push"
+		"drizzle-kit": "dotenvx run -f ../../.env -- tsx node_modules/drizzle-kit/bin.cjs",
+		"db:generate": "pnpm drizzle-kit generate",
+		"db:migrate": "pnpm drizzle-kit migrate",
+		"db:push": "pnpm drizzle-kit push",
+		"db:pull": "pnpm drizzle-kit pull",
+		"db:check": "pnpm drizzle-kit check",
+		"db:up": "pnpm drizzle-kit up",
+		"db:studio": "pnpm drizzle-kit studio"
 	},
 	"dependencies": {
 		"@libsql/client": "^0.14.0",

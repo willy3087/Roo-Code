@@ -119,7 +119,7 @@ const askExercise = async (prompt: GluegunPrompt, language: Language) => {
 		type: "select",
 		name: "exercise",
 		message: "Which exercise?",
-		choices: exercises.map((exercise) => path.basename(exercise)),
+		choices: exercises.map((exercise) => path.basename(exercise)).filter((exercise) => !exercise.startsWith(".")),
 	})
 
 	return exercise
