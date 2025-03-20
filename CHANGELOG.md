@@ -1,11 +1,8 @@
 # Roo Code Changelog
 
-## 3.10.1
+## [3.10.1] - 2025-03-20
 
-### Patch Changes
-
-- Make the question follow-up optional
-- Reflect Cross-region inference option in `ap-xx` region
+- Make the suggested responses optional to not break overriden system prompts
 
 ## [3.10.0] - 2025-03-20
 
