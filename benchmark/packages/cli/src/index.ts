@@ -1,25 +1,45 @@
 import * as fs from "fs"
 import * as path from "path"
+import { fileURLToPath } from "url"
+import pMap from "p-map"
 
-import { build, filesystem, GluegunPrompt } from "gluegun"
+import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
-// console.log(__dirname)
-// <...>/Roo-Code/benchmark/src
+import { type Language, languages, type Run, findRun, createRun, getTask } from "@benchmark/db"
 
-const extensionDevelopmentPath = path.resolve(__dirname, "../../")
-const extensionTestsPath = path.resolve(__dirname, "../out/run.js")
-const promptsPath = path.resolve(__dirname, "../prompts")
-const exercisesPath = path.resolve(__dirname, "../../../exercises")
-const languages = ["cpp", "go", "java", "javascript", "python", "rust"]
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const extensionDevelopmentPath = path.resolve(__dirname, "../../../..")
+const extensionTestsPath = path.resolve(extensionDevelopmentPath, "benchmark/packages/runner/dist/run.js")
+const exercisesPath = path.resolve(extensionDevelopmentPath, "benchmark/exercises")
 
-async function runAll({ runId, model }: { runId: number; model: string }) {
-	for (const language of languages) {
-		await runLanguage({ runId, model, language })
+export const isLanguage = (language: string): language is Language => languages.includes(language as Language)
+
+const run = async (toolbox: GluegunToolbox) => {
+	const { config, prompt } = toolbox
+	const id = config.runId ? Number(config.runId) : undefined
+	let { language, exercise } = config
+
+	if (language === "all") {
+		const run = await findOrCreateRun({ id })
+		await runAll(run)
+	} else if (exercise === "all") {
+		const run = await findOrCreateRun({ id })
+		await runLanguage({ run, language })
+	} else {
+		language = language || (await askLanguage(prompt))
+		exercise = exercise || (await askExercise(prompt, language))
+		const run = await findOrCreateRun({ id })
+		await runExercise({ run, language, exercise })
 	}
 }
 
-async function runLanguage({ runId, model, language }: { runId: number; model: string; language: string }) {
+const runAll = async (run: Run) =>
+	(await pMap(languages, (language) => runLanguage({ run, language }), { concurrency: 1 })).flatMap(
+		(language) => language,
+	)
+
+const runLanguage = async ({ run, language }: { run: Run; language: Language }) => {
 	const languagePath = path.resolve(exercisesPath, language)
 
 	if (!fs.existsSync(languagePath)) {
@@ -32,65 +52,64 @@ async function runLanguage({ runId, model, language }: { runId: number; model: s
 		.map((exercise) => path.basename(exercise))
 		.filter((exercise) => !exercise.startsWith("."))
 
-	for (const exercise of exercises) {
-		await runExercise({ runId, model, language, exercise })
-	}
+	const results = await pMap(
+		exercises,
+		async (exercise) => ({
+			language,
+			exercise,
+			result: await runExercise({ run, language, exercise }),
+		}),
+		{ concurrency: 1 },
+	)
+
+	return results
 }
 
-async function runExercise({
-	runId,
-	model,
-	language,
-	exercise,
-}: {
-	runId: number
-	model: string
-	language: string
-	exercise: string
-}) {
+const runExercise = async ({ run, language, exercise }: { run: Run; language: Language; exercise: string }) => {
 	const workspacePath = path.resolve(exercisesPath, language, exercise)
-	const promptPath = path.resolve(promptsPath, `${language}.md`)
+	const promptPath = path.resolve(exercisesPath, `prompts/${language}.md`)
 
-	const extensionTestsEnv = {
-		PROMPT_PATH: promptPath,
-		WORKSPACE_PATH: workspacePath,
-		OPENROUTER_MODEL_ID: model,
-		RUN_ID: runId.toString(),
+	if (!fs.existsSync(promptPath)) {
+		throw new Error(`Prompt file does not exist: ${promptPath}`)
 	}
 
-	if (fs.existsSync(path.resolve(workspacePath, "usage.json"))) {
+	const task = await getTask({ runId: run.id, language, exercise })
+
+	if (task) {
 		console.log(`Test result exists for ${language} / ${exercise}, skipping`)
-		return
+		return false
 	}
 
 	console.log(`Running ${language} / ${exercise}`)
+	return true
 
 	await runTests({
 		extensionDevelopmentPath,
 		extensionTestsPath,
 		launchArgs: [workspacePath, "--disable-extensions"],
-		extensionTestsEnv,
+		extensionTestsEnv: {
+			PROMPT_PATH: promptPath,
+			WORKSPACE_PATH: workspacePath,
+			OPENROUTER_MODEL_ID: run.model,
+			RUN_ID: run.id.toString(),
+		},
 	})
+
+	return true
 }
 
-async function askLanguage(prompt: GluegunPrompt) {
-	const languages = filesystem.subdirectories(exercisesPath)
-
-	if (languages.length === 0) {
-		throw new Error(`No languages found in ${exercisesPath}`)
-	}
-
-	const { language } = await prompt.ask<{ language: string }>({
+const askLanguage = async (prompt: GluegunPrompt) => {
+	const { language } = await prompt.ask<{ language: Language }>({
 		type: "select",
 		name: "language",
 		message: "Which language?",
-		choices: languages.map((language) => path.basename(language)).filter((language) => !language.startsWith(".")),
+		choices: [...languages],
 	})
 
 	return language
 }
 
-async function askExercise(prompt: GluegunPrompt, language: string) {
+const askExercise = async (prompt: GluegunPrompt, language: Language) => {
 	const exercises = filesystem.subdirectories(path.join(exercisesPath, language))
 
 	if (exercises.length === 0) {
@@ -107,30 +126,20 @@ async function askExercise(prompt: GluegunPrompt, language: string) {
 	return exercise
 }
 
-async function createRun({ model }: { model: string }): Promise<{ id: number; model: string }> {
-	const response = await fetch("http://localhost:3000/api/runs", {
-		method: "POST",
-		body: JSON.stringify({ model }),
-	})
+type FindOrCreateRun = { id?: number; model?: string }
 
-	if (!response.ok) {
-		throw new Error(`Failed to create run: ${response.statusText}`)
-	}
+const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: FindOrCreateRun) =>
+	id ? findRun(id) : createRun({ model })
 
-	const {
-		run: [run],
-	} = await response.json()
-	return run
-}
-
-async function main() {
+const main = async () => {
 	const cli = build()
-		.brand("benchmark-cli")
+		.brand("cli")
 		.src(__dirname)
 		.help()
 		.version()
 		.command({
 			name: "run",
+			description: "Run a benchmark",
 			run: ({ config, parameters }) => {
 				config.language = parameters.first
 				config.exercise = parameters.second
@@ -140,32 +149,41 @@ async function main() {
 				}
 			},
 		})
-		.defaultCommand() // Use the default command if no args.
+		.defaultCommand()
 		.create()
 
-	const { print, prompt, config } = await cli.run(process.argv)
+	const toolbox = await cli.run(process.argv)
+	const { print, command } = toolbox
 
 	try {
-		const model = "anthropic/claude-3.7-sonnet"
-		const runId = config.runId ? Number(config.runId) : (await createRun({ model })).id
-
-		if (config.language === "all") {
-			console.log("Running all exercises for all languages")
-			await runAll({ runId, model })
-		} else if (config.exercise === "all") {
-			console.log(`Running all exercises for ${config.language}`)
-			await runLanguage({ runId, model, language: config.language })
-		} else {
-			const language = config.language || (await askLanguage(prompt))
-			const exercise = config.exercise || (await askExercise(prompt, language))
-			await runExercise({ runId, model, language, exercise })
+		switch (command?.name) {
+			case "run":
+				await run(toolbox)
+				break
 		}
 
 		process.exit(0)
-	} catch (error) {
-		print.error(error)
+	} catch (error: unknown) {
+		print.error(error instanceof Error ? error.message : String(error))
 		process.exit(1)
 	}
+}
+
+if (!fs.existsSync(extensionDevelopmentPath)) {
+	console.error(`"extensionDevelopmentPath" does not exist.`)
+	process.exit(1)
+}
+
+if (!fs.existsSync(extensionTestsPath)) {
+	console.error(`"extensionTestsPath" does not exist. Please run "pnpm --filter @benchmark/runner build".`)
+	process.exit(1)
+}
+
+if (!fs.existsSync(exercisesPath)) {
+	console.error(
+		`Exercises path does not exist. Please run "git clone https://github.com/cte/Roo-Code-Benchmark.git exercises".`,
+	)
+	process.exit(1)
 }
 
 main()

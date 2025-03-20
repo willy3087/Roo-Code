@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server"
 
-import { db, tasks, insertTaskSchema } from "@benchmark/db"
+import { createTask } from "@benchmark/db"
 
 export async function POST(request: Request) {
 	try {
-		const task = await db
-			.insert(tasks)
-			.values({
-				...insertTaskSchema.parse(await request.json()),
-				createdAt: new Date(),
-			})
-			.returning()
-
+		const task = await createTask(await request.json())
 		return NextResponse.json({ task }, { status: 201 })
 	} catch (error) {
 		return NextResponse.json({ error: (error as Error).message }, { status: 500 })

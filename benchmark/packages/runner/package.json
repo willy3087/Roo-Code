@@ -1,5 +1,5 @@
 {
-	"name": "@benchmark/client",
+	"name": "@benchmark/runner",
 	"version": "0.1.0",
 	"private": true,
 	"packageManager": "pnpm@10.6.5",
@@ -7,9 +7,8 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write .",
-		"compile": "pnpm clean && tsc",
-		"build": "pnpm compile && cd ../../.. && npm run compile && npm run build:webview",
-		"clean": "rimraf out"
+		"build": "rimraf dist && tsc",
+		"vscode-test": "pnpm build && cd ../../.. && npm run vscode-test"
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",

@@ -1,14 +1,9 @@
 import { sqliteTable, text, real, integer } from "drizzle-orm/sqlite-core"
 import * as t from "drizzle-orm/sqlite-core"
 import { createInsertSchema } from "drizzle-zod"
+import { z } from "zod"
 
-/**
- * languages
- */
-
-export const languages = ["cpp", "go", "java", "javascript", "python", "rust"] as const
-
-export type Language = (typeof languages)[number]
+import { languages } from "./enums"
 
 /**
  * runs
@@ -27,6 +22,8 @@ export const insertRunSchema = createInsertSchema(runs).omit({
 	id: true,
 	createdAt: true,
 })
+
+export type InsertRun = z.infer<typeof insertRunSchema>
 
 /**
  * tasks
@@ -58,3 +55,11 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
 	id: true,
 	createdAt: true,
 })
+
+export type InsertTask = z.infer<typeof insertTaskSchema>
+
+/**
+ * schema
+ */
+
+export const schema = { runs, tasks }

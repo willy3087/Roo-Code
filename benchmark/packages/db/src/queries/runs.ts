@@ -1,6 +1,31 @@
 import { desc, eq, sql } from "drizzle-orm"
 
-import { db, runs, tasks } from "./db"
+import { db } from "../db"
+import { InsertRun, insertRunSchema, runs, tasks } from "../schema"
+
+import { RecordNotFoundError } from "./errors"
+
+export const findRun = async (id: number) => {
+	const run = await db.query.runs.findFirst({ where: eq(runs.id, id) })
+
+	if (!run) {
+		throw new RecordNotFoundError()
+	}
+
+	return run
+}
+
+export const createRun = async (args: InsertRun) => {
+	const result = await db
+		.insert(runs)
+		.values({
+			...insertRunSchema.parse(args),
+			createdAt: new Date(),
+		})
+		.returning()
+
+	return result[0]
+}
 
 export const getRuns = () =>
 	db

@@ -5,7 +5,8 @@
 		"lint": "turbo lint",
 		"check-types": "turbo check-types",
 		"format": "turbo format",
-		"dev": "pnpm --filter @benchmark/server dev"
+		"cli": "pnpm --filter @benchmark/cli dev",
+		"web": "pnpm --filter @benchmark/web dev"
 	},
 	"devDependencies": {
 		"@dotenvx/dotenvx": "^1.39.0",

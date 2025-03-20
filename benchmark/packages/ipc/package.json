@@ -2,6 +2,7 @@
 	"name": "@benchmark/ipc",
 	"version": "0.1.0",
 	"private": true,
+	"type": "module",
 	"packageManager": "pnpm@10.6.5",
 	"scripts": {
 		"lint": "eslint src --ext ts --max-warnings=0",
@@ -16,6 +17,7 @@
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",
+		"@benchmark/typescript-config": "workspace:^",
 		"@types/node-ipc": "^9.2.3"
 	}
 }

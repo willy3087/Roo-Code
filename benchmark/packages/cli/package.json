@@ -2,6 +2,7 @@
 	"name": "@benchmark/cli",
 	"version": "0.1.0",
 	"private": true,
+	"type": "module",
 	"packageManager": "pnpm@10.6.5+sha512.cdf928fca20832cd59ec53826492b7dc25dc524d4370b6b4adbf65803d32efaa6c1c88147c0ae4e8d579a6c9eec715757b50d4fa35eea179d868eada4ed043af",
 	"scripts": {
 		"lint": "eslint src --ext ts --max-warnings=0",
@@ -11,10 +12,13 @@
 		"dev": "dotenvx run -f ../../.env -- tsx src/index.ts"
 	},
 	"dependencies": {
+		"@benchmark/db": "workspace:^",
 		"@vscode/test-electron": "^2.4.0",
-		"gluegun": "^5.1.2"
+		"gluegun": "^5.1.2",
+		"p-map": "^7.0.3"
 	},
 	"devDependencies": {
-		"@benchmark/eslint-config": "workspace:^"
+		"@benchmark/eslint-config": "workspace:^",
+		"@benchmark/typescript-config": "workspace:^"
 	}
 }

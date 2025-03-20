@@ -9,7 +9,7 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"useUnknownInCatchVariables": false,
-		"outDir": "out"
+		"outDir": "dist"
 	},
-	"include": ["src", "../../../../src/exports/roo-code.d.ts"]
+	"include": ["src"]
 }

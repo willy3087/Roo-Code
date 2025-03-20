@@ -1,5 +1,8 @@
 import { drizzle } from "drizzle-orm/libsql"
 
-export * from "./schema"
+import { schema } from "./schema"
 
-export const db = drizzle({ connection: { url: process.env.BENCHMARKS_DB_PATH! } })
+export const db = drizzle({
+	schema,
+	connection: { url: process.env.BENCHMARKS_DB_PATH! },
+})

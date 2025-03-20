@@ -41,25 +41,25 @@ importers:
 
   packages/cli:
     dependencies:
+      '@benchmark/db':
+        specifier: workspace:^
+        version: link:../db
       '@vscode/test-electron':
         specifier: ^2.4.0
         version: 2.4.1
       gluegun:
         specifier: ^5.1.2
         version: 5.2.0
+      p-map:
+        specifier: ^7.0.3
+        version: 7.0.3
     devDependencies:
       '@benchmark/eslint-config':
         specifier: workspace:^
         version: link:../eslint-config
-
-  packages/client:
-    devDependencies:
-      '@benchmark/eslint-config':
+      '@benchmark/typescript-config':
         specifier: workspace:^
-        version: link:../eslint-config
-      '@types/vscode':
-        specifier: ^1.98.0
-        version: 1.98.0
+        version: link:../typescript-config
 
   packages/db:
     dependencies:
@@ -82,6 +82,9 @@ importers:
       '@benchmark/eslint-config':
         specifier: workspace:^
         version: link:../eslint-config
+      '@benchmark/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       drizzle-kit:
         specifier: ^0.30.5
         version: 0.30.5
@@ -136,11 +139,25 @@ importers:
       '@benchmark/eslint-config':
         specifier: workspace:^
         version: link:../eslint-config
+      '@benchmark/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       '@types/node-ipc':
         specifier: ^9.2.3
         version: 9.2.3
 
-  packages/server:
+  packages/runner:
+    devDependencies:
+      '@benchmark/eslint-config':
+        specifier: workspace:^
+        version: link:../eslint-config
+      '@types/vscode':
+        specifier: ^1.98.0
+        version: 1.98.0
+
+  packages/typescript-config: {}
+
+  packages/web:
     dependencies:
       '@benchmark/db':
         specifier: workspace:^
@@ -182,6 +199,9 @@ importers:
       '@benchmark/eslint-config':
         specifier: workspace:^
         version: link:../eslint-config
+      '@benchmark/typescript-config':
+        specifier: workspace:^
+        version: link:../typescript-config
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.0.14
@@ -2511,6 +2531,10 @@ packages:
   p-locate@5.0.0:
     resolution: {integrity: sha512-LaNjtRWUBY++zB5nE/NwcaoMylSPk+S+ZHNB1TzdbMJMny6dynpAGt7X/tl/QYq3TIeE6nxHppbo2LGymrG5Pw==}
     engines: {node: '>=10'}
+
+  p-map@7.0.3:
+    resolution: {integrity: sha512-VkndIv2fIB99swvQoA65bm+fsmt6UNdGeIB0oxBs+WhAhdh08QA04JXpI7rbB9r08/nkbysKoya9rtDERYOYMA==}
+    engines: {node: '>=18'}
 
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
@@ -5316,6 +5340,8 @@ snapshots:
   p-locate@5.0.0:
     dependencies:
       p-limit: 3.1.0
+
+  p-map@7.0.3: {}
 
   package-json-from-dist@1.0.1: {}
 

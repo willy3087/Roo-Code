@@ -1,7 +1,15 @@
 export { db } from "./db"
+export { type Language, languages } from "./enums"
+export { schema } from "./schema"
 
-export { type Language, languages } from "./schema"
-export { type Run, insertRunSchema, runs } from "./schema"
-export { type Task, insertTaskSchema, tasks } from "./schema"
+/**
+ * runs
+ */
+export { type Run, insertRunSchema } from "./schema"
+export { findRun, createRun, getRuns } from "./queries/runs"
 
-export { getRuns } from "./queries"
+/**
+ * tasks
+ */
+export { type Task, insertTaskSchema } from "./schema"
+export { findTask, createTask, getTask } from "./queries/tasks"

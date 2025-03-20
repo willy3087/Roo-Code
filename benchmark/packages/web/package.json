@@ -1,5 +1,5 @@
 {
-	"name": "@benchmark/server",
+	"name": "@benchmark/web",
 	"version": "0.1.0",
 	"private": true,
 	"packageManager": "pnpm@10.6.5",
@@ -27,6 +27,7 @@
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",
+		"@benchmark/typescript-config": "workspace:^",
 		"@tailwindcss/postcss": "^4",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
