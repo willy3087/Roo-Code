@@ -9,7 +9,16 @@
 		"build:extension": "cd .. && npm run vscode-test",
 		"build:runner": "turbo build --filter @benchmark/runner",
 		"cli": "pnpm --filter @benchmark/cli dev",
-		"web": "pnpm --filter @benchmark/web dev"
+		"web": "pnpm --filter @benchmark/web dev",
+		"studio": "pnpm --filter @benchmark/db db:studio",
+		"docker:build": "docker build -f Dockerfile -t roo-code-benchmark ..",
+		"docker:run": "touch /tmp/benchmarks.db && docker run -d -it -p 3000:3000 -v /tmp/benchmarks.db:/tmp/benchmarks.db roo-code-benchmark",
+		"docker:start": "npm run docker:build && npm run docker:run",
+		"docker:shell": "docker exec -it $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) /bin/bash",
+		"docker:cli": "docker exec -it -w /home/vscode/repo/benchmark $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) xvfb-run npm run cli --",
+		"docker:stop": "docker stop $(docker ps --filter \"ancestor=roo-code-benchmark\" -q)",
+		"docker:rm": "docker rm $(docker ps -a --filter \"ancestor=roo-code-benchmark\" -q)",
+		"docker:clean": "npm run docker:stop && npm run docker:rm"
 	},
 	"devDependencies": {
 		"@dotenvx/dotenvx": "^1.39.0",
