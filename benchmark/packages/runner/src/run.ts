@@ -3,7 +3,7 @@ import * as path from "path"
 
 import * as vscode from "vscode"
 
-import { RooCodeAPI, TokenUsage } from "./roo-code"
+import { RooCodeAPI, TokenUsage } from "../../../../src/exports/roo-code"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils"
 

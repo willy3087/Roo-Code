@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 
-import { RooCodeAPI, TokenUsage } from "./roo-code"
+import { RooCodeAPI, TokenUsage } from "../../../../src/exports/roo-code"
 
 type WaitForOptions = {
 	timeout?: number

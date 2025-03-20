@@ -11,5 +11,5 @@
 		"useUnknownInCatchVariables": false,
 		"outDir": "dist"
 	},
-	"include": ["src"]
+	"include": ["src", "../../../../src/exports/roo-code.d.ts"]
 }
