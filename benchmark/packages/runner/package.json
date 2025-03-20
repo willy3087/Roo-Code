@@ -7,11 +7,14 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
-		"build": "rimraf dist && tsc",
-		"vscode-test": "pnpm build && cd ../../.. && npm run vscode-test"
+		"build": "tsup"
+	},
+	"dependencies": {
+		"@benchmark/ipc": "workspace:^"
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",
+		"@benchmark/typescript-config": "workspace:^",
 		"@types/vscode": "^1.98.0"
 	}
 }

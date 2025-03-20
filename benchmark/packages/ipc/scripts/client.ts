@@ -4,7 +4,6 @@ async function main(socketPath: string) {
 	try {
 		const startTime = Date.now()
 		const client = new IpcClient(socketPath)
-		client.connect()
 
 		while (!client.isConnected) {
 			if (Date.now() - startTime > 5000) {

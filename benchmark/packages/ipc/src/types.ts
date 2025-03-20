@@ -5,8 +5,8 @@ import { z } from "zod"
  */
 
 export enum ClientMessageType {
-	Message = "message",
 	Ping = "ping",
+	Message = "message",
 }
 
 export const clientMessageSchema = z.discriminatedUnion("type", [
@@ -34,6 +34,8 @@ export type ClientMessage = z.infer<typeof clientMessageSchema>
 export enum ServerMessageType {
 	Hello = "hello",
 	Pong = "pong",
+	Message = "message",
+	Data = "data",
 }
 
 export const serverMessageSchema = z.discriminatedUnion("type", [
@@ -45,6 +47,16 @@ export const serverMessageSchema = z.discriminatedUnion("type", [
 	}),
 	z.object({
 		type: z.literal(ServerMessageType.Pong),
+	}),
+	z.object({
+		type: z.literal(ServerMessageType.Message),
+		data: z.object({
+			message: z.string(),
+		}),
+	}),
+	z.object({
+		type: z.literal(ServerMessageType.Data),
+		data: z.unknown(),
 	}),
 ])
 

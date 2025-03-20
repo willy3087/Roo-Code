@@ -10,7 +10,7 @@ import { type Language, languages, type Run, findRun, createRun, getTask } from 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const extensionDevelopmentPath = path.resolve(__dirname, "../../../..")
-const extensionTestsPath = path.resolve(extensionDevelopmentPath, "benchmark/packages/runner/dist/run.js")
+const extensionTestsPath = path.resolve(extensionDevelopmentPath, "benchmark/packages/runner/dist")
 const exercisesPath = path.resolve(extensionDevelopmentPath, "benchmark/exercises")
 
 export const isLanguage = (language: string): language is Language => languages.includes(language as Language)

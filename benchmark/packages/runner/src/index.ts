@@ -3,9 +3,12 @@ import * as path from "path"
 
 import * as vscode from "vscode"
 
-import { RooCodeAPI, TokenUsage } from "../../../../src/exports/roo-code"
+import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-import { waitUntilReady, waitUntilCompleted, sleep } from "./utils"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { IpcServer, ServerMessageType } = require("@benchmark/ipc")
+
+import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
 
 export async function run() {
 	/**
@@ -70,7 +73,38 @@ export async function run() {
 		.getConfiguration("roo-cline")
 		.update("allowedCommands", ["*"], vscode.ConfigurationTarget.Global)
 
-	await sleep(2_000)
+	await sleep(1_000)
+
+	/**
+	 * Start the IPC server.
+	 */
+
+	const server = new IpcServer(`/tmp/benchmark-${runId}.sock`)
+	server.listen()
+
+	api.on("message", (message) => {
+		server.broadcast({ type: ServerMessageType.Data, data: message })
+	})
+
+	api.on("taskStarted", (taskId) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+	})
+
+	api.on("taskPaused", (taskId) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+	})
+
+	api.on("taskUnpaused", (taskId) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+	})
+
+	api.on("taskAskResponded", (taskId) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+	})
+
+	api.on("taskTokenUsageUpdated", (taskId, usage) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { taskId, usage } })
+	})
 
 	/**
 	 * Run the task and wait up to 10 minutes for it to complete.
@@ -78,8 +112,7 @@ export async function run() {
 
 	const startTime = Date.now()
 	const taskId = await api.startNewTask(prompt)
-
-	let usage: TokenUsage | undefined = undefined
+	let usage
 
 	try {
 		usage = await waitUntilCompleted({ api, taskId, timeout: 5 * 60 * 1_000 }) // 5m

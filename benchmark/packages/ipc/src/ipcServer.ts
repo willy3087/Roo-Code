@@ -1,31 +1,32 @@
 import { Socket } from "node:net"
-import ipc from "node-ipc"
-import * as os from "node:os"
-import * as path from "node:path"
 import * as crypto from "node:crypto"
+
+import ipc from "node-ipc"
 
 import { ClientMessageType, ServerMessage, ServerMessageType, clientMessageSchema } from "./types.js"
 
 export class IpcServer {
-	private _isListening = false
-	private _socketId: string
-	private _clients: Map<string, Socket>
+	private readonly _socketPath: string
+	private readonly _log: (...args: unknown[]) => void
+	private readonly _clients: Map<string, Socket>
 
-	constructor() {
-		this._socketId = "benchmark"
+	private _isListening = false
+
+	constructor(socketPath: string, log = console.log) {
+		this._socketPath = socketPath
+		this._log = log
 		this._clients = new Map()
 	}
 
 	public listen() {
 		this._isListening = true
 
-		ipc.config.id = this._socketId
 		ipc.config.silent = true
 
 		ipc.serve(this.socketPath, () => {
 			ipc.server.on("connect", (socket) => this.onConnect(socket))
 			ipc.server.on("message", (data, socket) => this.onMessage(data, socket))
-			ipc.server.on("socket.disconnected", (socket, id) => this.onDisconnect(socket, id))
+			ipc.server.on("socket.disconnected", (socket) => this.onDisconnect(socket))
 		})
 
 		ipc.server.start()
@@ -33,21 +34,21 @@ export class IpcServer {
 
 	private onConnect(socket: Socket) {
 		const clientId = crypto.randomBytes(6).toString("hex")
-		console.log(`[server#onConnect]`, clientId)
 		this._clients.set(clientId, socket)
-		this.sendMessage(socket, { type: ServerMessageType.Hello, data: { clientId } })
+		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
+		this.send(socket, { type: ServerMessageType.Hello, data: { clientId } })
 	}
 
 	private onMessage(data: unknown, socket: Socket) {
 		if (typeof data !== "object") {
-			console.log("[server#onMessage] invalid data", data)
+			this.log("[server#onMessage] invalid data", data)
 			return
 		}
 
 		const result = clientMessageSchema.safeParse(data)
 
 		if (!result.success) {
-			console.log("[server#onMessage] invalid payload", result.error)
+			this.log("[server#onMessage] invalid payload", result.error)
 			return
 		}
 
@@ -55,25 +56,45 @@ export class IpcServer {
 
 		switch (payload.type) {
 			case ClientMessageType.Message:
-				console.log(`[server#Message] ${payload.data.message}`)
+				this.log(`[server#Message] ${payload.data.message}`)
 				break
 			case ClientMessageType.Ping:
-				console.log(`[server#Ping]`)
-				this.sendMessage(socket, { type: ServerMessageType.Pong })
+				this.log(`[server#Ping]`)
+				this.send(socket, { type: ServerMessageType.Pong })
 				break
 		}
 	}
 
-	private onDisconnect(socket: Socket, destroyedSocketID: string) {
-		console.log(`[server#socket.disconnected] ${destroyedSocketID}`)
+	private onDisconnect(destroyedSocket: Socket) {
+		let destroyedClientId: string | undefined
+
+		for (const [clientId, socket] of this._clients.entries()) {
+			if (socket === destroyedSocket) {
+				destroyedClientId = clientId
+				this._clients.delete(clientId)
+				break
+			}
+		}
+
+		this.log(`[server#socket.disconnected] clientId = ${destroyedClientId}, # clients = ${this._clients.size}`)
 	}
 
-	public sendMessage(socket: Socket, message: ServerMessage) {
+	private log(...args: unknown[]) {
+		this._log(...args)
+	}
+
+	public broadcast(message: ServerMessage) {
+		this.log("[server#broadcast] message =", message)
+		ipc.server.broadcast("message", message)
+	}
+
+	public send(socket: Socket, message: ServerMessage) {
+		this.log("[server#send] message =", message)
 		ipc.server.emit(socket, "message", message)
 	}
 
 	public get socketPath() {
-		return path.join(os.tmpdir(), `${this._socketId}.sock`)
+		return this._socketPath
 	}
 
 	public get isListening() {

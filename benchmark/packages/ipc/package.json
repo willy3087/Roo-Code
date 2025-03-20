@@ -4,10 +4,17 @@
 	"private": true,
 	"type": "module",
 	"packageManager": "pnpm@10.6.5",
+	"exports": {
+		".": {
+			"import": "./src/index.ts",
+			"require": "./dist/index.cjs"
+		}
+	},
 	"scripts": {
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
+		"build": "tsup",
 		"test:server": "tsx scripts/server.ts",
 		"test:client": "tsx scripts/client.ts"
 	},

@@ -8,7 +8,6 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
-		"build": "pnpm --filter @benchmark/client build",
 		"dev": "dotenvx run -f ../../.env -- tsx src/index.ts"
 	},
 	"dependencies": {
