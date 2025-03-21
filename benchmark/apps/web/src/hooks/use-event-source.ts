@@ -17,22 +17,18 @@ export function useEventSource({ url, withCredentials, onMessage }: UseEventSour
 	const handleMessage = useCallback((event: MessageEvent) => onMessage(event), [onMessage])
 
 	const createEventSource = useCallback(() => {
-		console.log("connecting")
 		sourceRef.current = new EventSource(url, { withCredentials })
 
-		sourceRef.current.onopen = (event) => {
-			console.log("onopen", event)
+		sourceRef.current.onopen = () => {
 			statusRef.current = "open"
 			setStatus("open")
 		}
 
 		sourceRef.current.onmessage = (event) => {
-			// console.log("onmessage", event)
 			handleMessage(event)
 		}
 
-		sourceRef.current.onerror = (event) => {
-			console.log("onerror", event)
+		sourceRef.current.onerror = () => {
 			statusRef.current = "error"
 			setStatus("error")
 			// sourceRef.current?.close()
@@ -45,7 +41,6 @@ export function useEventSource({ url, withCredentials, onMessage }: UseEventSour
 
 		setTimeout(() => {
 			if (statusRef.current === "init") {
-				console.log("timeout -> close")
 				sourceRef.current?.close()
 				sourceRef.current = null
 				createEventSource()
@@ -53,7 +48,6 @@ export function useEventSource({ url, withCredentials, onMessage }: UseEventSour
 		}, 100)
 
 		return () => {
-			console.log("unmounting -> close")
 			sourceRef.current?.close()
 			sourceRef.current = null
 		}

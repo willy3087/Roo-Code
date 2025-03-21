@@ -10,6 +10,7 @@ export function ShowRun({ run }: { run: Run }) {
 	const url = `/api/runs/${run.id}/stream`
 	const onMessage = useCallback(({ data }: MessageEvent) => console.log(data), [])
 	const status = useEventSource({ url, onMessage })
+
 	return (
 		<div>
 			Show Run: {run.id} | {status}

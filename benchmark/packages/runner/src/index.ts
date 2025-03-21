@@ -6,7 +6,7 @@ import * as vscode from "vscode"
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
 import { IpcServer, ServerMessageType } from "@benchmark/ipc"
-import { Language, createTask } from "@benchmark/db"
+import { Language, findRun, createTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
 
@@ -28,6 +28,8 @@ export async function run() {
 	}
 
 	const prompt = await fs.readFile(promptPath, "utf-8")
+
+	const run = await findRun(runId)
 
 	/**
 	 * Activate the extension.
@@ -81,7 +83,7 @@ export async function run() {
 	 * Start the IPC server.
 	 */
 
-	const server = new IpcServer(`/tmp/benchmark-${runId}.sock`, () => {})
+	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
 	server.on("client", (id) => {

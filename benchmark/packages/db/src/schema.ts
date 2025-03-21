@@ -13,6 +13,8 @@ export const runs = sqliteTable("runs", {
 	id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
 	model: text().notNull(),
 	description: text(),
+	pid: integer({ mode: "number" }),
+	socketPath: text().notNull(),
 	createdAt: integer({ mode: "timestamp" }).notNull(),
 })
 
@@ -43,10 +45,10 @@ export const tasks = sqliteTable(
 		cacheReads: integer({ mode: "number" }).notNull(),
 		cost: real().notNull(),
 		duration: integer({ mode: "number" }).notNull(),
-		passed: integer({ mode: "boolean" }).notNull(),
+		passed: integer({ mode: "boolean" }),
 		createdAt: integer({ mode: "timestamp" }).notNull(),
 	},
-	(table) => [t.uniqueIndex("language_exercise_idx").on(table.runId, table.language, table.exercise)],
+	(table) => [t.uniqueIndex("tasks_language_exercise_idx").on(table.runId, table.language, table.exercise)],
 )
 
 export type Task = typeof tasks.$inferSelect
@@ -57,6 +59,32 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
 })
 
 export type InsertTask = z.infer<typeof insertTaskSchema>
+
+/**
+ * pendingTasks
+ */
+
+export const pendingTasks = sqliteTable(
+	"pendingTasks",
+	{
+		id: integer({ mode: "number" }).primaryKey({ autoIncrement: true }),
+		runId: integer({ mode: "number" }).notNull(),
+		language: text({ enum: languages }).notNull(),
+		exercise: text().notNull(),
+		pid: integer({ mode: "number" }),
+		createdAt: integer({ mode: "timestamp" }).notNull(),
+	},
+	(table) => [t.uniqueIndex("pendingTasks_language_exercise_idx").on(table.runId, table.language, table.exercise)],
+)
+
+export type PendingTask = typeof pendingTasks.$inferSelect
+
+export const insertPendingTaskSchema = createInsertSchema(pendingTasks).omit({
+	id: true,
+	createdAt: true,
+})
+
+export type InsertPendingTask = z.infer<typeof insertPendingTaskSchema>
 
 /**
  * schema
