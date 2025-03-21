@@ -90,4 +90,4 @@ export type InsertPendingTask = z.infer<typeof insertPendingTaskSchema>
  * schema
  */
 
-export const schema = { runs, tasks }
+export const schema = { runs, tasks, pendingTasks }

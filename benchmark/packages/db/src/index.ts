@@ -15,3 +15,10 @@ export { findRun, createRun, getRuns } from "./queries/runs.js"
 
 export { type Task, type InsertTask, insertTaskSchema } from "./schema.js"
 export { findTask, createTask, getTask } from "./queries/tasks.js"
+
+/**
+ * pendingTasks
+ */
+
+export { type PendingTask, type InsertPendingTask, insertPendingTaskSchema } from "./schema.js"
+export { findPendingTask, createPendingTask, getPendingTask } from "./queries/pendingTasks.js"

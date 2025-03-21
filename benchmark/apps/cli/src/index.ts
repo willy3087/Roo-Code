@@ -1,68 +1,90 @@
 import * as fs from "fs"
 import * as path from "path"
-import { fileURLToPath } from "url"
-import pMap from "p-map"
+import * as os from "os"
 
+import { v4 as uuidv4 } from "uuid"
 import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
-import { type Language, languages, type Run, findRun, createRun, getTask } from "@benchmark/db"
+import {
+	type Language,
+	languages,
+	type Run,
+	findRun,
+	createRun,
+	getPendingTask,
+	createPendingTask,
+	getTask,
+} from "@benchmark/db"
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const extensionDevelopmentPath = path.resolve(__dirname, "..", "..", "..", "..")
-const extensionTestsPath = path.resolve(extensionDevelopmentPath, "benchmark/packages/runner/dist")
-const exercisesPath = path.resolve(extensionDevelopmentPath, "..", "exercises")
+import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
+import { getExercises } from "./exercises.js"
 
 export const isLanguage = (language: string): language is Language => languages.includes(language as Language)
 
 const run = async (toolbox: GluegunToolbox) => {
 	const { config, prompt } = toolbox
 	const id = config.runId ? Number(config.runId) : undefined
-	let { language, exercise } = config
+	const { language, exercise } = config
 
 	if (language === "all") {
-		const run = await findOrCreateRun({ id })
-		await runAll(run)
+		await runAll(id)
 	} else if (exercise === "all") {
-		const run = await findOrCreateRun({ id })
-		await runLanguage({ run, language })
+		await runLanguage({ id, language })
 	} else {
-		language = language || (await askLanguage(prompt))
-		exercise = exercise || (await askExercise(prompt, language))
-		const run = await findOrCreateRun({ id })
+		await runLanguageExercise({
+			id,
+			language: language || (await askLanguage(prompt)),
+			exercise: exercise || (await askExercise(prompt, language)),
+		})
+	}
+}
+
+const runAll = async (id?: number) => {
+	const run = await findOrCreateRun({ id })
+	const exercises = getExercises()
+
+	for (const [language, languageExercises] of Object.entries(exercises)) {
+		await Promise.all(
+			languageExercises.map((exercise) =>
+				findOrCreatePendingTask({ runId: run.id, language: language as Language, exercise }),
+			),
+		)
+	}
+
+	for (const [language, languageExercises] of Object.entries(exercises)) {
+		for (const exercise of languageExercises) {
+			await runExercise({ run, language: language as Language, exercise })
+		}
+	}
+}
+
+const runLanguage = async ({ id, language }: { id?: number; language: Language }) => {
+	const run = await findOrCreateRun({ id })
+	const exercises = getExercises()
+	const languageExercises = exercises[language]
+
+	await Promise.all(
+		languageExercises.map((exercise) => findOrCreatePendingTask({ runId: run.id, language, exercise })),
+	)
+
+	for (const exercise of languageExercises) {
 		await runExercise({ run, language, exercise })
 	}
 }
 
-const runAll = async (run: Run) =>
-	(await pMap(languages, (language) => runLanguage({ run, language }), { concurrency: 1 })).flatMap(
-		(language) => language,
-	)
-
-const runLanguage = async ({ run, language }: { run: Run; language: Language }) => {
-	const languagePath = path.resolve(exercisesPath, language)
-
-	if (!fs.existsSync(languagePath)) {
-		console.error(`Language directory ${languagePath} does not exist`)
-		process.exit(1)
-	}
-
-	const exercises = filesystem
-		.subdirectories(languagePath)
-		.map((exercise) => path.basename(exercise))
-		.filter((exercise) => !exercise.startsWith("."))
-
-	const results = await pMap(
-		exercises,
-		async (exercise) => ({
-			language,
-			exercise,
-			result: await runExercise({ run, language, exercise }),
-		}),
-		{ concurrency: 1 },
-	)
-
-	return results
+const runLanguageExercise = async ({
+	id,
+	language,
+	exercise,
+}: {
+	id?: number
+	language: Language
+	exercise: string
+}) => {
+	const run = await findOrCreateRun({ id })
+	await findOrCreatePendingTask({ runId: run.id, language, exercise })
+	return runExercise({ run, language, exercise })
 }
 
 const runExercise = async ({ run, language, exercise }: { run: Run; language: Language; exercise: string }) => {
@@ -127,10 +149,20 @@ const askExercise = async (prompt: GluegunPrompt, language: Language) => {
 	return exercise
 }
 
-type FindOrCreateRun = { id?: number; model?: string }
+const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: { id?: number; model?: string }) =>
+	id
+		? findRun(id)
+		: createRun({ model, pid: process.pid, socketPath: path.resolve(os.tmpdir(), `benchmark-${uuidv4()}.sock`) })
 
-const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: FindOrCreateRun) =>
-	id ? findRun(id) : createRun({ model })
+const findOrCreatePendingTask = async ({
+	runId,
+	language,
+	exercise,
+}: {
+	runId: number
+	language: Language
+	exercise: string
+}) => (await getPendingTask({ runId, language, exercise })) || (await createPendingTask({ runId, language, exercise }))
 
 const main = async () => {
 	const cli = build()
