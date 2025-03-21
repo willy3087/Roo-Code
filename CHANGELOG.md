@@ -1,8 +1,6 @@
 # Roo Code Changelog
 
-## 3.10.2
-
-### Patch Changes
+## [3.10.2]
 
 - v3.10.2
 
