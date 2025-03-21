@@ -1,6 +1,6 @@
 # Roo Code Changelog
 
-## [3.10.2]
+## [3.10.2] - 2025-03-21
 
 - Fixes to context mentions on Windows
 - Fixes to German translations (thanks @cannuri!)
