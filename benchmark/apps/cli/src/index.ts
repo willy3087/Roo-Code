@@ -2,7 +2,6 @@ import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"
 
-import { v4 as uuidv4 } from "uuid"
 import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
@@ -152,7 +151,11 @@ const askExercise = async (prompt: GluegunPrompt, language: Language) => {
 const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: { id?: number; model?: string }) =>
 	id
 		? findRun(id)
-		: createRun({ model, pid: process.pid, socketPath: path.resolve(os.tmpdir(), `benchmark-${uuidv4()}.sock`) })
+		: createRun({
+				model,
+				pid: process.pid,
+				socketPath: path.resolve(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`),
+			})
 
 const findOrCreatePendingTask = async ({
 	runId,

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import { ThemeProvider, ReactQueryProvider } from "@/components/providers"
+import { Header } from "@/components/layout/header"
 
 import "./globals.css"
 
@@ -21,7 +22,10 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-					<ReactQueryProvider>{children}</ReactQueryProvider>
+					<ReactQueryProvider>
+						<Header />
+						<div className="max-w-3xl mx-auto">{children}</div>
+					</ReactQueryProvider>
 				</ThemeProvider>
 			</body>
 		</html>

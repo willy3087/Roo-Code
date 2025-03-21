@@ -1,13 +1,15 @@
 import { and, eq } from "drizzle-orm"
 
-import { db } from "../db.js"
-import { type InsertPendingTask, insertPendingTaskSchema, pendingTasks } from "../schema.js"
-
-import { Language } from "../enums.js"
+import type { Language } from "../enums.js"
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
+import type { InsertPendingTask, UpdatePendingTask } from "../schema.js"
+import { insertPendingTaskSchema, pendingTasks } from "../schema.js"
+import { db } from "../db.js"
+
+const table = pendingTasks
 
 export const findPendingTask = async (id: number) => {
-	const run = await db.query.pendingTasks.findFirst({ where: eq(pendingTasks.id, id) })
+	const run = await db.query.pendingTasks.findFirst({ where: eq(table.id, id) })
 
 	if (!run) {
 		throw new RecordNotFoundError()
@@ -17,21 +19,32 @@ export const findPendingTask = async (id: number) => {
 }
 
 export const createPendingTask = async (args: InsertPendingTask) => {
-	const result = await db
-		.insert(pendingTasks)
+	const records = await db
+		.insert(table)
 		.values({
 			...insertPendingTaskSchema.parse(args),
 			createdAt: new Date(),
 		})
 		.returning()
 
-	const task = result[0]
+	const record = records[0]
 
-	if (!task) {
+	if (!record) {
 		throw new RecordNotCreatedError()
 	}
 
-	return task
+	return record
+}
+
+export const updatePendingTask = async (id: number, values: UpdatePendingTask) => {
+	const records = await db.update(table).set(values).where(eq(table.id, id)).returning()
+	const record = records[0]
+
+	if (!record) {
+		throw new RecordNotFoundError()
+	}
+
+	return record
 }
 
 type GetPendingTask = {
@@ -42,9 +55,8 @@ type GetPendingTask = {
 
 export const getPendingTask = async ({ runId, language, exercise }: GetPendingTask) =>
 	db.query.pendingTasks.findFirst({
-		where: and(
-			eq(pendingTasks.runId, runId),
-			eq(pendingTasks.language, language),
-			eq(pendingTasks.exercise, exercise),
-		),
+		where: and(eq(table.runId, runId), eq(table.language, language), eq(table.exercise, exercise)),
 	})
+
+export const getPendingTasks = async (runId: number) =>
+	db.query.pendingTasks.findMany({ where: eq(table.runId, runId) })

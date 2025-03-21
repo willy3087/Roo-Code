@@ -1,12 +1,16 @@
 "use server"
 
 import { spawn } from "child_process"
+import path from "path"
+import os from "os"
+
 import { revalidatePath } from "next/cache"
 
 import * as db from "@benchmark/db"
 
-export async function createRun(data: db.InsertRun) {
-	const run = await db.createRun(data)
+export async function createRun(data: Omit<db.InsertRun, "socketPath">) {
+	const socketPath = path.join(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`)
+	const run = await db.createRun({ ...data, socketPath })
 	revalidatePath("/runs")
 
 	try {
@@ -20,8 +24,10 @@ export async function createRun(data: db.InsertRun) {
 		)
 
 		process.unref()
-		return process.pid
-	} catch (_) {
-		return undefined
+		await db.updateRun(run.id, { pid: process.pid })
+	} catch (error) {
+		console.error(error)
 	}
+
+	return run
 }

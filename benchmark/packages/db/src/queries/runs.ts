@@ -1,12 +1,14 @@
 import { desc, eq, sql } from "drizzle-orm"
 
-import { db } from "../db.js"
-import { type InsertRun, insertRunSchema, runs, tasks } from "../schema.js"
-
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
+import type { InsertRun, UpdateRun } from "../schema.js"
+import { insertRunSchema, runs, tasks } from "../schema.js"
+import { db } from "../db.js"
+
+const table = runs
 
 export const findRun = async (id: number) => {
-	const run = await db.query.runs.findFirst({ where: eq(runs.id, id) })
+	const run = await db.query.runs.findFirst({ where: eq(table.id, id) })
 
 	if (!run) {
 		throw new RecordNotFoundError()
@@ -16,30 +18,41 @@ export const findRun = async (id: number) => {
 }
 
 export const createRun = async (args: InsertRun) => {
-	const result = await db
-		.insert(runs)
+	const records = await db
+		.insert(table)
 		.values({
 			...insertRunSchema.parse(args),
 			createdAt: new Date(),
 		})
 		.returning()
 
-	const run = result[0]
+	const record = records[0]
 
-	if (!run) {
+	if (!record) {
 		throw new RecordNotCreatedError()
 	}
 
-	return run
+	return record
+}
+
+export const updateRun = async (id: number, values: UpdateRun) => {
+	const records = await db.update(table).set(values).where(eq(table.id, id)).returning()
+	const record = records[0]
+
+	if (!record) {
+		throw new RecordNotFoundError()
+	}
+
+	return record
 }
 
 export const getRuns = () =>
 	db
 		.select({
-			id: runs.id,
-			model: runs.model,
-			description: runs.description,
-			createdAt: runs.createdAt,
+			id: table.id,
+			model: table.model,
+			description: table.description,
+			createdAt: table.createdAt,
 			passed: sql<number>`sum(${tasks.passed})`,
 			failed: sql<number>`sum(${tasks.passed} = 0)`,
 			total: sql<number>`count(${tasks.id})`,
@@ -47,6 +60,6 @@ export const getRuns = () =>
 			cost: sql<number>`sum(${tasks.cost})`,
 			duration: sql<number>`sum(${tasks.duration})`,
 		})
-		.from(runs)
-		.leftJoin(tasks, eq(runs.id, tasks.runId))
-		.orderBy(desc(runs.id))
+		.from(table)
+		.leftJoin(tasks, eq(table.id, tasks.runId))
+		.orderBy(desc(table.id))

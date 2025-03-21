@@ -27,6 +27,8 @@ export const insertRunSchema = createInsertSchema(runs).omit({
 
 export type InsertRun = z.infer<typeof insertRunSchema>
 
+export type UpdateRun = Partial<Omit<Run, "id" | "createdAt">>
+
 /**
  * tasks
  */
@@ -60,6 +62,8 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
 
 export type InsertTask = z.infer<typeof insertTaskSchema>
 
+export type UpdateTask = Partial<Omit<Task, "id" | "createdAt">>
+
 /**
  * pendingTasks
  */
@@ -85,6 +89,8 @@ export const insertPendingTaskSchema = createInsertSchema(pendingTasks).omit({
 })
 
 export type InsertPendingTask = z.infer<typeof insertPendingTaskSchema>
+
+export type UpdatePendingTask = Partial<Omit<PendingTask, "id" | "createdAt">>
 
 /**
  * schema

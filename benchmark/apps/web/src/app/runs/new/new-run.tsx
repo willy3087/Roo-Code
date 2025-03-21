@@ -51,8 +51,7 @@ export function NewRun() {
 		try {
 			const run = await createRun(data)
 			router.push(`/runs/${run.id}`)
-		} catch (error) {
-			console.error("Error creating run:", error)
+		} catch (_) {
 			setIsSubmitting(false)
 		}
 	}
@@ -60,10 +59,7 @@ export function NewRun() {
 	return (
 		<>
 			<FormProvider {...form}>
-				<form
-					onSubmit={form.handleSubmit(onSubmit)}
-					className="flex flex-col justify-center gap-6 h-dvh max-w-xl mx-auto">
-					<div>__dirname: {__dirname}</div>
+				<form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col justify-center gap-6">
 					<FormField
 						control={form.control}
 						name="model"
@@ -117,7 +113,7 @@ export function NewRun() {
 			</FormProvider>
 			<Button
 				variant="default"
-				className="absolute top-5 right-5 size-12 rounded-full"
+				className="absolute top-4 right-12 size-12 rounded-full"
 				onClick={() => router.push("/")}>
 				<X className="size-6" />
 			</Button>
