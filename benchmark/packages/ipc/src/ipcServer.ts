@@ -1,11 +1,16 @@
 import { Socket } from "node:net"
 import * as crypto from "node:crypto"
+import EventEmitter from "node:events"
 
 import ipc from "node-ipc"
 
 import { ClientMessageType, ServerMessage, ServerMessageType, clientMessageSchema } from "./types.js"
 
-export class IpcServer {
+type IpcServerEvents = {
+	client: [id: string]
+}
+
+export class IpcServer extends EventEmitter<IpcServerEvents> {
 	private readonly _socketPath: string
 	private readonly _log: (...args: unknown[]) => void
 	private readonly _clients: Map<string, Socket>
@@ -13,6 +18,8 @@ export class IpcServer {
 	private _isListening = false
 
 	constructor(socketPath: string, log = console.log) {
+		super()
+
 		this._socketPath = socketPath
 		this._log = log
 		this._clients = new Map()
@@ -37,6 +44,7 @@ export class IpcServer {
 		this._clients.set(clientId, socket)
 		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
 		this.send(socket, { type: ServerMessageType.Hello, data: { clientId } })
+		this.emit("client", clientId)
 	}
 
 	private onMessage(data: unknown, socket: Socket) {
@@ -88,9 +96,18 @@ export class IpcServer {
 		ipc.server.broadcast("message", message)
 	}
 
-	public send(socket: Socket, message: ServerMessage) {
+	public send(client: string | Socket, message: ServerMessage) {
 		this.log("[server#send] message =", message)
-		ipc.server.emit(socket, "message", message)
+
+		if (typeof client === "string") {
+			const socket = this._clients.get(client)
+
+			if (socket) {
+				ipc.server.emit(socket, "message", message)
+			}
+		} else {
+			ipc.server.emit(client, "message", message)
+		}
 	}
 
 	public get socketPath() {

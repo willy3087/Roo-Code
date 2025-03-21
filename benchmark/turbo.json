@@ -5,6 +5,8 @@
 		"NODE_ENV",
 		"NEXT_RUNTIME",
 		"RUN_ID",
+		"LANGUAGE",
+		"EXERCISE",
 		"OPENROUTER_API_KEY",
 		"OPENROUTER_MODEL_ID",
 		"PROMPT_PATH",
@@ -22,7 +24,7 @@
 		},
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": [".next/**", "!.next/cache/**"]
+			"outputs": [".next/**", "!.next/cache/**", "dist/**"]
 		}
 	}
 }

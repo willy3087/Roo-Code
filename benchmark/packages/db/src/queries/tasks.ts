@@ -34,7 +34,13 @@ export const createTask = async (args: InsertTask) => {
 	return task
 }
 
-export const getTask = async ({ runId, language, exercise }: { runId: number; language: Language; exercise: string }) =>
+type GetTask = {
+	runId: number
+	language: Language
+	exercise: string
+}
+
+export const getTask = async ({ runId, language, exercise }: GetTask) =>
 	db.query.tasks.findFirst({
 		where: and(eq(tasks.runId, runId), eq(tasks.language, language), eq(tasks.exercise, exercise)),
 	})

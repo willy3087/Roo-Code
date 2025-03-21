@@ -5,9 +5,9 @@
 		"lint": "next lint",
 		"check-types": "tsc -b",
 		"dev": "dotenvx run -f ../../.env -- next dev --turbopack",
+		"format": "prettier --write src",
 		"build": "echo 'NOP' || next build",
-		"start": "next start",
-		"format": "prettier --write src"
+		"start": "next start"
 	},
 	"dependencies": {
 		"@benchmark/db": "workspace:^",

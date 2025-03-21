@@ -12,9 +12,7 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
-		"build": "tsup",
-		"test:server": "tsx scripts/server.ts",
-		"test:client": "tsx scripts/client.ts"
+		"build": "tsup"
 	},
 	"dependencies": {
 		"node-ipc": "^12.0.0",

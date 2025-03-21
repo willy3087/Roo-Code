@@ -8,6 +8,7 @@
 		"build": "tsup"
 	},
 	"dependencies": {
+		"@benchmark/db": "workspace:^",
 		"@benchmark/ipc": "workspace:^"
 	},
 	"devDependencies": {

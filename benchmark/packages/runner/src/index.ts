@@ -5,8 +5,8 @@ import * as vscode from "vscode"
 
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { IpcServer, ServerMessageType } = require("@benchmark/ipc")
+import { IpcServer, ServerMessageType } from "@benchmark/ipc"
+import { Language, createTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
 
@@ -15,13 +15,15 @@ export async function run() {
 	 * Validate environment variables.
 	 */
 
-	const runId = process.env.RUN_ID
-	const openRouterApiKey = process.env.OPENROUTER_API_KEY
-	const openRouterModelId = process.env.OPENROUTER_MODEL_ID
+	const runId = process.env.RUN_ID ? parseInt(process.env.RUN_ID) : undefined
+	const language = process.env.LANGUAGE as Language
+	const exercise = process.env.EXERCISE
 	const promptPath = process.env.PROMPT_PATH
 	const workspacePath = process.env.WORKSPACE_PATH
+	const openRouterApiKey = process.env.OPENROUTER_API_KEY
+	const openRouterModelId = process.env.OPENROUTER_MODEL_ID
 
-	if (!runId || !openRouterApiKey || !openRouterModelId || !promptPath || !workspacePath) {
+	if (!runId || !language || !exercise || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
 		throw new Error("ENV not configured.")
 	}
 
@@ -79,31 +81,33 @@ export async function run() {
 	 * Start the IPC server.
 	 */
 
-	const server = new IpcServer(`/tmp/benchmark-${runId}.sock`)
+	const server = new IpcServer(`/tmp/benchmark-${runId}.sock`, () => {})
 	server.listen()
 
-	api.on("message", (message) => {
-		server.broadcast({ type: ServerMessageType.Data, data: message })
+	server.on("client", (id) => {
+		server.send(id, {
+			type: ServerMessageType.Data,
+			data: {
+				event: "client",
+				runId,
+				language,
+				exercise,
+				prompt,
+				workspacePath,
+			},
+		})
 	})
 
 	api.on("taskStarted", (taskId) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskStarted", taskId } })
 	})
 
-	api.on("taskPaused", (taskId) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
-	})
-
-	api.on("taskUnpaused", (taskId) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
-	})
-
-	api.on("taskAskResponded", (taskId) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { taskId } })
+	api.on("message", ({ taskId, action, message }) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "message", taskId, action, message } })
 	})
 
 	api.on("taskTokenUsageUpdated", (taskId, usage) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { taskId, usage } })
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskTokenUsageUpdated", taskId, usage } })
 	})
 
 	/**
@@ -115,14 +119,25 @@ export async function run() {
 	let usage
 
 	try {
-		usage = await waitUntilCompleted({ api, taskId, timeout: 5 * 60 * 1_000 }) // 5m
+		usage = (await waitUntilCompleted({ api, taskId, timeout: 5 * 60 * 1_000 })) || api.getTokenUsage(taskId)
 	} catch (e: unknown) {
-		console.error(e)
 		usage = api.getTokenUsage(taskId)
+		console.error(e)
 	}
 
-	if (usage) {
-		const content = JSON.stringify({ runId: parseInt(runId), ...usage, duration: Date.now() - startTime }, null, 2)
-		await fs.writeFile(path.resolve(workspacePath, "usage.json"), content)
-	}
+	const task = await createTask({
+		runId,
+		language,
+		exercise,
+		duration: Date.now() - startTime,
+		tokensIn: usage.totalTokensIn,
+		tokensOut: usage.totalTokensOut,
+		tokensContext: usage.contextTokens,
+		cacheWrites: usage.totalCacheWrites ?? 0,
+		cacheReads: usage.totalCacheReads ?? 0,
+		cost: usage.totalCost,
+		passed: false,
+	})
+
+	await fs.writeFile(path.resolve(workspacePath, "usage.json"), JSON.stringify(task, null, 2))
 }

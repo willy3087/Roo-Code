@@ -9,9 +9,9 @@ import { runTests } from "@vscode/test-electron"
 import { type Language, languages, type Run, findRun, createRun, getTask } from "@benchmark/db"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const extensionDevelopmentPath = path.resolve(__dirname, "../../../..")
+const extensionDevelopmentPath = path.resolve(__dirname, "..", "..", "..", "..")
 const extensionTestsPath = path.resolve(extensionDevelopmentPath, "benchmark/packages/runner/dist")
-const exercisesPath = path.resolve(extensionDevelopmentPath, "benchmark/exercises")
+const exercisesPath = path.resolve(extensionDevelopmentPath, "..", "exercises")
 
 export const isLanguage = (language: string): language is Language => languages.includes(language as Language)
 
@@ -87,10 +87,12 @@ const runExercise = async ({ run, language, exercise }: { run: Run; language: La
 		extensionTestsPath,
 		launchArgs: [workspacePath, "--disable-extensions"],
 		extensionTestsEnv: {
+			RUN_ID: run.id.toString(),
+			LANGUAGE: language,
+			EXERCISE: exercise,
 			PROMPT_PATH: promptPath,
 			WORKSPACE_PATH: workspacePath,
 			OPENROUTER_MODEL_ID: run.model,
-			RUN_ID: run.id.toString(),
 		},
 	})
 
