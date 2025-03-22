@@ -14,9 +14,12 @@
 	"tasks": {
 		"format": {},
 		"lint": {},
-		"check-types": {},
+		"check-types": {
+			"dependsOn": ["build"]
+		},
 		"test": {},
 		"dev": {
+			"dependsOn": ["build"],
 			"cache": false,
 			"persistent": true
 		},

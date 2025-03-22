@@ -1,22 +1,23 @@
-import { defineConfig } from "tsup"
+import { defineConfig, Options } from "tsup"
+
+const shared: Options = {
+	entry: ["src/index.ts"],
+	dts: true,
+	outDir: "dist",
+	clean: true,
+}
 
 export default defineConfig([
 	{
-		entry: ["src/index.ts"],
+		...shared,
 		format: ["esm"],
-		dts: true,
-		outDir: "dist",
 		tsconfig: "./tsconfig.json",
-		clean: true,
 	},
 	{
-		entry: ["src/index.ts"],
+		...shared,
 		format: ["cjs"],
-		dts: false,
-		outDir: "dist",
 		tsconfig: "./tsconfig.cjs.json",
 		outExtension: () => ({ js: ".cjs" }),
-		clean: false,
 		noExternal: ["node-ipc"],
 	},
 ])

@@ -2,9 +2,16 @@
 	"name": "@benchmark/db",
 	"private": true,
 	"type": "module",
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": {
-			"import": "./dist/index.js",
+		"import": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"require": {
+			"types": "./dist/index.d.cts",
 			"require": "./dist/index.cjs"
 		}
 	},
@@ -12,7 +19,7 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
-		"build": "tsup --format esm,cjs",
+		"build": "tsup",
 		"drizzle-kit": "dotenvx run -f ../../.env -- tsx node_modules/drizzle-kit/bin.cjs",
 		"db:generate": "pnpm drizzle-kit generate",
 		"db:migrate": "pnpm drizzle-kit migrate",

@@ -17,18 +17,16 @@ export const isLanguage = (language: string): language is Language => languages.
 const run = async (toolbox: GluegunToolbox) => {
 	const { config, prompt } = toolbox
 	const id = config.runId ? Number(config.runId) : undefined
-	const { language, exercise } = config
+	let { language, exercise } = config
 
 	if (language === "all") {
 		await runAll(id)
 	} else if (exercise === "all") {
 		await runLanguage({ id, language })
 	} else {
-		await runLanguageExercise({
-			id,
-			language: language || (await askLanguage(prompt)),
-			exercise: exercise || (await askExercise(prompt, language)),
-		})
+		language = language || (await askLanguage(prompt))
+		exercise = exercise || (await askExercise(prompt, language))
+		await runLanguageExercise({ id, language, exercise })
 	}
 }
 
@@ -73,6 +71,10 @@ const runLanguageExercise = async ({
 	language: Language
 	exercise: string
 }) => {
+	if (!getExercises()[language].includes(exercise)) {
+		throw new Error(`Exercise ${exercise} not found for language ${language}`)
+	}
+
 	const run = await findOrCreateRun({ id })
 	const task = await findOrCreateTask({ runId: run.id, language, exercise })
 	return runExercise({ run, task })
