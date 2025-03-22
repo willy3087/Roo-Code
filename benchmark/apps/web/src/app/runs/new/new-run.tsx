@@ -107,7 +107,7 @@ export function NewRun() {
 					/>
 					<Button type="submit" disabled={isSubmitting}>
 						<Rocket className="size-4" />
-						Launch Benchmark Run
+						Launch
 					</Button>
 				</form>
 			</FormProvider>

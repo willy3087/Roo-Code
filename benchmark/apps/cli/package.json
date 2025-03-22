@@ -11,7 +11,8 @@
 	"dependencies": {
 		"@benchmark/db": "workspace:^",
 		"@vscode/test-electron": "^2.4.0",
-		"gluegun": "^5.1.2"
+		"gluegun": "^5.1.2",
+		"p-map": "^7.0.3"
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",

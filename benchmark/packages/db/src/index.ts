@@ -1,6 +1,4 @@
-// export { db } from "./db.js"
 export { type Language, languages } from "./enums.js"
-// export { schema } from "./schema.js"
 
 /**
  * runs
@@ -17,8 +15,8 @@ export type { Task, InsertTask, UpdateTask } from "./schema.js"
 export * from "./queries/tasks.js"
 
 /**
- * pendingTasks
+ * taskMetrics
  */
 
-export type { PendingTask, InsertPendingTask, UpdatePendingTask } from "./schema.js"
-export * from "./queries/pendingTasks.js"
+export type { TaskMetrics, InsertTaskMetrics, UpdateTaskMetrics } from "./schema.js"
+export * from "./queries/taskMetrics.js"

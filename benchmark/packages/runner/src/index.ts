@@ -6,7 +6,7 @@ import * as vscode from "vscode"
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
 import { IpcServer, ServerMessageType } from "@benchmark/ipc"
-import { Language, findRun, createTask } from "@benchmark/db"
+import { Language, findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
 
@@ -15,7 +15,7 @@ export async function run() {
 	 * Validate environment variables.
 	 */
 
-	const runId = process.env.RUN_ID ? parseInt(process.env.RUN_ID) : undefined
+	const tid = process.env.TASK_ID ? parseInt(process.env.TASK_ID) : undefined
 	const language = process.env.LANGUAGE as Language
 	const exercise = process.env.EXERCISE
 	const promptPath = process.env.PROMPT_PATH
@@ -23,13 +23,20 @@ export async function run() {
 	const openRouterApiKey = process.env.OPENROUTER_API_KEY
 	const openRouterModelId = process.env.OPENROUTER_MODEL_ID
 
-	if (!runId || !language || !exercise || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
+	if (!tid || !language || !exercise || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
 		throw new Error("ENV not configured.")
 	}
 
 	const prompt = await fs.readFile(promptPath, "utf-8")
 
-	const run = await findRun(runId)
+	/**
+	 * Fetch and update the task.
+	 */
+
+	let task = await findTask(tid)
+	task = await updateTask(task.id, { startedAt: new Date() })
+
+	const run = await findRun(task.runId)
 
 	/**
 	 * Activate the extension.
@@ -87,29 +94,19 @@ export async function run() {
 	server.listen()
 
 	server.on("client", (id) => {
-		server.send(id, {
-			type: ServerMessageType.Data,
-			data: {
-				event: "client",
-				runId,
-				language,
-				exercise,
-				prompt,
-				workspacePath,
-			},
-		})
+		server.send(id, { type: ServerMessageType.Data, data: { event: "client", task } })
 	})
 
-	api.on("taskStarted", (taskId) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskStarted", taskId } })
+	api.on("taskStarted", () => {
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskStarted", task } })
 	})
 
-	api.on("message", ({ taskId, action, message }) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "message", taskId, action, message } })
+	api.on("message", (message) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "message", task, message } })
 	})
 
-	api.on("taskTokenUsageUpdated", (taskId, usage) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskTokenUsageUpdated", taskId, usage } })
+	api.on("taskTokenUsageUpdated", (_, usage) => {
+		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskTokenUsageUpdated", task, usage } })
 	})
 
 	/**
@@ -117,20 +114,19 @@ export async function run() {
 	 */
 
 	const startTime = Date.now()
-	const taskId = await api.startNewTask(prompt)
+	const rooTaskId = await api.startNewTask(prompt)
 	let usage
 
 	try {
-		usage = (await waitUntilCompleted({ api, taskId, timeout: 5 * 60 * 1_000 })) || api.getTokenUsage(taskId)
+		usage =
+			(await waitUntilCompleted({ api, taskId: rooTaskId, timeout: 5 * 60 * 1_000 })) ||
+			api.getTokenUsage(rooTaskId)
 	} catch (e: unknown) {
-		usage = api.getTokenUsage(taskId)
+		usage = api.getTokenUsage(rooTaskId)
 		console.error(e)
 	}
 
-	const task = await createTask({
-		runId,
-		language,
-		exercise,
+	const taskMetrics = await createTaskMetrics({
 		duration: Date.now() - startTime,
 		tokensIn: usage.totalTokensIn,
 		tokensOut: usage.totalTokensOut,
@@ -138,8 +134,11 @@ export async function run() {
 		cacheWrites: usage.totalCacheWrites ?? 0,
 		cacheReads: usage.totalCacheReads ?? 0,
 		cost: usage.totalCost,
-		passed: false,
 	})
 
-	await fs.writeFile(path.resolve(workspacePath, "usage.json"), JSON.stringify(task, null, 2))
+	task = await updateTask(task.id, { taskMetricsId: taskMetrics.id, finishedAt: new Date() })
+
+	server.broadcast({ type: ServerMessageType.Data, data: { event: "taskFinished", task, taskMetrics } })
+
+	await fs.writeFile(path.resolve(workspacePath, "usage.json"), JSON.stringify({ ...task, ...taskMetrics }, null, 2))
 }

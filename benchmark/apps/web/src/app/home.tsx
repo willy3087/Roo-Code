@@ -3,15 +3,16 @@
 import { useRouter } from "next/navigation"
 import { Rocket } from "lucide-react"
 
-import { getRuns } from "@benchmark/db"
+import type { Run, TaskMetrics } from "@benchmark/db"
 
 import { formatCurrency, formatDuration } from "@/lib"
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui"
+import { useMemo } from "react"
 
-type Run = Awaited<ReturnType<typeof getRuns>>[number]
-
-export function Home({ runs }: { runs: Run[] }) {
+export function Home({ runs }: { runs: (Run & { taskMetrics: TaskMetrics | null })[] }) {
 	const router = useRouter()
+
+	const visibleRuns = useMemo(() => runs.filter((run) => run.taskMetrics !== null), [runs])
 
 	return (
 		<>
@@ -29,18 +30,30 @@ export function Home({ runs }: { runs: Run[] }) {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{runs.map((run) => (
-						<TableRow key={run.id}>
-							<TableCell>{run.id}</TableCell>
-							<TableCell>{run.model}</TableCell>
-							<TableCell>{new Date(run.createdAt).toLocaleString()}</TableCell>
-							<TableCell>{run.passed}</TableCell>
-							<TableCell>{run.failed}</TableCell>
-							<TableCell>{(run.rate * 100).toFixed(1)}%</TableCell>
-							<TableCell>{formatCurrency(run.cost)}</TableCell>
-							<TableCell>{formatDuration(run.duration)}</TableCell>
+					{visibleRuns.length ? (
+						visibleRuns.map(({ taskMetrics, ...run }) => (
+							<TableRow key={run.id}>
+								<TableCell>{run.id}</TableCell>
+								<TableCell>{run.model}</TableCell>
+								<TableCell>{new Date(run.createdAt).toLocaleString()}</TableCell>
+								<TableCell>{run.passed}</TableCell>
+								<TableCell>{run.failed}</TableCell>
+								<TableCell>{((run.passed / (run.passed + run.failed)) * 100).toFixed(1)}%</TableCell>
+								<TableCell>{formatCurrency(taskMetrics!.cost)}</TableCell>
+								<TableCell>{formatDuration(taskMetrics!.duration)}</TableCell>
+							</TableRow>
+						))
+					) : (
+						<TableRow>
+							<TableCell colSpan={8} className="text-center">
+								No benchmark runs yet.
+								<Button variant="link" onClick={() => router.push("/runs/new")}>
+									Launch
+								</Button>
+								one now.
+							</TableCell>
 						</TableRow>
-					))}
+					)}
 				</TableBody>
 			</Table>
 			<Button

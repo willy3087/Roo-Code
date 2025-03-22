@@ -2,19 +2,11 @@ import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"
 
+import pMap from "p-map"
 import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
-import {
-	type Language,
-	languages,
-	type Run,
-	findRun,
-	createRun,
-	getPendingTask,
-	createPendingTask,
-	getTask,
-} from "@benchmark/db"
+import { type Language, languages, type Run, findRun, createRun, getTask, createTask, Task } from "@benchmark/db"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
@@ -41,34 +33,33 @@ const run = async (toolbox: GluegunToolbox) => {
 
 const runAll = async (id?: number) => {
 	const run = await findOrCreateRun({ id })
-	const exercises = getExercises()
 
-	for (const [language, languageExercises] of Object.entries(exercises)) {
-		await Promise.all(
-			languageExercises.map((exercise) =>
-				findOrCreatePendingTask({ runId: run.id, language: language as Language, exercise }),
-			),
-		)
-	}
+	const entries = Object.entries(getExercises()).flatMap(([language, languageExercises]) =>
+		languageExercises.map((exercise) => ({ language: language as Language, exercise })),
+	)
 
-	for (const [language, languageExercises] of Object.entries(exercises)) {
-		for (const exercise of languageExercises) {
-			await runExercise({ run, language: language as Language, exercise })
-		}
+	const tasks = await pMap(
+		entries,
+		async ({ language, exercise }) => findOrCreateTask({ runId: run.id, language, exercise }),
+		{ concurrency: 10 },
+	)
+
+	for (const task of tasks) {
+		await runExercise({ run, task })
 	}
 }
 
 const runLanguage = async ({ id, language }: { id?: number; language: Language }) => {
 	const run = await findOrCreateRun({ id })
-	const exercises = getExercises()
-	const languageExercises = exercises[language]
 
-	await Promise.all(
-		languageExercises.map((exercise) => findOrCreatePendingTask({ runId: run.id, language, exercise })),
+	const tasks = await pMap(
+		getExercises()[language],
+		async (exercise) => findOrCreateTask({ runId: run.id, language, exercise }),
+		{ concurrency: 10 },
 	)
 
-	for (const exercise of languageExercises) {
-		await runExercise({ run, language, exercise })
+	for (const task of tasks) {
+		await runExercise({ run, task })
 	}
 }
 
@@ -82,11 +73,12 @@ const runLanguageExercise = async ({
 	exercise: string
 }) => {
 	const run = await findOrCreateRun({ id })
-	await findOrCreatePendingTask({ runId: run.id, language, exercise })
-	return runExercise({ run, language, exercise })
+	const task = await findOrCreateTask({ runId: run.id, language, exercise })
+	return runExercise({ run, task })
 }
 
-const runExercise = async ({ run, language, exercise }: { run: Run; language: Language; exercise: string }) => {
+const runExercise = async ({ run, task }: { run: Run; task: Task }) => {
+	const { language, exercise } = task
 	const workspacePath = path.resolve(exercisesPath, language, exercise)
 	const promptPath = path.resolve(exercisesPath, `prompts/${language}.md`)
 
@@ -94,9 +86,7 @@ const runExercise = async ({ run, language, exercise }: { run: Run; language: La
 		throw new Error(`Prompt file does not exist: ${promptPath}`)
 	}
 
-	const task = await getTask({ runId: run.id, language, exercise })
-
-	if (task) {
+	if (task.finishedAt) {
 		console.log(`Test result exists for ${language} / ${exercise}, skipping`)
 		return false
 	}
@@ -108,7 +98,7 @@ const runExercise = async ({ run, language, exercise }: { run: Run; language: La
 		extensionTestsPath,
 		launchArgs: [workspacePath, "--disable-extensions"],
 		extensionTestsEnv: {
-			RUN_ID: run.id.toString(),
+			TASK_ID: task.id.toString(),
 			LANGUAGE: language,
 			EXERCISE: exercise,
 			PROMPT_PATH: promptPath,
@@ -157,7 +147,7 @@ const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: { 
 				socketPath: path.resolve(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`),
 			})
 
-const findOrCreatePendingTask = async ({
+const findOrCreateTask = async ({
 	runId,
 	language,
 	exercise,
@@ -165,7 +155,7 @@ const findOrCreatePendingTask = async ({
 	runId: number
 	language: Language
 	exercise: string
-}) => (await getPendingTask({ runId, language, exercise })) || (await createPendingTask({ runId, language, exercise }))
+}) => (await getTask({ runId, language, exercise })) || (await createTask({ runId, language, exercise }))
 
 const main = async () => {
 	const cli = build()
