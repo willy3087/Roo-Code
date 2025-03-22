@@ -1,9 +1,11 @@
-import { IpcClient } from "../src/ipcClient"
+import { IpcClientMessageType, IpcClient } from "../src/index.js"
 
-async function main(socketPath: string) {
+async function main(socketPath: string, prompt: string) {
 	try {
 		const startTime = Date.now()
 		const client = new IpcClient(socketPath)
+
+		client.on("message", (data) => console.log(data))
 
 		while (!client.isConnected) {
 			if (Date.now() - startTime > 5000) {
@@ -13,9 +15,10 @@ async function main(socketPath: string) {
 			await new Promise((resolve) => setTimeout(resolve, 1000))
 		}
 
+		client.sendMessage({ type: IpcClientMessageType.StartNewTask, data: { text: prompt } })
+
 		while (client.isConnected) {
-			client.ping()
-			await new Promise((resolve) => setTimeout(resolve, 5000))
+			await new Promise((resolve) => setTimeout(resolve, 1000))
 		}
 
 		process.exit(0)
@@ -26,8 +29,8 @@ async function main(socketPath: string) {
 }
 
 if (!process.argv[2]) {
-	console.error("Usage: npx tsx scripts/client.ts <socketPath>")
+	console.error("Usage: npx tsx scripts/client.ts <socketPath> <prompt>")
 	process.exit(1)
 }
 
-main(process.argv[2])
+main(process.argv[2], process.argv[3])
