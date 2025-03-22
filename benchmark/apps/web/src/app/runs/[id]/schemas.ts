@@ -1,42 +1,20 @@
 import { z } from "zod"
 
-export const messageSchema = z.object({
-	type: z.enum(["hello", "data"]),
-	data: z.record(z.string(), z.unknown()),
-})
-
-export const taskSchema = z.object({
-	id: z.number(),
-})
-
-export const taskEventSchema = z.discriminatedUnion("event", [
-	z.object({ event: z.literal("client"), task: taskSchema }),
-	z.object({ event: z.literal("taskStarted"), task: taskSchema }),
-	z.object({ event: z.literal("taskFinished"), task: taskSchema }),
+export const ipcServerMessageSchema = z.discriminatedUnion("type", [
 	z.object({
-		event: z.literal("message"),
-		task: taskSchema,
-		message: z.object({
-			taskId: z.string(),
-			action: z.enum(["created", "updated"]),
-			message: z.object({
-				ts: z.number(),
-				type: z.enum(["ask", "say"]),
-				text: z.string(),
-				partial: z.boolean().optional(),
-			}),
-		}),
+		type: z.literal("Ack"),
+		data: z.object({ clientId: z.string() }),
 	}),
 	z.object({
-		event: z.literal("taskTokenUsageUpdated"),
-		task: taskSchema,
-		usage: z.object({
-			totalTokensIn: z.number(),
-			totalTokensOut: z.number(),
-			totalCacheWrites: z.number().optional(),
-			totalCacheReads: z.number().optional(),
-			totalCost: z.number(),
-			contextTokens: z.number(),
+		type: z.literal("TaskEvent"),
+		data: z.object({
+			eventName: z.enum(["connect", "taskStarted", "message", "taskTokenUsageUpdated", "taskFinished"]),
+			data: z.object({
+				task: z.object({ id: z.number() }),
+				// message: z.object({}).optional(),
+				// usage: z.object({}).optional(),
+				// taskMetrics: z.object({}).optional(),
+			}),
 		}),
 	}),
 ])

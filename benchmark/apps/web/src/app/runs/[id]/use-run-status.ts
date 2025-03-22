@@ -1,12 +1,12 @@
-import { useState } from "react"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
-import { useCallback } from "react"
+import { useState, useCallback } from "react"
+import { useQuery, keepPreviousData } from "@tanstack/react-query"
+
 import { useEventSource } from "@/hooks/use-event-source"
 
 import { Run } from "@benchmark/db"
 
 import { getTasks } from "./actions"
-import { messageSchema, taskEventSchema } from "./schemas"
+import { ipcServerMessageSchema } from "./schemas"
 
 export const useRunStatus = (run: Run) => {
 	const [clientId, setClientId] = useState<string>()
@@ -30,7 +30,7 @@ export const useRunStatus = (run: Run) => {
 			return
 		}
 
-		const result = messageSchema.safeParse(data)
+		const result = ipcServerMessageSchema.safeParse(data)
 
 		if (!result.success) {
 			console.log(`unrecognized messageEvent.data: ${messageEvent.data}`)
@@ -39,26 +39,17 @@ export const useRunStatus = (run: Run) => {
 
 		const payload = result.data
 
-		if (payload.type === "hello") {
+		if (payload.type === "Ack") {
 			setClientId(payload.data.clientId as string)
-		} else if (payload.type === "data") {
-			const taskEvent = taskEventSchema.safeParse(payload.data)
+		} else if (payload.type === "TaskEvent") {
+			const {
+				eventName,
+				data: { task },
+			} = payload.data
 
-			if (!taskEvent.success) {
-				console.log(`unrecognized payload.data`, payload.data, taskEvent.error)
-				return
-			}
-
-			if (taskEvent.data.event === "client") {
-				console.log(`client`, taskEvent.data)
-				setRunningTaskId(taskEvent.data.task.id)
-			} else if (taskEvent.data.event === "message") {
-				// console.log(`message: ${taskEvent.data.message.message.text}`)
-			} else if (taskEvent.data.event === "taskTokenUsageUpdated") {
-				console.log(`taskTokenUsageUpdated`, taskEvent.data.usage)
-			} else if (taskEvent.data.event === "taskStarted") {
-				setRunningTaskId(taskEvent.data.task.id)
-			} else if (taskEvent.data.event === "taskFinished") {
+			if (eventName === "connect" || eventName === "taskStarted") {
+				setRunningTaskId(task.id)
+			} else if (eventName === "taskFinished") {
 				setRunningTaskId(undefined)
 			}
 		}
