@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm"
 
-import type { Language } from "../enums.js"
+import type { Language } from "@benchmark/types"
+
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
 import type { InsertTask, UpdateTask } from "../schema.js"
 import { insertTaskSchema, tasks } from "../schema.js"

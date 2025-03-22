@@ -4,7 +4,7 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": "./src/index.ts",
+			"import": "./dist/index.js",
 			"require": "./dist/index.cjs"
 		}
 	},
@@ -12,7 +12,7 @@
 		"lint": "eslint src --ext ts --max-warnings=0",
 		"check-types": "tsc --noEmit",
 		"format": "prettier --write src",
-		"build": "tsup",
+		"build": "tsup --format esm,cjs",
 		"drizzle-kit": "dotenvx run -f ../../.env -- tsx node_modules/drizzle-kit/bin.cjs",
 		"db:generate": "pnpm drizzle-kit generate",
 		"db:migrate": "pnpm drizzle-kit migrate",
@@ -23,6 +23,7 @@
 		"db:studio": "pnpm drizzle-kit studio"
 	},
 	"dependencies": {
+		"@benchmark/types": "workspace:^",
 		"@libsql/client": "^0.14.0",
 		"drizzle-orm": "^0.40.0",
 		"drizzle-zod": "^0.7.0",

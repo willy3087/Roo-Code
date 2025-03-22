@@ -143,7 +143,7 @@ export const ipcServerMessageSchema = z.discriminatedUnion("type", [
 	z.object({
 		type: z.literal(IpcServerMessageType.TaskEvent),
 		data: z.object({
-			eventName: z.string(),
+			eventName: z.enum(["connect", "taskStarted", "message", "taskTokenUsageUpdated", "taskFinished"]),
 			data: z.unknown(),
 		}),
 	}),

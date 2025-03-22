@@ -5,8 +5,8 @@ import * as vscode from "vscode"
 
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-import { IpcServer, ServerMessageType } from "@benchmark/ipc"
-import { Language, findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
+import { IpcServer, IpcServerMessageType } from "@benchmark/ipc"
+import { findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
 
@@ -16,14 +16,12 @@ export async function run() {
 	 */
 
 	const tid = process.env.TASK_ID ? parseInt(process.env.TASK_ID) : undefined
-	const language = process.env.LANGUAGE as Language
-	const exercise = process.env.EXERCISE
 	const promptPath = process.env.PROMPT_PATH
 	const workspacePath = process.env.WORKSPACE_PATH
 	const openRouterApiKey = process.env.OPENROUTER_API_KEY
 	const openRouterModelId = process.env.OPENROUTER_MODEL_ID
 
-	if (!tid || !language || !exercise || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
+	if (!tid || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
 		throw new Error("ENV not configured.")
 	}
 
@@ -93,21 +91,27 @@ export async function run() {
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
-	server.on("client", (id) => {
-		server.send(id, { type: ServerMessageType.Data, data: { event: "client", task } })
-	})
+	server.on("connect", (id) =>
+		server.send(id, { type: IpcServerMessageType.TaskEvent, data: { eventName: "connect", data: { task } } }),
+	)
 
-	api.on("taskStarted", () => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskStarted", task } })
-	})
+	api.on("taskStarted", () =>
+		server.broadcast({ type: IpcServerMessageType.TaskEvent, data: { eventName: "taskStarted", data: { task } } }),
+	)
 
-	api.on("message", (message) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "message", task, message } })
-	})
+	api.on("message", (message) =>
+		server.broadcast({
+			type: IpcServerMessageType.TaskEvent,
+			data: { eventName: "message", data: { task, message } },
+		}),
+	)
 
-	api.on("taskTokenUsageUpdated", (_, usage) => {
-		server.broadcast({ type: ServerMessageType.Data, data: { event: "taskTokenUsageUpdated", task, usage } })
-	})
+	api.on("taskTokenUsageUpdated", (_, usage) =>
+		server.broadcast({
+			type: IpcServerMessageType.TaskEvent,
+			data: { eventName: "taskTokenUsageUpdated", data: { task, usage } },
+		}),
+	)
 
 	/**
 	 * Run the task and wait up to 10 minutes for it to complete.
@@ -138,7 +142,10 @@ export async function run() {
 
 	task = await updateTask(task.id, { taskMetricsId: taskMetrics.id, finishedAt: new Date() })
 
-	server.broadcast({ type: ServerMessageType.Data, data: { event: "taskFinished", task, taskMetrics } })
+	server.broadcast({
+		type: IpcServerMessageType.TaskEvent,
+		data: { eventName: "taskFinished", data: { task, taskMetrics } },
+	})
 
 	await fs.writeFile(path.resolve(workspacePath, "usage.json"), JSON.stringify({ ...task, ...taskMetrics }, null, 2))
 }

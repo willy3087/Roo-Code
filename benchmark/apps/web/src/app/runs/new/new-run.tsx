@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { X, Loader2, Rocket } from "lucide-react"
 
+import { languages } from "@benchmark/types"
+
 import { useOpenRouterModels } from "@/hooks/use-open-router-models"
 import {
 	Button,
@@ -15,15 +17,22 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
+	FormDescription,
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
 	Textarea,
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+	MultiSelect,
 } from "@/components/ui"
 
 import { createRun } from "./actions"
+import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
 	model: z.string(),
@@ -55,6 +64,9 @@ export function NewRun() {
 			setIsSubmitting(false)
 		}
 	}
+
+	const [selectedSuite, setSelectedSuite] = useState<"full" | "partial">("full")
+	const [selectedExercises, setSelectedExercises] = useState<string[]>([])
 
 	return (
 		<>
@@ -92,6 +104,36 @@ export function NewRun() {
 							</FormItem>
 						)}
 					/>
+
+					<FormItem>
+						<FormLabel>Exercise Suite</FormLabel>
+						<Tabs
+							defaultValue="full"
+							onValueChange={(value) => setSelectedSuite(value as "full" | "partial")}>
+							<TabsList className="grid w-full grid-cols-2">
+								<TabsTrigger value="full">Full</TabsTrigger>
+								<TabsTrigger value="partial">Partial</TabsTrigger>
+							</TabsList>
+						</Tabs>
+					</FormItem>
+
+					{selectedSuite === "partial" && (
+						<FormItem>
+							<FormLabel>Exercises</FormLabel>
+							<MultiSelect
+								options={languages.map((language) => ({
+									value: language,
+									label: language,
+								}))}
+								onValueChange={setSelectedExercises}
+								defaultValue={selectedExercises}
+								placeholder="Select"
+								variant="inverted"
+								maxCount={10}
+							/>
+						</FormItem>
+					)}
+
 					<FormField
 						control={form.control}
 						name="description"
@@ -105,6 +147,7 @@ export function NewRun() {
 							</FormItem>
 						)}
 					/>
+
 					<Button type="submit" disabled={isSubmitting}>
 						<Rocket className="size-4" />
 						Launch

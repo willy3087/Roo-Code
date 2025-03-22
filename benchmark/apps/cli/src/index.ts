@@ -6,7 +6,8 @@ import pMap from "p-map"
 import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
-import { type Language, languages, type Run, findRun, createRun, getTask, createTask, Task } from "@benchmark/db"
+import { type Language, languages } from "@benchmark/types"
+import { type Run, findRun, createRun, getTask, createTask, Task } from "@benchmark/db"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
@@ -99,8 +100,6 @@ const runExercise = async ({ run, task }: { run: Run; task: Task }) => {
 		launchArgs: [workspacePath, "--disable-extensions"],
 		extensionTestsEnv: {
 			TASK_ID: task.id.toString(),
-			LANGUAGE: language,
-			EXERCISE: exercise,
 			PROMPT_PATH: promptPath,
 			WORKSPACE_PATH: workspacePath,
 			OPENROUTER_MODEL_ID: run.model,

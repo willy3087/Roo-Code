@@ -3,7 +3,7 @@ import * as fs from "fs"
 
 import { filesystem } from "gluegun"
 
-import { type Language, languages } from "@benchmark/db"
+import { type Language, languages } from "@benchmark/types"
 
 import { exercisesPath } from "./paths.js"
 
