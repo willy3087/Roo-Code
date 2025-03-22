@@ -74,11 +74,11 @@ code \
 If you make extension code changes then you need to re-build it so that `extensionDevelopmentPath` has the latest version transpiled:
 
 ```sh
-pnpm build:extension
+cd .. && npm run vscode-test
 ```
 
 If you make changes to `@benchmark/runner` or any of its dependencies then you should rebuild it:
 
 ```sh
-pnpm build:runner
+pnpm build
 ```
