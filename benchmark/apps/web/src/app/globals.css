@@ -135,6 +135,7 @@
 	}
 	body {
 		@apply bg-background text-foreground;
-		scrollbar-color: var(--color-background) transparent; /* Firefox */
+		scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Firefox */
+		scrollbar-width: thin;
 	}
 }

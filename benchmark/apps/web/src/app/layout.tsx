@@ -20,11 +20,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased`}>
+			<body className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased pb-12`}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
 					<ReactQueryProvider>
 						<Header />
-						<div className="max-w-3xl mx-auto pb-12">{children}</div>
+						{children}
 					</ReactQueryProvider>
 				</ThemeProvider>
 			</body>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -151,7 +151,6 @@ export function NewRun() {
 										</Command>
 									</PopoverContent>
 								</Popover>
-
 								<FormMessage />
 							</FormItem>
 						)}
@@ -189,6 +188,7 @@ export function NewRun() {
 										variant="inverted"
 										maxCount={4}
 									/>
+									<FormMessage />
 								</FormItem>
 							)}
 						/>

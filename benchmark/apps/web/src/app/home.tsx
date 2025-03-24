@@ -16,7 +16,7 @@ export function Home({ runs }: { runs: (Run & { taskMetrics: TaskMetrics | null 
 
 	return (
 		<>
-			<Table className="border">
+			<Table className="border border-t-0">
 				<TableHeader>
 					<TableRow>
 						<TableHead>ID</TableHead>
