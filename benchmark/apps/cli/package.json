@@ -12,6 +12,7 @@
 		"@benchmark/db": "workspace:^",
 		"@benchmark/types": "workspace:^",
 		"@vscode/test-electron": "^2.4.0",
+		"execa": "^9.5.2",
 		"gluegun": "^5.1.2",
 		"p-map": "^7.0.3"
 	},

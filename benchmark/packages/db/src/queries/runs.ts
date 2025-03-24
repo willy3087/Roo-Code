@@ -1,4 +1,4 @@
-import { desc, eq, sum } from "drizzle-orm"
+import { desc, eq, sql, sum } from "drizzle-orm"
 
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
 import type { InsertRun, UpdateRun } from "../schema.js"
@@ -59,6 +59,8 @@ export const finishRun = async (runId: number) => {
 			cacheReads: sum(schema.taskMetrics.cacheReads).mapWith(Number),
 			cost: sum(schema.taskMetrics.cost).mapWith(Number),
 			duration: sum(schema.taskMetrics.duration).mapWith(Number),
+			passed: sql<number>`sum(${schema.tasks.passed} = 1)`,
+			failed: sql<number>`sum(${schema.tasks.passed} = 0)`,
 		})
 		.from(schema.taskMetrics)
 		.innerJoin(schema.tasks, eq(schema.taskMetrics.id, schema.tasks.taskMetricsId))
@@ -69,8 +71,9 @@ export const finishRun = async (runId: number) => {
 		throw new RecordNotFoundError()
 	}
 
-	const taskMetrics = await createTaskMetrics(values)
-	await updateRun(runId, { taskMetricsId: taskMetrics.id })
+	const { passed, failed, ...rest } = values
+	const taskMetrics = await createTaskMetrics(rest)
+	await updateRun(runId, { taskMetricsId: taskMetrics.id, passed, failed })
 
 	const run = await db.query.runs.findFirst({ where: eq(table.id, runId), with: { taskMetrics: true } })
 

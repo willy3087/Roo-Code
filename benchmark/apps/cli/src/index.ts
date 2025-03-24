@@ -5,14 +5,24 @@ import * as os from "os"
 import pMap from "p-map"
 import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
+import { execa, parseCommandString } from "execa"
 
 import { type Language, languages } from "@benchmark/types"
-import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks } from "@benchmark/db"
+import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks, updateTask } from "@benchmark/db"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
 
 export const isLanguage = (language: string): language is Language => languages.includes(language as Language)
+
+const testCommands: Record<Language, { commands: string[]; timeout?: number; cwd?: string }> = {
+	cpp: { commands: ["cmake -G 'Unix\\ Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 ..", "make"], cwd: "build" }, // timeout 15s bash -c "cd '$dir' && mkdir -p build && cd build && cmake -G 'Unix Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 .. >/dev/null 2>&1 && make >/dev/null 2>&1"
+	go: { commands: ["go test"] }, // timeout 15s bash -c "cd '$dir' && go test > /dev/null 2>&1"
+	java: { commands: ["./gradlew test"] }, // timeout --foreground 15s bash -c "cd '$dir' && ./gradlew test > /dev/null 2>&1"
+	javascript: { commands: ["pnpm install", "pnpm test"], timeout: 30_000 }, // timeout 30s bash -c "cd '$dir' && pnpm install >/dev/null 2>&1 && pnpm test >/dev/null 2>&1"
+	python: { commands: ["uv run python3 -m pytest -o markers=task *_test.py"] }, // timeout 15s bash -c "cd '$dir' && uv run python3 -m pytest -o markers=task *_test.py"
+	rust: { commands: ["cargo test"] }, // timeout 15s bash -c "cd '$dir' && cargo test > /dev/null 2>&1"
+}
 
 const run = async (toolbox: GluegunToolbox) => {
 	const { config, prompt } = toolbox
@@ -62,6 +72,37 @@ const run = async (toolbox: GluegunToolbox) => {
 
 	for (const task of tasks) {
 		await runExercise({ run, task })
+
+		const cmd = testCommands[task.language]
+		const exercisePath = path.resolve(exercisesPath, task.language, task.exercise)
+		const cwd = cmd.cwd ? path.resolve(exercisePath, cmd.cwd) : exercisePath
+		const commands = cmd.commands.map((cs) => parseCommandString(cs))
+
+		let passed = true
+
+		for (const command of commands) {
+			const controller = new AbortController()
+			const cancelSignal = controller.signal
+			const timeout = setTimeout(() => controller.abort(), cmd.timeout ?? 15_000)
+
+			try {
+				const result = await execa({ cwd, shell: true, reject: false, cancelSignal })`${command}`
+				console.log({ ...result, cwd, command })
+
+				clearTimeout(timeout)
+
+				if (result.failed) {
+					passed = false
+					break
+				}
+			} catch (error) {
+				console.log(error)
+				passed = false
+				break
+			}
+		}
+
+		await updateTask(task.id, { passed })
 	}
 
 	const result = await finishRun(run.id)
