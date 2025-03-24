@@ -5,11 +5,13 @@ import path from "path"
 import os from "os"
 
 import { revalidatePath } from "next/cache"
+import pMap from "p-map"
 
-import { Language } from "@benchmark/types"
+import { Language, languages } from "@benchmark/types"
 import * as db from "@benchmark/db"
 
 import { CreateRun } from "@/lib/schemas"
+import { getExercisesForLanguage } from "./exercises"
 
 export async function createRun({ suite, exercises = [], ...values }: CreateRun) {
 	const run = await db.createRun({
@@ -26,6 +28,14 @@ export async function createRun({ suite, exercises = [], ...values }: CreateRun)
 			}
 
 			await db.createTask({ ...values, runId: run.id, language: language as Language, exercise })
+		}
+	} else {
+		for (const language of languages) {
+			const exercises = await getExercisesForLanguage(language)
+
+			await pMap(exercises, (exercise) => db.createTask({ ...values, runId: run.id, language, exercise }), {
+				concurrency: 10,
+			})
 		}
 	}
 

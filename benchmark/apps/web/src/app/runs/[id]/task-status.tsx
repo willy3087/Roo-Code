@@ -12,9 +12,11 @@ export const TaskStatus = ({ task, runningTaskId }: TaskStatusProps) => {
 		<LoaderCircle className="size-4 animate-spin" />
 	) : !task.finishedAt ? (
 		<CircleDashed className="size-4" />
-	) : !task.passed ? (
+	) : task.passed === false ? (
 		<CircleSlash className="size-4 text-destructive" />
-	) : (
+	) : task.passed === true ? (
 		<CircleCheck className="size-4 text-green-500" />
+	) : (
+		<LoaderCircle className="size-4 animate-spin" />
 	)
 }

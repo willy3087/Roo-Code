@@ -15,6 +15,7 @@ export const useRunStatus = (run: Run) => {
 		queryKey: ["run", run.id, runningTaskId],
 		queryFn: async () => getTasks(run.id),
 		placeholderData: keepPreviousData,
+		refetchInterval: 10_000,
 	})
 
 	const url = `/api/runs/${run.id}/stream`

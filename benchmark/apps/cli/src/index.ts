@@ -52,15 +52,14 @@ const run = async (toolbox: GluegunToolbox) => {
 		if (language === "all") {
 			for (const language of languages) {
 				const exercises = getExercises()[language as Language]
-				await pMap(exercises, async (exercise) => createTask({ runId: run.id, language, exercise }), {
+
+				await pMap(exercises, (exercise) => createTask({ runId: run.id, language, exercise }), {
 					concurrency: 10,
 				})
 			}
 		} else if (exercise === "all") {
 			const exercises = getExercises()[language as Language]
-			await pMap(exercises, async (exercise) => createTask({ runId: run.id, language, exercise }), {
-				concurrency: 10,
-			})
+			await pMap(exercises, (exercise) => createTask({ runId: run.id, language, exercise }), { concurrency: 10 })
 		} else {
 			language = language || (await askLanguage(prompt))
 			exercise = exercise || (await askExercise(prompt, language))

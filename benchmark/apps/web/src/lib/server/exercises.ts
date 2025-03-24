@@ -4,11 +4,11 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { fileURLToPath } from "url"
 
-import { languages } from "@benchmark/types"
+import { Language, languages } from "@benchmark/types"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const listDirectories = async (relativePath: string) => {
+export const listDirectories = async (relativePath: string) => {
 	try {
 		const targetPath = path.resolve(__dirname, relativePath)
 		const entries = await fs.readdir(targetPath, { withFileTypes: true })
@@ -33,3 +33,6 @@ export const getExercises = async () => {
 
 	return result.flat()
 }
+
+export const getExercisesForLanguage = async (language: Language) =>
+	listDirectories(path.join(EXERCISES_BASE_PATH, language))
