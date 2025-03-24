@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
 import { Run } from "@benchmark/db"
@@ -10,6 +10,8 @@ import { useEventSource } from "@/hooks/use-event-source"
 export const useRunStatus = (run: Run) => {
 	const [clientId, setClientId] = useState<string>()
 	const [runningTaskId, setRunningTaskId] = useState<number>()
+	const outputRef = useRef<Map<number, string[]>>(new Map())
+	const [outputCounts, setOutputCounts] = useState<Record<number, number>>({})
 
 	const { data: tasks } = useQuery({
 		queryKey: ["run", run.id, runningTaskId],
@@ -42,20 +44,28 @@ export const useRunStatus = (run: Run) => {
 		if (payload.type === "Ack") {
 			setClientId(payload.data.clientId as string)
 		} else if (payload.type === "TaskEvent") {
-			const {
-				eventName,
-				data: { task },
-			} = payload.data
+			const taskId = payload.data.data.task.id
 
-			if (eventName === "connect" || eventName === "taskStarted") {
-				setRunningTaskId(task.id)
-			} else if (eventName === "taskFinished") {
+			if (payload.data.eventName === "connect" || payload.data.eventName === "taskStarted") {
+				setRunningTaskId(taskId)
+			} else if (payload.data.eventName === "taskFinished") {
 				setRunningTaskId(undefined)
+			} else if (payload.data.eventName === "message") {
+				const { text } = payload.data.data.message.message
+				console.log(`message: ${taskId} ->`, text)
+				outputRef.current.set(taskId, [...(outputRef.current.get(taskId) || []), text])
+				const outputCounts: Record<number, number> = {}
+
+				for (const [taskId, messages] of outputRef.current.entries()) {
+					outputCounts[taskId] = messages.length
+				}
+
+				setOutputCounts(outputCounts)
 			}
 		}
 	}, [])
 
 	const status = useEventSource({ url, onMessage })
 
-	return { tasks, status, clientId, runningTaskId }
+	return { tasks, status, clientId, runningTaskId, output: outputRef.current, outputCounts }
 }
