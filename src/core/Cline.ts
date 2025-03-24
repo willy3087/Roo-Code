@@ -2326,6 +2326,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 								let sourceCodeDef = ""
 
 								const isBinary = await isBinaryFile(absolutePath).catch(() => false)
+								const autoTruncate = block.params.auto_truncate === "true"
 
 								if (isRangeRead) {
 									if (startLine === undefined) {
@@ -2333,10 +2334,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 									} else {
 										content = addLineNumbers(
 											await readLines(absolutePath, endLine, startLine),
-											startLine,
+											startLine + 1,
 										)
 									}
-								} else if (!isBinary && totalLines > maxReadFileLine) {
+								} else if (autoTruncate && !isBinary && totalLines > maxReadFileLine) {
 									// If file is too large, only read the first maxReadFileLine lines
 									isFileTruncated = true
 
@@ -2357,7 +2358,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 								// Add truncation notice if applicable
 								if (isFileTruncated) {
-									content += `\n\n[File truncated: showing ${maxReadFileLine} of ${totalLines} total lines. Use start_line and end_line if you need to read more.].${sourceCodeDef}`
+									content += `\n\n[File truncated: showing ${maxReadFileLine} of ${totalLines} total lines. Use start_line and end_line or set auto_truncate to false if you need to read more.].${sourceCodeDef}`
 								}
 
 								pushToolResult(content)
