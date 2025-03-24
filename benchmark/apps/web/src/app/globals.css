@@ -135,5 +135,6 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+		scrollbar-color: var(--color-background) transparent; /* Firefox */
 	}
 }

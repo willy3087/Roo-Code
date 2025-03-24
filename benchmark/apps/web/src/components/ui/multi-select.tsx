@@ -1,20 +1,13 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { CheckIcon, X, ChevronDown } from "lucide-react"
+import fuzzysort from "fuzzysort"
+import { Check, X, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
 import { Badge } from "./badge"
 import { Popover, PopoverContent, PopoverTrigger } from "./popover"
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-	CommandSeparator,
-} from "./command"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./command"
 
 /**
  * Variants for the multi-select component to handle different styles.
@@ -127,11 +120,6 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 			onValueChange(newSelectedValues)
 		}
 
-		const handleClear = () => {
-			setSelectedValues([])
-			onValueChange([])
-		}
-
 		const handleTogglePopover = () => {
 			setIsPopoverOpen((prev) => !prev)
 		}
@@ -142,15 +130,49 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 			onValueChange(newSelectedValues)
 		}
 
-		const toggleAll = () => {
-			if (selectedValues.length === options.length) {
-				handleClear()
-			} else {
-				const allValues = options.map((option) => option.value)
-				setSelectedValues(allValues)
-				onValueChange(allValues)
+		const searchResultsRef = React.useRef<Map<string, number>>(new Map())
+		const searchValueRef = React.useRef("")
+
+		const onSelectAll = () => {
+			const values = Array.from(searchResultsRef.current.keys())
+
+			if (
+				selectedValues.length === values.length &&
+				selectedValues.sort().join(",") === values.sort().join(",")
+			) {
+				setSelectedValues([])
+				onValueChange([])
+				return
 			}
+
+			setSelectedValues(values)
+			onValueChange(values)
 		}
+
+		const onFilter = React.useCallback(
+			(value: string, search: string) => {
+				if (searchValueRef.current !== search) {
+					searchValueRef.current = search
+					searchResultsRef.current.clear()
+
+					for (const {
+						obj: { value },
+						score,
+					} of fuzzysort.go(search, options, {
+						key: "label",
+					})) {
+						searchResultsRef.current.set(value, score)
+					}
+				}
+
+				if (value === "all") {
+					return searchResultsRef.current.size > 1 ? 0.01 : 0
+				}
+
+				return searchResultsRef.current.get(value) ?? 0
+			},
+			[options],
+		)
 
 		return (
 			<Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal={modalPopover}>
@@ -160,13 +182,13 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 						{...props}
 						onClick={handleTogglePopover}
 						className={cn(
-							"flex w-full p-1 rounded-sm border min-h-10 h-auto items-center justify-between [&_svg]:pointer-events-auto pl-2 pr-3",
+							"flex w-full rounded-sm border min-h-9 h-auto items-center justify-between [&_svg]:pointer-events-auto",
 							"border border-input bg-input hover:opacity-80 cursor-pointer",
 							className,
 						)}>
 						{selectedValues.length > 0 ? (
 							<div className="flex justify-between items-center w-full">
-								<div className="flex flex-wrap items-center gap-1">
+								<div className="flex flex-wrap items-center gap-1 p-1">
 									{selectedValues.slice(0, maxCount).map((value) => (
 										<Badge key={value} className={cn(multiSelectVariants({ variant }))}>
 											<div className="flex items-center gap-1.5">
@@ -202,39 +224,28 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 						) : (
 							<div className="flex items-center justify-between w-full mx-auto">
 								<span className="text-muted-foreground mx-3">{placeholder}</span>
-								<ChevronDown className="h-4 cursor-pointer text-muted-foreground mx-2" />
+								<ChevronsUpDown className="opacity-50 size-4 mx-2" />
 							</div>
 						)}
 					</div>
 				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0" align="start" onEscapeKeyDown={() => setIsPopoverOpen(false)}>
-					<Command>
+				<PopoverContent
+					className="p-0 w-[var(--radix-popover-trigger-width)]"
+					align="start"
+					onEscapeKeyDown={() => setIsPopoverOpen(false)}>
+					<Command filter={onFilter}>
 						<CommandInput placeholder="Search" onKeyDown={handleInputKeyDown} />
 						<CommandList>
 							<CommandEmpty>No results found.</CommandEmpty>
 							<CommandGroup>
-								<CommandItem
-									key="all"
-									onSelect={toggleAll}
-									className="flex items-center justify-between">
-									<span>Select All</span>
-									<CheckIcon
-										className={cn(
-											"text-accent group-data-[selected=true]:text-accent-foreground size-4",
-											{
-												"opacity-0": selectedValues.length !== options.length,
-											},
-										)}
-									/>
-								</CommandItem>
-								<CommandSeparator />
 								{options.map((option) => (
 									<CommandItem
 										key={option.value}
+										value={option.value}
 										onSelect={() => toggleOption(option.value)}
 										className="flex items-center justify-between">
 										<span>{option.label}</span>
-										<CheckIcon
+										<Check
 											className={cn(
 												"text-accent group-data-[selected=true]:text-accent-foreground size-4",
 												{ "opacity-0": !selectedValues.includes(option.value) },
@@ -242,16 +253,13 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 										/>
 									</CommandItem>
 								))}
-								{selectedValues.length > 0 && (
-									<>
-										<CommandSeparator />
-										<CommandItem
-											className="flex items-center justify-between"
-											onSelect={handleClear}>
-											Select None
-										</CommandItem>
-									</>
-								)}
+								<CommandItem
+									key="all"
+									value="all"
+									onSelect={onSelectAll}
+									className="flex items-center justify-between">
+									<span>Select All</span>
+								</CommandItem>
 							</CommandGroup>
 						</CommandList>
 					</Command>

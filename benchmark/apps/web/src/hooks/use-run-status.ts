@@ -1,12 +1,11 @@
 import { useState, useCallback } from "react"
 import { useQuery, keepPreviousData } from "@tanstack/react-query"
 
-import { useEventSource } from "@/hooks/use-event-source"
-
 import { Run } from "@benchmark/db"
 
-import { getTasks } from "./actions"
-import { ipcServerMessageSchema } from "./schemas"
+import { getTasks } from "@/lib/server/tasks"
+import { ipcServerMessageSchema } from "@/lib/schemas"
+import { useEventSource } from "@/hooks/use-event-source"
 
 export const useRunStatus = (run: Run) => {
 	const [clientId, setClientId] = useState<string>()

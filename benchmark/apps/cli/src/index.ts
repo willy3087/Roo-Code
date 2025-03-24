@@ -7,7 +7,7 @@ import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 
 import { type Language, languages } from "@benchmark/types"
-import { type Run, findRun, createRun, getTask, createTask, Task } from "@benchmark/db"
+import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks } from "@benchmark/db"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
@@ -16,68 +16,56 @@ export const isLanguage = (language: string): language is Language => languages.
 
 const run = async (toolbox: GluegunToolbox) => {
 	const { config, prompt } = toolbox
-	const id = config.runId ? Number(config.runId) : undefined
+
 	let { language, exercise } = config
 
-	if (language === "all") {
-		await runAll(id)
-	} else if (exercise === "all") {
-		await runLanguage({ id, language })
+	if (![undefined, ...languages, "all"].includes(language)) {
+		throw new Error(`Language is invalid: ${language}`)
+	}
+
+	if (!["undefined", "string"].includes(typeof exercise)) {
+		throw new Error(`Exercise is invalid: ${exercise}`)
+	}
+
+	const id = config.runId ? Number(config.runId) : undefined
+	let run: Run
+
+	if (id) {
+		run = await findRun(id)
 	} else {
-		language = language || (await askLanguage(prompt))
-		exercise = exercise || (await askExercise(prompt, language))
-		await runLanguageExercise({ id, language, exercise })
+		run = await createRun({
+			model: "anthropic/claude-3.7-sonnet",
+			pid: process.pid,
+			socketPath: path.resolve(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`),
+		})
+
+		if (language === "all") {
+			for (const language of languages) {
+				const exercises = getExercises()[language as Language]
+				await pMap(exercises, async (exercise) => createTask({ runId: run.id, language, exercise }), {
+					concurrency: 10,
+				})
+			}
+		} else if (exercise === "all") {
+			const exercises = getExercises()[language as Language]
+			await pMap(exercises, async (exercise) => createTask({ runId: run.id, language, exercise }), {
+				concurrency: 10,
+			})
+		} else {
+			language = language || (await askLanguage(prompt))
+			exercise = exercise || (await askExercise(prompt, language))
+			await createTask({ runId: run.id, language, exercise })
+		}
 	}
-}
 
-const runAll = async (id?: number) => {
-	const run = await findOrCreateRun({ id })
-
-	const entries = Object.entries(getExercises()).flatMap(([language, languageExercises]) =>
-		languageExercises.map((exercise) => ({ language: language as Language, exercise })),
-	)
-
-	const tasks = await pMap(
-		entries,
-		async ({ language, exercise }) => findOrCreateTask({ runId: run.id, language, exercise }),
-		{ concurrency: 10 },
-	)
+	const tasks = await getTasks(run.id)
 
 	for (const task of tasks) {
 		await runExercise({ run, task })
 	}
-}
 
-const runLanguage = async ({ id, language }: { id?: number; language: Language }) => {
-	const run = await findOrCreateRun({ id })
-
-	const tasks = await pMap(
-		getExercises()[language],
-		async (exercise) => findOrCreateTask({ runId: run.id, language, exercise }),
-		{ concurrency: 10 },
-	)
-
-	for (const task of tasks) {
-		await runExercise({ run, task })
-	}
-}
-
-const runLanguageExercise = async ({
-	id,
-	language,
-	exercise,
-}: {
-	id?: number
-	language: Language
-	exercise: string
-}) => {
-	if (!getExercises()[language].includes(exercise)) {
-		throw new Error(`Exercise ${exercise} not found for language ${language}`)
-	}
-
-	const run = await findOrCreateRun({ id })
-	const task = await findOrCreateTask({ runId: run.id, language, exercise })
-	return runExercise({ run, task })
+	const result = await finishRun(run.id)
+	console.log(result)
 }
 
 const runExercise = async ({ run, task }: { run: Run; task: Task }) => {
@@ -138,25 +126,6 @@ const askExercise = async (prompt: GluegunPrompt, language: Language) => {
 
 	return exercise
 }
-
-const findOrCreateRun = async ({ id, model = "anthropic/claude-3.7-sonnet" }: { id?: number; model?: string }) =>
-	id
-		? findRun(id)
-		: createRun({
-				model,
-				pid: process.pid,
-				socketPath: path.resolve(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`),
-			})
-
-const findOrCreateTask = async ({
-	runId,
-	language,
-	exercise,
-}: {
-	runId: number
-	language: Language
-	exercise: string
-}) => (await getTask({ runId, language, exercise })) || (await createTask({ runId, language, exercise }))
 
 const main = async () => {
 	const cli = build()

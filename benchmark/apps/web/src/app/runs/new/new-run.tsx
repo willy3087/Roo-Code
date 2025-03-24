@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { X, Loader2, Rocket } from "lucide-react"
+import fuzzysort from "fuzzysort"
+import { X, Rocket, Check, ChevronsUpDown } from "lucide-react"
 
-import { languages } from "@benchmark/types"
-
+import { createRun } from "@/lib/server/runs"
+import { createRunSchema as formSchema, type CreateRun as FormValues } from "@/lib/schemas"
+import { cn } from "@/lib/utils"
 import { useOpenRouterModels } from "@/hooks/use-open-router-models"
+import { useExercises } from "@/hooks/use-exercises"
 import {
 	Button,
 	FormControl,
@@ -17,56 +19,70 @@ import {
 	FormItem,
 	FormLabel,
 	FormMessage,
-	FormDescription,
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
 	Textarea,
 	Tabs,
-	TabsContent,
 	TabsList,
 	TabsTrigger,
 	MultiSelect,
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandInput,
+	CommandItem,
+	CommandList,
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
 } from "@/components/ui"
-
-import { createRun } from "./actions"
-import { cn } from "@/lib/utils"
-
-const formSchema = z.object({
-	model: z.string(),
-	description: z.string().optional(),
-})
-
-type FormValues = z.infer<typeof formSchema>
 
 export function NewRun() {
 	const router = useRouter()
-	const { data: models, isLoading, isError } = useOpenRouterModels()
-	const [isSubmitting, setIsSubmitting] = useState(false)
+
+	const [modelSearchValue, setModelSearchValue] = useState("")
+	const [modelPopoverOpen, setModelPopoverOpen] = useState(false)
+	const modelSearchResultsRef = useRef<Map<string, number>>(new Map())
+	const modelSearchValueRef = useRef("")
+	const models = useOpenRouterModels()
+
+	const exercises = useExercises()
 
 	const form = useForm<FormValues>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			model: "anthropic/claude-3.7-sonnet",
+			model: "",
 			description: "",
+			suite: "full",
+			exercises: [],
 		},
 	})
 
-	async function onSubmit(data: FormValues) {
-		setIsSubmitting(true)
+	const {
+		setValue,
+		watch,
+		formState: { isSubmitting },
+	} = form
 
-		try {
-			const run = await createRun(data)
-			router.push(`/runs/${run.id}`)
-		} catch (_) {
-			setIsSubmitting(false)
-		}
-	}
+	const [model, suite] = watch(["model", "suite"])
 
-	const [selectedSuite, setSelectedSuite] = useState<"full" | "partial">("full")
-	const [selectedExercises, setSelectedExercises] = useState<string[]>([])
+	const selectModel = useCallback(
+		(model: string) => {
+			setValue("model", model)
+			setModelPopoverOpen(false)
+		},
+		[setValue],
+	)
+
+	const onSubmit = useCallback(
+		async (data: FormValues) => {
+			try {
+				const { id } = await createRun(data)
+				router.push(`/runs/${id}`)
+			} catch (_) {
+				// Surface error.
+			}
+		},
+		[router],
+	)
 
 	return (
 		<>
@@ -75,63 +91,107 @@ export function NewRun() {
 					<FormField
 						control={form.control}
 						name="model"
-						render={({ field }) => (
+						render={() => (
 							<FormItem>
 								<FormLabel>OpenRouter Model</FormLabel>
-								<Select onValueChange={field.onChange} defaultValue={field.value}>
-									<FormControl>
-										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select" />
-										</SelectTrigger>
-									</FormControl>
-									<SelectContent>
-										{isLoading ? (
-											<Loader2 className="size-4 m-2 animate-spin" />
-										) : isError ? (
-											<div className="m-2 text-center text-destructive">
-												Failed to load models.
+								<Popover open={modelPopoverOpen} onOpenChange={setModelPopoverOpen}>
+									<PopoverTrigger asChild>
+										<Button
+											variant="input"
+											role="combobox"
+											aria-expanded={modelPopoverOpen}
+											className="flex items-center justify-between">
+											<div>
+												{models.data?.find(({ id }) => id === model)?.name || model || "Select"}
 											</div>
-										) : (
-											models?.map((model) => (
-												<SelectItem key={model.id} value={model.id}>
-													{model.name}
-												</SelectItem>
-											))
-										)}
-									</SelectContent>
-								</Select>
+											<ChevronsUpDown className="opacity-50" />
+										</Button>
+									</PopoverTrigger>
+									<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+										<Command
+											filter={(value, search) => {
+												if (modelSearchValueRef.current !== search) {
+													modelSearchValueRef.current = search
+													modelSearchResultsRef.current.clear()
+
+													for (const {
+														obj: { id },
+														score,
+													} of fuzzysort.go(search, models.data || [], {
+														key: "name",
+													})) {
+														modelSearchResultsRef.current.set(id, score)
+													}
+												}
+
+												return modelSearchResultsRef.current.get(value) ?? 0
+											}}>
+											<CommandInput
+												placeholder="Search"
+												value={modelSearchValue}
+												onValueChange={setModelSearchValue}
+												className="h-9"
+											/>
+											<CommandList>
+												<CommandEmpty>No model found.</CommandEmpty>
+												<CommandGroup>
+													{models.data?.map(({ id, name }) => (
+														<CommandItem key={id} value={id} onSelect={selectModel}>
+															{name}
+															<Check
+																className={cn(
+																	"ml-auto text-accent group-data-[selected=true]:text-accent-foreground size-4",
+																	id === model ? "opacity-100" : "opacity-0",
+																)}
+															/>
+														</CommandItem>
+													))}
+												</CommandGroup>
+											</CommandList>
+										</Command>
+									</PopoverContent>
+								</Popover>
+
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
 
-					<FormItem>
-						<FormLabel>Exercise Suite</FormLabel>
-						<Tabs
-							defaultValue="full"
-							onValueChange={(value) => setSelectedSuite(value as "full" | "partial")}>
-							<TabsList className="grid w-full grid-cols-2">
-								<TabsTrigger value="full">Full</TabsTrigger>
-								<TabsTrigger value="partial">Partial</TabsTrigger>
-							</TabsList>
-						</Tabs>
-					</FormItem>
+					<FormField
+						control={form.control}
+						name="suite"
+						render={() => (
+							<FormItem>
+								<FormLabel>Exercise Suite</FormLabel>
+								<Tabs
+									defaultValue="full"
+									onValueChange={(value) => setValue("suite", value as "full" | "partial")}>
+									<TabsList className="grid w-full grid-cols-2">
+										<TabsTrigger value="full">Full</TabsTrigger>
+										<TabsTrigger value="partial">Partial</TabsTrigger>
+									</TabsList>
+								</Tabs>
+							</FormItem>
+						)}
+					/>
 
-					{selectedSuite === "partial" && (
-						<FormItem>
-							<FormLabel>Exercises</FormLabel>
-							<MultiSelect
-								options={languages.map((language) => ({
-									value: language,
-									label: language,
-								}))}
-								onValueChange={setSelectedExercises}
-								defaultValue={selectedExercises}
-								placeholder="Select"
-								variant="inverted"
-								maxCount={10}
-							/>
-						</FormItem>
+					{suite === "partial" && (
+						<FormField
+							control={form.control}
+							name="exercises"
+							render={() => (
+								<FormItem>
+									<FormLabel>Exercises</FormLabel>
+									<MultiSelect
+										options={exercises.data?.map((path) => ({ value: path, label: path })) || []}
+										onValueChange={(value) => setValue("exercises", value)}
+										placeholder="Select"
+										variant="inverted"
+										maxCount={4}
+									/>
+								</FormItem>
+							)}
+						/>
 					)}
 
 					<FormField

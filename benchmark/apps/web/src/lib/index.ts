@@ -1,2 +1,2 @@
-export { formatCurrency } from "./formatCurrency"
-export { formatDuration } from "./formatDuration"
+export { formatCurrency } from "./format-currency"
+export { formatDuration } from "./format-duration"

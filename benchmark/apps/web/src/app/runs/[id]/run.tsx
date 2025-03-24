@@ -4,7 +4,8 @@ import { LoaderCircle } from "lucide-react"
 
 import * as db from "@benchmark/db"
 
-import { useRunStatus } from "./use-run-status"
+import { useRunStatus } from "@/hooks/use-run-status"
+
 import { TaskStatus } from "./task-status"
 import { ConnectionStatus } from "./connection-status"
 

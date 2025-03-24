@@ -15,14 +15,16 @@ export async function run() {
 	 * Validate environment variables.
 	 */
 
-	const tid = process.env.TASK_ID ? parseInt(process.env.TASK_ID) : undefined
+	const taskId = process.env.TASK_ID ? parseInt(process.env.TASK_ID) : undefined
 	const promptPath = process.env.PROMPT_PATH
 	const workspacePath = process.env.WORKSPACE_PATH
 	const openRouterApiKey = process.env.OPENROUTER_API_KEY
 	const openRouterModelId = process.env.OPENROUTER_MODEL_ID
 
-	if (!tid || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
-		throw new Error("ENV not configured.")
+	if (!taskId || !promptPath || !workspacePath || !openRouterApiKey || !openRouterModelId) {
+		throw new Error(
+			`ENV not configured. ${JSON.stringify({ taskId, promptPath, workspacePath, openRouterApiKey, openRouterModelId })}`,
+		)
 	}
 
 	const prompt = await fs.readFile(promptPath, "utf-8")
@@ -31,7 +33,7 @@ export async function run() {
 	 * Fetch and update the task.
 	 */
 
-	let task = await findTask(tid)
+	let task = await findTask(taskId)
 	task = await updateTask(task.id, { startedAt: new Date() })
 
 	const run = await findRun(task.runId)
