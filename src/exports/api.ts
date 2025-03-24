@@ -22,7 +22,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		this.history = new MessageHistory()
 		this.tokenUsage = {}
 
-		this.provider.on("clineAdded", (cline) => {
+		this.provider.on("clineCreated", (cline) => {
 			cline.on("message", (message) => this.emit("message", { taskId: cline.taskId, ...message }))
 			cline.on("taskStarted", () => this.emit("taskStarted", cline.taskId))
 			cline.on("taskPaused", () => this.emit("taskPaused", cline.taskId))
@@ -32,6 +32,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 			cline.on("taskSpawned", (childTaskId) => this.emit("taskSpawned", cline.taskId, childTaskId))
 			cline.on("taskCompleted", (_, usage) => this.emit("taskCompleted", cline.taskId, usage))
 			cline.on("taskTokenUsageUpdated", (_, usage) => this.emit("taskTokenUsageUpdated", cline.taskId, usage))
+			this.emit("taskCreated", cline.taskId)
 		})
 
 		this.on("message", ({ taskId, action, message }) => {
