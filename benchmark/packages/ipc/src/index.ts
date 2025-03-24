@@ -5,33 +5,56 @@ import * as crypto from "node:crypto"
 import ipc from "node-ipc"
 import { z } from "zod"
 
+import { TaskCommand, taskCommandSchema, TaskEvent, taskEventSchema } from "@benchmark/types"
+
+/**
+ * IpcMessage
+ */
+
+export enum IpcMessageType {
+	Ack = "Ack",
+	TaskCommand = "TaskCommand",
+	TaskEvent = "TaskEvent",
+}
+
+export enum IpcOrigin {
+	Client = "client",
+	Server = "server",
+	Relay = "relay",
+}
+
+export const ipcMessageSchema = z.discriminatedUnion("type", [
+	z.object({
+		type: z.literal(IpcMessageType.Ack),
+		origin: z.literal(IpcOrigin.Server),
+		data: z.object({ clientId: z.string() }),
+	}),
+	z.object({
+		type: z.literal(IpcMessageType.TaskCommand),
+		origin: z.literal(IpcOrigin.Client),
+		clientId: z.string(),
+		data: taskCommandSchema,
+	}),
+	z.object({
+		type: z.literal(IpcMessageType.TaskEvent),
+		origin: z.union([z.literal(IpcOrigin.Server), z.literal(IpcOrigin.Relay)]),
+		relayClientId: z.string().optional(),
+		data: taskEventSchema,
+	}),
+])
+
+export type IpcMessage = z.infer<typeof ipcMessageSchema>
+
 /**
  * IpcClient
  */
 
-export type IpcClientId = string
-
-export enum IpcClientMessageType {
-	Message = "Message",
-	StartNewTask = "StartNewTask",
-}
-
-export const ipcClientMessageSchema = z.discriminatedUnion("type", [
-	z.object({
-		type: z.literal(IpcClientMessageType.StartNewTask),
-		data: z.object({
-			text: z.string(),
-			images: z.array(z.string()).optional(),
-		}),
-	}),
-])
-
-export type IpcClientMessage = z.infer<typeof ipcClientMessageSchema>
-
-export interface IpcClientEvents {
+type IpcClientEvents = {
 	connect: []
 	disconnect: []
-	message: [data: IpcServerMessage]
+	ack: [clientId: string]
+	taskCommand: [data: TaskCommand]
+	taskEvent: [data: TaskEvent]
 }
 
 export class IpcClient extends EventEmitter<IpcClientEvents> {
@@ -39,7 +62,7 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 	private readonly _log: (...args: unknown[]) => void
 
 	private _isConnected = false
-	private _clientId?: IpcClientId
+	private _clientId?: string
 
 	constructor(socketPath: string, log = console.log) {
 		super()
@@ -82,21 +105,33 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 			return
 		}
 
-		const result = ipcServerMessageSchema.safeParse(data)
+		const result = ipcMessageSchema.safeParse(data)
 
 		if (!result.success) {
 			this.log("[client#onMessage] invalid payload", result.error)
 			return
 		}
 
-		this.emit("message", result.data)
+		const payload = result.data
+
+		if (payload.origin === IpcOrigin.Server) {
+			switch (payload.type) {
+				case IpcMessageType.Ack:
+					this._clientId = payload.data.clientId
+					this.emit("ack", payload.data.clientId)
+					break
+				case IpcMessageType.TaskEvent:
+					this.emit("taskEvent", payload.data)
+					break
+			}
+		}
 	}
 
 	private log(...args: unknown[]) {
 		this._log(...args)
 	}
 
-	public sendMessage(message: IpcClientMessage) {
+	public sendMessage(message: IpcMessage) {
 		ipc.of.benchmarkServer?.emit("message", message)
 	}
 
@@ -130,31 +165,11 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
  * IpcServer
  */
 
-export enum IpcServerMessageType {
-	Ack = "Ack",
-	TaskEvent = "TaskEvent",
-}
-
-export const ipcServerMessageSchema = z.discriminatedUnion("type", [
-	z.object({
-		type: z.literal(IpcServerMessageType.Ack),
-		data: z.object({ clientId: z.string() }),
-	}),
-	z.object({
-		type: z.literal(IpcServerMessageType.TaskEvent),
-		data: z.object({
-			eventName: z.enum(["connect", "taskStarted", "message", "taskTokenUsageUpdated", "taskFinished"]),
-			data: z.unknown(),
-		}),
-	}),
-])
-
-export type IpcServerMessage = z.infer<typeof ipcServerMessageSchema>
-
 type IpcServerEvents = {
-	connect: [id: IpcClientId]
-	disconnect: [id: IpcClientId]
-	message: [data: IpcClientMessage]
+	connect: [clientId: string]
+	disconnect: [clientId: string]
+	taskCommand: [clientId: string, data: TaskCommand]
+	taskEvent: [relayClientId: string | undefined, data: TaskEvent]
 }
 
 export class IpcServer extends EventEmitter<IpcServerEvents> {
@@ -190,12 +205,12 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		const clientId = crypto.randomBytes(6).toString("hex")
 		this._clients.set(clientId, socket)
 		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
-		this.send(socket, { type: IpcServerMessageType.Ack, data: { clientId } })
+		this.send(socket, { type: IpcMessageType.Ack, origin: IpcOrigin.Server, data: { clientId } })
 		this.emit("connect", clientId)
 	}
 
 	private onDisconnect(destroyedSocket: Socket) {
-		let disconnectedClientId: IpcClientId | undefined
+		let disconnectedClientId: string | undefined
 
 		for (const [clientId, socket] of this._clients.entries()) {
 			if (socket === destroyedSocket) {
@@ -218,7 +233,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 			return
 		}
 
-		const result = ipcClientMessageSchema.safeParse(data)
+		const result = ipcMessageSchema.safeParse(data)
 
 		if (!result.success) {
 			this.log("[server#onMessage] invalid payload", result.error)
@@ -226,19 +241,32 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		}
 
 		const payload = result.data
-		this.emit("message", payload)
+
+		if (payload.origin === IpcOrigin.Client) {
+			switch (payload.type) {
+				case IpcMessageType.TaskCommand:
+					this.emit("taskCommand", payload.clientId, payload.data)
+					break
+			}
+		} else if (payload.origin === IpcOrigin.Relay) {
+			switch (payload.type) {
+				case IpcMessageType.TaskEvent:
+					this.emit("taskEvent", payload.relayClientId, payload.data)
+					break
+			}
+		}
 	}
 
 	private log(...args: unknown[]) {
 		this._log(...args)
 	}
 
-	public broadcast(message: IpcServerMessage) {
+	public broadcast(message: IpcMessage) {
 		this.log("[server#broadcast] message =", message)
 		ipc.server.broadcast("message", message)
 	}
 
-	public send(client: IpcClientId | Socket, message: IpcServerMessage) {
+	public send(client: string | Socket, message: IpcMessage) {
 		this.log("[server#send] message =", message)
 
 		if (typeof client === "string") {

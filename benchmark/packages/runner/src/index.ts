@@ -5,7 +5,8 @@ import * as vscode from "vscode"
 
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-import { IpcServer, IpcServerMessageType } from "@benchmark/ipc"
+import { TaskEventName } from "@benchmark/types"
+import { IpcMessageType, IpcOrigin, IpcClient } from "@benchmark/ipc"
 import { findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"
@@ -87,31 +88,44 @@ export async function run() {
 	await sleep(1_000)
 
 	/**
-	 * Start the IPC server.
+	 * Start the IPC client.
 	 */
 
-	const server = new IpcServer(run.socketPath, () => {})
-	server.listen()
+	const client = new IpcClient(run.socketPath, () => {})
+	const clientStartedAt = Date.now()
 
-	server.on("connect", (id) =>
-		server.send(id, { type: IpcServerMessageType.TaskEvent, data: { eventName: "connect", data: { task } } }),
-	)
+	while (!client.clientId && Date.now() - clientStartedAt < 10_000) {
+		await sleep(250)
+	}
+
+	if (!client.clientId) {
+		throw new Error("No client ID received.")
+	}
 
 	api.on("taskStarted", () =>
-		server.broadcast({ type: IpcServerMessageType.TaskEvent, data: { eventName: "taskStarted", data: { task } } }),
+		client.sendMessage({
+			type: IpcMessageType.TaskEvent,
+			relayClientId: client.clientId,
+			origin: IpcOrigin.Relay,
+			data: { eventName: TaskEventName.TaskStarted, data: { task } },
+		}),
 	)
 
 	api.on("message", (message) =>
-		server.broadcast({
-			type: IpcServerMessageType.TaskEvent,
-			data: { eventName: "message", data: { task, message } },
+		client.sendMessage({
+			type: IpcMessageType.TaskEvent,
+			relayClientId: client.clientId,
+			origin: IpcOrigin.Relay,
+			data: { eventName: TaskEventName.Message, data: { task, message } },
 		}),
 	)
 
 	api.on("taskTokenUsageUpdated", (_, usage) =>
-		server.broadcast({
-			type: IpcServerMessageType.TaskEvent,
-			data: { eventName: "taskTokenUsageUpdated", data: { task, usage } },
+		client.sendMessage({
+			type: IpcMessageType.TaskEvent,
+			relayClientId: client.clientId,
+			origin: IpcOrigin.Relay,
+			data: { eventName: TaskEventName.TaskTokenUsageUpdated, data: { task, usage } },
 		}),
 	)
 
@@ -144,9 +158,11 @@ export async function run() {
 
 	task = await updateTask(task.id, { taskMetricsId: taskMetrics.id, finishedAt: new Date() })
 
-	server.broadcast({
-		type: IpcServerMessageType.TaskEvent,
-		data: { eventName: "taskFinished", data: { task, taskMetrics } },
+	client.sendMessage({
+		type: IpcMessageType.TaskEvent,
+		relayClientId: client.clientId,
+		origin: IpcOrigin.Relay,
+		data: { eventName: TaskEventName.TaskFinished, data: { task, taskMetrics } },
 	})
 
 	await fs.writeFile(path.resolve(workspacePath, "usage.json"), JSON.stringify({ ...task, ...taskMetrics }, null, 2))

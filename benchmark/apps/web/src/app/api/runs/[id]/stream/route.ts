@@ -25,7 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 	console.log(`[stream#${requestId}] connect`)
 	client.on("connect", () => write("connect"))
 	client.on("disconnect", () => write("disconnect"))
-	client.on("message", write)
+	client.on("taskEvent", write)
 
 	request.signal.addEventListener("abort", () => {
 		console.log(`[stream#${requestId}] abort`)

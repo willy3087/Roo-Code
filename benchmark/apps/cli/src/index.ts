@@ -7,13 +7,12 @@ import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 import { execa, parseCommandString } from "execa"
 
-import { type Language, languages } from "@benchmark/types"
+import { type Language, languages, TaskEventName } from "@benchmark/types"
 import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks, updateTask } from "@benchmark/db"
+import { IpcServer, IpcMessageType, IpcOrigin } from "@benchmark/ipc"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
-
-export const isLanguage = (language: string): language is Language => languages.includes(language as Language)
 
 const testCommands: Record<Language, { commands: string[]; timeout?: number; cwd?: string }> = {
 	cpp: { commands: ["cmake -G 'Unix\\ Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 ..", "make"], cwd: "build" }, // timeout 15s bash -c "cd '$dir' && mkdir -p build && cd build && cmake -G 'Unix Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 .. >/dev/null 2>&1 && make >/dev/null 2>&1"
@@ -69,7 +68,26 @@ const run = async (toolbox: GluegunToolbox) => {
 
 	const tasks = await getTasks(run.id)
 
+	if (tasks.length === 0) {
+		throw new Error("No tasks found.")
+	}
+
+	const server = new IpcServer(run.socketPath, () => {})
+	server.listen()
+
+	let currentTask = tasks[0]
+
+	server.on("connect", (clientId) => {
+		server.send(clientId, {
+			type: IpcMessageType.TaskEvent,
+			origin: IpcOrigin.Server,
+			data: { eventName: TaskEventName.Connect, data: { task: currentTask } },
+		})
+	})
+
 	for (const task of tasks) {
+		currentTask = task
+
 		await runExercise({ run, task })
 
 		const cmd = testCommands[task.language]

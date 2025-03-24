@@ -9,7 +9,8 @@
 	},
 	"dependencies": {
 		"@benchmark/db": "workspace:^",
-		"@benchmark/ipc": "workspace:^"
+		"@benchmark/ipc": "workspace:^",
+		"@benchmark/types": "workspace:^"
 	},
 	"devDependencies": {
 		"@benchmark/eslint-config": "workspace:^",

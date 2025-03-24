@@ -1,21 +1,28 @@
-import { IpcClientMessageType, IpcClient } from "../src/index.js"
+import { TaskCommandName } from "@benchmark/types"
+
+import { IpcMessageType, IpcClient, IpcOrigin } from "../src/index.js"
 
 async function main(socketPath: string, prompt: string) {
 	try {
-		const startTime = Date.now()
 		const client = new IpcClient(socketPath)
+		const clientStartedAt = Date.now()
 
-		client.on("message", (data) => console.log(data))
-
-		while (!client.isConnected) {
-			if (Date.now() - startTime > 5000) {
-				throw new Error("Failed to connect to server.")
-			}
-
-			await new Promise((resolve) => setTimeout(resolve, 1000))
+		while (!client.isConnected && Date.now() - clientStartedAt < 10_000) {
+			await new Promise((resolve) => setTimeout(resolve, 250))
 		}
 
-		client.sendMessage({ type: IpcClientMessageType.StartNewTask, data: { text: prompt } })
+		if (!client.isConnected) {
+			throw new Error("Failed to connect to server.")
+		}
+
+		client.on("taskEvent", (data) => console.log(data))
+
+		client.sendMessage({
+			type: IpcMessageType.TaskCommand,
+			origin: IpcOrigin.Client,
+			clientId: client.clientId!,
+			data: { commandName: TaskCommandName.StartNewTask, data: { text: prompt } },
+		})
 
 		while (client.isConnected) {
 			await new Promise((resolve) => setTimeout(resolve, 1000))
