@@ -5,8 +5,8 @@ import * as vscode from "vscode"
 
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-import { TaskEventName } from "@benchmark/types"
-import { IpcMessageType, IpcOrigin, IpcClient } from "@benchmark/ipc"
+import { IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
+import { IpcClient } from "@benchmark/ipc"
 import { findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
 
 import { waitUntilReady, waitUntilCompleted, sleep } from "./utils.js"

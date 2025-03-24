@@ -3,47 +3,8 @@ import { Socket } from "node:net"
 import * as crypto from "node:crypto"
 
 import ipc from "node-ipc"
-import { z } from "zod"
 
-import { TaskCommand, taskCommandSchema, TaskEvent, taskEventSchema } from "@benchmark/types"
-
-/**
- * IpcMessage
- */
-
-export enum IpcMessageType {
-	Ack = "Ack",
-	TaskCommand = "TaskCommand",
-	TaskEvent = "TaskEvent",
-}
-
-export enum IpcOrigin {
-	Client = "client",
-	Server = "server",
-	Relay = "relay",
-}
-
-export const ipcMessageSchema = z.discriminatedUnion("type", [
-	z.object({
-		type: z.literal(IpcMessageType.Ack),
-		origin: z.literal(IpcOrigin.Server),
-		data: z.object({ clientId: z.string() }),
-	}),
-	z.object({
-		type: z.literal(IpcMessageType.TaskCommand),
-		origin: z.literal(IpcOrigin.Client),
-		clientId: z.string(),
-		data: taskCommandSchema,
-	}),
-	z.object({
-		type: z.literal(IpcMessageType.TaskEvent),
-		origin: z.union([z.literal(IpcOrigin.Server), z.literal(IpcOrigin.Relay)]),
-		relayClientId: z.string().optional(),
-		data: taskEventSchema,
-	}),
-])
-
-export type IpcMessage = z.infer<typeof ipcMessageSchema>
+import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, TaskEvent } from "@benchmark/types"
 
 /**
  * IpcClient

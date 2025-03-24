@@ -7,9 +7,9 @@ import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 import { execa, parseCommandString } from "execa"
 
-import { type Language, languages, TaskEventName } from "@benchmark/types"
+import { type Language, languages, IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
 import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks, updateTask } from "@benchmark/db"
-import { IpcServer, IpcMessageType, IpcOrigin } from "@benchmark/ipc"
+import { IpcServer } from "@benchmark/ipc"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
@@ -67,21 +67,29 @@ const run = async (toolbox: GluegunToolbox) => {
 	}
 
 	const tasks = await getTasks(run.id)
+	let currentTask = tasks[0]
 
-	if (tasks.length === 0) {
+	if (!currentTask) {
 		throw new Error("No tasks found.")
 	}
 
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
-	let currentTask = tasks[0]
-
 	server.on("connect", (clientId) => {
 		server.send(clientId, {
 			type: IpcMessageType.TaskEvent,
 			origin: IpcOrigin.Server,
-			data: { eventName: TaskEventName.Connect, data: { task: currentTask } },
+			data: { eventName: TaskEventName.Connect, data: { task: currentTask! } },
+		})
+	})
+
+	server.on("taskEvent", (relayClientId, data) => {
+		server.broadcast({
+			type: IpcMessageType.TaskEvent,
+			origin: IpcOrigin.Server,
+			relayClientId,
+			data,
 		})
 	})
 

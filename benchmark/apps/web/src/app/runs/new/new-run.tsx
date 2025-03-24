@@ -84,6 +84,33 @@ export function NewRun() {
 		[router],
 	)
 
+	const onFilter = useCallback(
+		(value: string, search: string) => {
+			if (modelSearchValueRef.current !== search) {
+				modelSearchValueRef.current = search
+				modelSearchResultsRef.current.clear()
+
+				for (const {
+					obj: { id },
+					score,
+				} of fuzzysort.go(search, models.data || [], {
+					key: "name",
+				})) {
+					modelSearchResultsRef.current.set(id, score)
+				}
+			}
+
+			return modelSearchResultsRef.current.get(value) ?? 0
+		},
+		[models.data],
+	)
+
+	const recommendedModels = [
+		"anthropic/claude-3.7-sonnet",
+		"anthropic/claude-3.7-sonnet:thinking",
+		"google/gemini-2.0-flash-001",
+	]
+
 	return (
 		<>
 			<FormProvider {...form}>
@@ -108,24 +135,7 @@ export function NewRun() {
 										</Button>
 									</PopoverTrigger>
 									<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
-										<Command
-											filter={(value, search) => {
-												if (modelSearchValueRef.current !== search) {
-													modelSearchValueRef.current = search
-													modelSearchResultsRef.current.clear()
-
-													for (const {
-														obj: { id },
-														score,
-													} of fuzzysort.go(search, models.data || [], {
-														key: "name",
-													})) {
-														modelSearchResultsRef.current.set(id, score)
-													}
-												}
-
-												return modelSearchResultsRef.current.get(value) ?? 0
-											}}>
+										<Command filter={onFilter}>
 											<CommandInput
 												placeholder="Search"
 												value={modelSearchValue}
@@ -152,6 +162,22 @@ export function NewRun() {
 									</PopoverContent>
 								</Popover>
 								<FormMessage />
+								<div className="flex flex-wrap items-center gap-2 text-sm">
+									<div>Recommended:</div>
+									{recommendedModels.map((modelId) => (
+										<div key={modelId} className="flex items-center gap-2">
+											<Button
+												variant="link"
+												className="break-all px-0!"
+												onClick={(e) => {
+													e.preventDefault()
+													setValue("model", modelId)
+												}}>
+												{modelId}
+											</Button>
+										</div>
+									))}
+								</div>
 							</FormItem>
 						)}
 					/>
