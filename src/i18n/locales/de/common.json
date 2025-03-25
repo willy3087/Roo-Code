@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "MCP-Server {{serverName}} wird neu gestartet...",
 		"mcp_server_connected": "MCP-Server {{serverName}} verbunden",
 		"mcp_server_deleted": "MCP-Server gelöscht: {{serverName}}",
-		"mcp_server_not_found": "Server \"{{serverName}}\" nicht in der Konfiguration gefunden"
+		"mcp_server_not_found": "Server \"{{serverName}}\" nicht in der Konfiguration gefunden",
+		"settings_imported": "Einstellungen erfolgreich importiert."
 	},
 	"answers": {
 		"yes": "Ja",

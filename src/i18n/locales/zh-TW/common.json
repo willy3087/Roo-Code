@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "正在重啟{{serverName}}MCP服務器...",
 		"mcp_server_connected": "{{serverName}}MCP服務器已連接",
 		"mcp_server_deleted": "已刪除MCP服務器：{{serverName}}",
-		"mcp_server_not_found": "在配置中未找到服務器\"{{serverName}}\""
+		"mcp_server_not_found": "在配置中未找到服務器\"{{serverName}}\"",
+		"settings_imported": "設置已成功導入。"
 	},
 	"answers": {
 		"yes": "是",

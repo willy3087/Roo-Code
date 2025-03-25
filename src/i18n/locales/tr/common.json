@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "{{serverName}} MCP sunucusu yeniden başlatılıyor...",
 		"mcp_server_connected": "{{serverName}} MCP sunucusu bağlandı",
 		"mcp_server_deleted": "MCP sunucusu silindi: {{serverName}}",
-		"mcp_server_not_found": "Yapılandırmada \"{{serverName}}\" sunucusu bulunamadı"
+		"mcp_server_not_found": "Yapılandırmada \"{{serverName}}\" sunucusu bulunamadı",
+		"settings_imported": "Ayarlar başarıyla içe aktarıldı."
 	},
 	"answers": {
 		"yes": "Evet",

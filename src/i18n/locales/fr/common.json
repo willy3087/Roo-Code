@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "Redémarrage du serveur MCP {{serverName}}...",
 		"mcp_server_connected": "Serveur MCP {{serverName}} connecté",
 		"mcp_server_deleted": "Serveur MCP supprimé : {{serverName}}",
-		"mcp_server_not_found": "Serveur \"{{serverName}}\" introuvable dans la configuration"
+		"mcp_server_not_found": "Serveur \"{{serverName}}\" introuvable dans la configuration",
+		"settings_imported": "Paramètres importés avec succès."
 	},
 	"answers": {
 		"yes": "Oui",

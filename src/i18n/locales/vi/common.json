@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "Đang khởi động lại máy chủ MCP {{serverName}}...",
 		"mcp_server_connected": "Máy chủ MCP {{serverName}} đã kết nối",
 		"mcp_server_deleted": "Đã xóa máy chủ MCP: {{serverName}}",
-		"mcp_server_not_found": "Không tìm thấy máy chủ \"{{serverName}}\" trong cấu hình"
+		"mcp_server_not_found": "Không tìm thấy máy chủ \"{{serverName}}\" trong cấu hình",
+		"settings_imported": "Cài đặt đã được nhập thành công."
 	},
 	"answers": {
 		"yes": "Có",

@@ -61,7 +61,8 @@
 		"mcp_server_restarting": "{{serverName}} MCP सर्वर पुनः प्रारंभ हो रहा है...",
 		"mcp_server_connected": "{{serverName}} MCP सर्वर कनेक्टेड",
 		"mcp_server_deleted": "MCP सर्वर हटाया गया: {{serverName}}",
-		"mcp_server_not_found": "सर्वर \"{{serverName}}\" कॉन्फ़िगरेशन में नहीं मिला"
+		"mcp_server_not_found": "सर्वर \"{{serverName}}\" कॉन्फ़िगरेशन में नहीं मिला",
+		"settings_imported": "सेटिंग्स सफलतापूर्वक आयात की गईं।"
 	},
 	"answers": {
 		"yes": "हां",
