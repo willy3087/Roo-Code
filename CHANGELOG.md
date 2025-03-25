@@ -1,17 +1,27 @@
 # Roo Code Changelog
 
-## 3.11.0
+## [3.10.4] - 2025-03-25
 
-### Minor Changes
-
-- UX fixes that:
-
-### Patch Changes
-
-- Add settings migration to support renaming legacy settings files to new format
-- Fix the supportsPromptCache value for OpenAI models
-- Add the openAiR1FormatEnabled field to enable this switch in OpenAI compatible mode to support the current QWQ and future additional classes of R1 models.
-- 3.10.4
+- Dynamically fetch instructions for creating/editing custom modes and MCP servers (thanks @diarmidmackenzie!)
+- Added Gemini 2.5 Pro model to Google Gemini provider (thanks @samsilveira!)
+- Add settings to control whether to auto-approve reads and writes outside of the workspace
+- Update UX for chat text area (thanks @chadgauth!)
+- Support a custom storage path for tasks (thanks @Chenjiayuan195!)
+- Add a New Task command in the Command Palette (thanks @qdaxb!)
+- Add R1 support checkbox to Open AI compatible provider to support QWQ (thanks @teddyOOXX!)
+- Support test declarations in TypeScript tree-sitter queries (thanks @KJ7LNW!)
+- Add Bedrock support for application-inference-profile (thanks @maekawataiki!)
+- Rename and migrate global MCP and modes files (thanks @StevenTCramer!)
+- Add watchPaths option to McpHub for file change detection (thanks @01Rian!)
+- Read image responses from MCP calls (thanks @nevermorec!)
+- Add taskCreated event to API and subscribe to Cline events earlier (thanks @wkordalski!)
+- Fixes to numeric formatting suffix internationalization (thanks @feifei325!)
+- Fix open tab support in the context mention suggestions (thanks @aheizi!)
+- Better display of OpenRouter “overloaded” error messages
+- Fix browser tool visibility in system prompt preview (thanks @cannuri!)
+- Fix the supportsPromptCache value for OpenAI models (thanks @PeterDaveHello!)
+- Fix readme links to docs (thanks @kvokka!)
+- Run ‘npm audit fix’ on all of our libraries
 
 ## [3.10.3] - 2025-03-23
 
