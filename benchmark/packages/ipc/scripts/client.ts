@@ -1,6 +1,7 @@
 import { TaskCommandName } from "@benchmark/types"
 
-import { IpcMessageType, IpcClient, IpcOrigin } from "../src/index.js"
+import { IpcMessageType, IpcOrigin } from "@benchmark/types"
+import { IpcClient } from "../src/index.js"
 
 async function main(socketPath: string, prompt: string) {
 	try {
