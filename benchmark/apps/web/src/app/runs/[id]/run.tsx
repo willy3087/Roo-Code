@@ -1,18 +1,31 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { LoaderCircle, RectangleEllipsis } from "lucide-react"
+import { LoaderCircle, SquareTerminal } from "lucide-react"
 
 import * as db from "@benchmark/db"
 
+import { formatCurrency, formatDuration, formatTokens } from "@/lib"
 import { useRunStatus } from "@/hooks/use-run-status"
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, ScrollArea } from "@/components/ui"
+import {
+	Drawer,
+	DrawerContent,
+	DrawerHeader,
+	DrawerTitle,
+	ScrollArea,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui"
 
 import { TaskStatus } from "./task-status"
 import { ConnectionStatus } from "./connection-status"
 
 export function Run({ run }: { run: db.Run }) {
-	const { tasks, status, clientId, runningTaskId, output, outputCounts } = useRunStatus(run)
+	const { tasks, status, runningTaskId, output, outputCounts } = useRunStatus(run)
 	const scrollAreaRef = useRef<HTMLDivElement>(null)
 	const [selectedTask, setSelectedTask] = useState<db.Task>()
 
@@ -32,34 +45,73 @@ export function Run({ run }: { run: db.Run }) {
 	return (
 		<>
 			<div className="flex flex-col gap-2">
-				<div className="border-b mb-2 pb-2">
-					<div>Run #{run.id}</div>
+				<div>
 					<div>{run.model}</div>
 					{run.description && <div className="text-sm text-muted-foreground">{run.description}</div>}
 				</div>
 				{!tasks ? (
 					<LoaderCircle className="size-4 animate-spin" />
 				) : (
-					tasks.map((task) => (
-						<div key={task.id} className="flex items-center gap-2">
-							<TaskStatus task={task} runningTaskId={runningTaskId} />
-							<div>
-								{task.language}/{task.exercise}
-							</div>
-							{(outputCounts[task.id] ?? 0) > 0 && (
-								<div
-									className="flex items-center gap-1 cursor-pointer"
-									onClick={() => setSelectedTask(task)}>
-									<RectangleEllipsis className="size-4" />
-									<div className="text-xs">({outputCounts[task.id]})</div>
-								</div>
-							)}
-						</div>
-					))
+					<Table className="border">
+						<TableHeader>
+							<TableRow>
+								<TableHead>Exercise</TableHead>
+								<TableHead className="text-center">Tokens In / Out</TableHead>
+								<TableHead>Context</TableHead>
+								<TableHead>Duration</TableHead>
+								<TableHead>Cost</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody>
+							{tasks.map((task) => (
+								<TableRow key={task.id}>
+									<TableCell>
+										<div className="flex items-center gap-2">
+											<TaskStatus task={task} runningTaskId={runningTaskId} />
+											<div>
+												{task.language}/{task.exercise}
+											</div>
+											{(outputCounts[task.id] ?? 0) > 0 && (
+												<div
+													className="flex items-center gap-1 cursor-pointer"
+													onClick={() => setSelectedTask(task)}>
+													<SquareTerminal className="size-4" />
+													<div className="font-mono text-xs text-foreground/50">
+														{outputCounts[task.id]}
+													</div>
+												</div>
+											)}
+										</div>
+									</TableCell>
+									{task.taskMetrics ? (
+										<>
+											<TableCell className="font-mono text-xs">
+												<div className="flex items-center justify-evenly">
+													<div>{formatTokens(task.taskMetrics.tokensIn)}</div>/
+													<div>{formatTokens(task.taskMetrics.tokensOut)}</div>
+												</div>
+											</TableCell>
+											<TableCell className="font-mono text-xs">
+												{formatTokens(task.taskMetrics.tokensContext)}
+											</TableCell>
+											<TableCell className="font-mono text-xs">
+												{formatDuration(task.taskMetrics.duration)}
+											</TableCell>
+											<TableCell className="font-mono text-xs">
+												{formatCurrency(task.taskMetrics.cost)}
+											</TableCell>
+										</>
+									) : (
+										<TableCell colSpan={3} />
+									)}
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
 				)}
 			</div>
 			<div className="absolute top-5 right-5">
-				<ConnectionStatus status={status} clientId={clientId} pid={run.pid} />
+				<ConnectionStatus status={status} pid={run.pid} />
 			</div>
 			<Drawer open={!!selectedTask} onOpenChange={() => setSelectedTask(undefined)}>
 				<DrawerContent>

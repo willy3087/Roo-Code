@@ -3,18 +3,16 @@ import { cn } from "@/lib/utils"
 
 type ConnectionStatusProps = {
 	status: EventSourceStatus
-	clientId?: string
 	pid: number | null
 }
 
-export const ConnectionStatus = ({ status, clientId, pid }: ConnectionStatusProps) => (
+export const ConnectionStatus = ({ status, pid }: ConnectionStatusProps) => (
 	<div className="flex items-center">
 		<div className="flex flex-col items-end gap-1 font-mono text-xs border-r border-dotted pr-4 mr-4">
 			<div>
 				Status: <span className="capitalize">{status}</span>
 			</div>
 			<div>PID: {pid}</div>
-			{clientId && <div>Client: {clientId}</div>}
 		</div>
 		<div className="relative">
 			<div

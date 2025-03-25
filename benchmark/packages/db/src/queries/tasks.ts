@@ -58,4 +58,5 @@ export const getTask = async ({ runId, language, exercise }: GetTask) =>
 		where: and(eq(table.runId, runId), eq(table.language, language), eq(table.exercise, exercise)),
 	})
 
-export const getTasks = async (runId: number) => db.query.tasks.findMany({ where: eq(table.runId, runId) })
+export const getTasks = async (runId: number) =>
+	db.query.tasks.findMany({ where: eq(table.runId, runId), with: { taskMetrics: true } })
