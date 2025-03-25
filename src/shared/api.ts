@@ -21,17 +21,20 @@ export type ApiProvider =
 
 export interface ApiHandlerOptions {
 	apiModelId?: string
-	apiKey?: string // anthropic
+	// Anthropic
+	apiKey?: string
 	anthropicBaseUrl?: string
-	vsCodeLmModelSelector?: vscode.LanguageModelChatSelector
+	// Glama
 	glamaModelId?: string
 	glamaModelInfo?: ModelInfo
 	glamaApiKey?: string
+	// OpenRouter
 	openRouterApiKey?: string
 	openRouterModelId?: string
 	openRouterModelInfo?: ModelInfo
 	openRouterBaseUrl?: string
 	openRouterSpecificProvider?: string
+	// AWS Bedrok
 	awsAccessKey?: string
 	awsSecretKey?: string
 	awsSessionToken?: string
@@ -42,42 +45,58 @@ export interface ApiHandlerOptions {
 	awsProfile?: string
 	awsUseProfile?: boolean
 	awsCustomArn?: string
+	// Google Vertex
 	vertexKeyFile?: string
 	vertexJsonCredentials?: string
 	vertexProjectId?: string
 	vertexRegion?: string
+	// OpenAI
 	openAiBaseUrl?: string
 	openAiApiKey?: string
 	openAiR1FormatEnabled?: boolean
 	openAiModelId?: string
 	openAiCustomModelInfo?: ModelInfo
 	openAiUseAzure?: boolean
+	// Ollama
 	ollamaModelId?: string
 	ollamaBaseUrl?: string
+	// VS Code LM
+	vsCodeLmModelSelector?: vscode.LanguageModelChatSelector
+	// LM Studio
 	lmStudioModelId?: string
 	lmStudioBaseUrl?: string
 	lmStudioDraftModelId?: string
 	lmStudioSpeculativeDecodingEnabled?: boolean
+	// Gemini
 	geminiApiKey?: string
 	googleGeminiBaseUrl?: string
+	// OpenAI Native
 	openAiNativeApiKey?: string
+	// Mistral
 	mistralApiKey?: string
 	mistralCodestralUrl?: string // New option for Codestral URL
+	// Azure
 	azureApiVersion?: string
+	// OpenRouter
 	openRouterUseMiddleOutTransform?: boolean
 	openAiStreamingEnabled?: boolean
+	// DeepSeek
 	deepSeekBaseUrl?: string
 	deepSeekApiKey?: string
 	includeMaxTokens?: boolean
+	// Unbound
 	unboundApiKey?: string
 	unboundModelId?: string
 	unboundModelInfo?: ModelInfo
+	// Requesty
 	requestyApiKey?: string
 	requestyModelId?: string
 	requestyModelInfo?: ModelInfo
+	// Claude 3.7 Sonnet Thinking
 	modelTemperature?: number | null
 	modelMaxTokens?: number
 	modelMaxThinkingTokens?: number
+	// Fake AI
 	fakeAi?: unknown
 }
 
