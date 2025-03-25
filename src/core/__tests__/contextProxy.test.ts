@@ -1,5 +1,7 @@
 // npx jest src/core/__tests__/contextProxy.test.ts
 
+import fs from "fs/promises"
+
 import * as vscode from "vscode"
 import { ContextProxy } from "../contextProxy"
 
@@ -414,6 +416,78 @@ describe("ContextProxy", () => {
 
 			// Should reinitialize caches
 			expect(initializeSpy).toHaveBeenCalledTimes(1)
+		})
+	})
+
+	describe("exportGlobalConfiguration", () => {
+		it("should write configuration to a file when filePath is provided", async () => {
+			await proxy.updateGlobalState("apiModelId", "gpt-4")
+			await proxy.updateGlobalState("apiProvider", "openai")
+			await proxy.storeSecret("openAiApiKey", "test-api-key")
+
+			const filePath = `/tmp/roo-global-config-${Date.now()}.json`
+			const result = await proxy.exportGlobalConfiguration(filePath)
+			expect(result).toEqual({ apiProvider: "openai" })
+			const fileContent = await fs.readFile(filePath, "utf-8")
+			expect(fileContent).toContain('"apiProvider": "openai"')
+
+			await proxy.updateGlobalState("apiProvider", "openrouter")
+
+			const importedConfig = await proxy.importGlobalConfiguration(filePath)
+			expect(importedConfig).toEqual({ apiProvider: "openai" })
+
+			await fs.unlink(filePath)
+		})
+	})
+
+	describe("exportApiConfiguration", () => {
+		it("should write configuration to a file when filePath is provided", async () => {
+			await proxy.updateGlobalState("apiModelId", "gpt-4")
+			await proxy.updateGlobalState("apiProvider", "openai")
+			await proxy.storeSecret("openAiApiKey", "test-api-key")
+
+			const filePath = `/tmp/roo-api-config-${Date.now()}.json`
+			const result = await proxy.exportApiConfiguration(filePath)
+			expect(result).toEqual({
+				apiModelId: "gpt-4",
+				openAiApiKey: "test-api-key",
+				apiKey: "test-secret",
+				awsAccessKey: "test-secret",
+				awsSecretKey: "test-secret",
+				awsSessionToken: "test-secret",
+				deepSeekApiKey: "test-secret",
+				geminiApiKey: "test-secret",
+				glamaApiKey: "test-secret",
+				mistralApiKey: "test-secret",
+				openAiNativeApiKey: "test-secret",
+				openRouterApiKey: "test-secret",
+				requestyApiKey: "test-secret",
+				unboundApiKey: "test-secret",
+			})
+			const fileContent = await fs.readFile(filePath, "utf-8")
+			expect(fileContent).toContain('"openAiApiKey": "test-api-key"')
+
+			await proxy.storeSecret("openAiApiKey", "new-text-api-key")
+
+			const importedConfig = await proxy.importApiConfiguration(filePath)
+			expect(importedConfig).toEqual({
+				apiModelId: "gpt-4",
+				openAiApiKey: "test-api-key",
+				apiKey: "test-secret",
+				awsAccessKey: "test-secret",
+				awsSecretKey: "test-secret",
+				awsSessionToken: "test-secret",
+				deepSeekApiKey: "test-secret",
+				geminiApiKey: "test-secret",
+				glamaApiKey: "test-secret",
+				mistralApiKey: "test-secret",
+				openAiNativeApiKey: "test-secret",
+				openRouterApiKey: "test-secret",
+				requestyApiKey: "test-secret",
+				unboundApiKey: "test-secret",
+			})
+
+			await fs.unlink(filePath)
 		})
 	})
 })

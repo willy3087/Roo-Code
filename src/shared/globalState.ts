@@ -1,3 +1,5 @@
+import { z } from "zod"
+
 import type { SecretKey, GlobalStateKey, ConfigurationKey, ConfigurationValues } from "../exports/roo-code"
 
 export type { SecretKey, GlobalStateKey, ConfigurationKey, ConfigurationValues }
@@ -10,6 +12,10 @@ export type { SecretKey, GlobalStateKey, ConfigurationKey, ConfigurationValues }
  * If you extend the `SecretKey` or `GlobalStateKey` types, you will need to
  * update the `SECRET_KEYS` and `GLOBAL_STATE_KEYS` arrays to include the new
  * keys or a type error will be thrown.
+ */
+
+/**
+ * Secret keys.
  */
 
 export const SECRET_KEYS = [
@@ -28,9 +34,18 @@ export const SECRET_KEYS = [
 	"requestyApiKey",
 ] as const
 
+// Throws a type error we're missing a key.
 type CheckSecretKeysExhaustiveness = Exclude<SecretKey, (typeof SECRET_KEYS)[number]> extends never ? true : false
-
 const _checkSecretKeysExhaustiveness: CheckSecretKeysExhaustiveness = true
+
+export const isSecretKey = (key: string): key is SecretKey => SECRET_KEYS.includes(key as SecretKey)
+
+// TODO: Replace `z.unknown()` with the actual types.
+export const secretStateSchema = z.record(z.enum(SECRET_KEYS), z.unknown())
+
+/**
+ * Global state keys.
+ */
 
 export const GLOBAL_STATE_KEYS = [
 	"apiProvider",
@@ -127,17 +142,27 @@ export const GLOBAL_STATE_KEYS = [
 	"fakeAi",
 ] as const
 
-export const PASS_THROUGH_STATE_KEYS = ["taskHistory"] as const
-
+// Throws a type error we're missing a key.
 type CheckGlobalStateKeysExhaustiveness =
 	Exclude<GlobalStateKey, (typeof GLOBAL_STATE_KEYS)[number]> extends never ? true : false
 
 const _checkGlobalStateKeysExhaustiveness: CheckGlobalStateKeysExhaustiveness = true
 
-export const isSecretKey = (key: string): key is SecretKey => SECRET_KEYS.includes(key as SecretKey)
-
 export const isGlobalStateKey = (key: string): key is GlobalStateKey =>
 	GLOBAL_STATE_KEYS.includes(key as GlobalStateKey)
 
+// TODO: Replace `z.unknown()` with the actual types.
+export const globalStateSchema = z.record(z.enum(GLOBAL_STATE_KEYS), z.unknown())
+
+/**
+ * Pass-through state keys.
+ * TODO: What are these?
+ */
+
+export const PASS_THROUGH_STATE_KEYS = ["taskHistory"] as const
+
 export const isPassThroughStateKey = (key: string): key is (typeof PASS_THROUGH_STATE_KEYS)[number] =>
 	PASS_THROUGH_STATE_KEYS.includes(key as (typeof PASS_THROUGH_STATE_KEYS)[number])
+
+// TODO: Replace `z.unknown()` with the actual types.
+export const passThroughStateSchema = z.record(z.enum(PASS_THROUGH_STATE_KEYS), z.unknown())

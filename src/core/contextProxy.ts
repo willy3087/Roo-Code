@@ -1,4 +1,6 @@
 import * as vscode from "vscode"
+import * as fs from "fs/promises"
+import * as path from "path"
 
 import { logger } from "../utils/logging"
 import {
@@ -11,8 +13,22 @@ import {
 	isSecretKey,
 	isGlobalStateKey,
 	isPassThroughStateKey,
+	globalStateSchema,
 } from "../shared/globalState"
-import { API_CONFIG_KEYS, ApiConfiguration } from "../shared/api"
+import { API_CONFIG_KEYS, ApiConfiguration, apiHandlerOptionsSchema, ApiHandlerOptionsKey } from "../shared/api"
+
+const NON_EXPORTABLE_GLOBAL_CONFIGURATION: GlobalStateKey[] = [
+	"taskHistory",
+	"listApiConfigMeta",
+	"currentApiConfigName",
+]
+
+const NON_EXPORTABLE_API_CONFIGURATION: ApiHandlerOptionsKey[] = [
+	"glamaModelInfo",
+	"openRouterModelInfo",
+	"unboundModelInfo",
+	"requestyModelInfo",
+]
 
 export class ContextProxy {
 	private readonly originalContext: vscode.ExtensionContext
@@ -155,12 +171,123 @@ export class ContextProxy {
 		// that the setting's value should be `undefined` and therefore we
 		// need to remove it from the state cache if it exists.
 		await this.setValues({
-			...API_CONFIG_KEYS.filter((key) => !!this.stateCache.get(key)).reduce(
-				(acc, key) => ({ ...acc, [key]: undefined }),
-				{} as Partial<ConfigurationValues>,
-			),
+			...API_CONFIG_KEYS.filter((key) => isGlobalStateKey(key))
+				.filter((key) => !!this.stateCache.get(key))
+				.reduce((acc, key) => ({ ...acc, [key]: undefined }), {} as Partial<ConfigurationValues>),
 			...apiConfiguration,
 		})
+	}
+
+	private getAllGlobalStateValues() {
+		const values: Partial<Record<GlobalStateKey, any>> = {}
+
+		for (const key of GLOBAL_STATE_KEYS) {
+			const value = this.getGlobalState(key)
+
+			if (value !== undefined) {
+				values[key] = value
+			}
+		}
+
+		return values
+	}
+
+	private getAllSecretValues() {
+		const values: Partial<Record<SecretKey, string>> = {}
+
+		for (const key of SECRET_KEYS) {
+			const value = this.getSecret(key)
+
+			if (value !== undefined) {
+				values[key] = value
+			}
+		}
+
+		return values
+	}
+
+	async exportGlobalConfiguration(filePath: string) {
+		try {
+			const values = this.getAllGlobalStateValues()
+			const configuration = globalStateSchema.parse(values)
+			const omit = new Set<string>([...API_CONFIG_KEYS, ...NON_EXPORTABLE_GLOBAL_CONFIGURATION])
+			const entries = Object.entries(configuration).filter(([key]) => !omit.has(key))
+
+			if (entries.length === 0) {
+				throw new Error("No configuration values to export.")
+			}
+
+			const globalConfiguration = Object.fromEntries(entries)
+
+			const dirname = path.dirname(filePath)
+			await fs.mkdir(dirname, { recursive: true })
+			await fs.writeFile(filePath, JSON.stringify(globalConfiguration, null, 2), "utf-8")
+			return globalConfiguration
+		} catch (error) {
+			console.log(error.message)
+			logger.error(
+				`Error exporting global configuration to ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			return undefined
+		}
+	}
+
+	async importGlobalConfiguration(filePath: string) {
+		try {
+			const configuration = globalStateSchema.parse(JSON.parse(await fs.readFile(filePath, "utf-8")))
+			const omit = new Set<string>([...API_CONFIG_KEYS, ...NON_EXPORTABLE_GLOBAL_CONFIGURATION])
+			const entries = Object.entries(configuration).filter(([key]) => !omit.has(key))
+
+			if (entries.length === 0) {
+				throw new Error("No configuration values to import.")
+			}
+
+			const globalConfiguration = Object.fromEntries(entries)
+			await this.setValues(globalConfiguration)
+			return globalConfiguration
+		} catch (error) {
+			logger.error(
+				`Error importing global configuration from ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			return undefined
+		}
+	}
+
+	async exportApiConfiguration(filePath: string) {
+		try {
+			const apiConfiguration = apiHandlerOptionsSchema
+				.omit(NON_EXPORTABLE_API_CONFIGURATION.reduce((acc, key) => ({ ...acc, [key]: true }), {}))
+				.parse({
+					...this.getAllGlobalStateValues(),
+					...this.getAllSecretValues(),
+				})
+
+			const dirname = path.dirname(filePath)
+			await fs.mkdir(dirname, { recursive: true })
+			await fs.writeFile(filePath, JSON.stringify(apiConfiguration, null, 2), "utf-8")
+			return apiConfiguration
+		} catch (error) {
+			logger.error(
+				`Error exporting API configuration to ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			return undefined
+		}
+	}
+
+	async importApiConfiguration(filePath: string) {
+		try {
+			const apiConfiguration = apiHandlerOptionsSchema
+				.omit(NON_EXPORTABLE_API_CONFIGURATION.reduce((acc, key) => ({ ...acc, [key]: true }), {}))
+				.parse(JSON.parse(await fs.readFile(filePath, "utf-8")))
+
+			await this.setApiConfiguration(apiConfiguration)
+			return apiConfiguration
+		} catch (error) {
+			logger.error(
+				`Error importing API configuration from ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+			)
+			return undefined
+		}
 	}
 
 	/**
@@ -184,6 +311,6 @@ export class ContextProxy {
 		// Wait for all reset operations to complete.
 		await Promise.all([...stateResetPromises, ...secretResetPromises])
 
-		this.initialize()
+		await this.initialize()
 	}
 }

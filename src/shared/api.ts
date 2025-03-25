@@ -1,4 +1,45 @@
 import * as vscode from "vscode"
+import { z } from "zod"
+
+import { AssertEqual, Equals } from "../utils/type-fu"
+
+// Models
+
+export const modelInfoSchema = z.object({
+	maxTokens: z.number().optional(),
+	contextWindow: z.number(),
+	supportsImages: z.boolean().optional(),
+	supportsComputerUse: z.boolean().optional(),
+	supportsPromptCache: z.boolean(),
+	inputPrice: z.number().optional(),
+	outputPrice: z.number().optional(),
+	cacheWritesPrice: z.number().optional(),
+	cacheReadsPrice: z.number().optional(),
+	description: z.string().optional(),
+	reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+	thinking: z.boolean().optional(),
+})
+
+export interface ModelInfo {
+	maxTokens?: number
+	contextWindow: number
+	supportsImages?: boolean
+	supportsComputerUse?: boolean
+	supportsPromptCache: boolean // This value is hardcoded for now.
+	inputPrice?: number
+	outputPrice?: number
+	cacheWritesPrice?: number
+	cacheReadsPrice?: number
+	description?: string
+	reasoningEffort?: "low" | "medium" | "high"
+	thinking?: boolean
+}
+
+// Throws a type error if the inferred type of the schema is not equal to the
+// type of the ModelInfo.
+type _AssertModelInfoMatchesSchema = AssertEqual<Equals<ModelInfo, z.infer<typeof modelInfoSchema>>>
+
+// Providers
 
 export type ApiProvider =
 	| "anthropic"
@@ -34,7 +75,7 @@ export interface ApiHandlerOptions {
 	openRouterModelInfo?: ModelInfo
 	openRouterBaseUrl?: string
 	openRouterSpecificProvider?: string
-	// AWS Bedrok
+	// AWS Bedrock
 	awsAccessKey?: string
 	awsSecretKey?: string
 	awsSessionToken?: string
@@ -74,7 +115,7 @@ export interface ApiHandlerOptions {
 	openAiNativeApiKey?: string
 	// Mistral
 	mistralApiKey?: string
-	mistralCodestralUrl?: string // New option for Codestral URL
+	mistralCodestralUrl?: string // New option for Codestral URL.
 	// Azure
 	azureApiVersion?: string
 	// OpenRouter
@@ -100,18 +141,109 @@ export interface ApiHandlerOptions {
 	fakeAi?: unknown
 }
 
+export type ApiHandlerOptionsKey = keyof ApiHandlerOptions
+
+export const apiHandlerOptionsSchema = z.object({
+	// Anthropic
+	apiModelId: z.string().optional(),
+	apiKey: z.string().optional(),
+	anthropicBaseUrl: z.string().optional(),
+	// Glama
+	glamaModelId: z.string().optional(),
+	glamaModelInfo: modelInfoSchema.optional(),
+	glamaApiKey: z.string().optional(),
+	// OpenRouter
+	openRouterApiKey: z.string().optional(),
+	openRouterModelId: z.string().optional(),
+	openRouterModelInfo: modelInfoSchema.optional(),
+	openRouterBaseUrl: z.string().optional(),
+	openRouterSpecificProvider: z.string().optional(),
+	// AWS Bedrock
+	awsAccessKey: z.string().optional(),
+	awsSecretKey: z.string().optional(),
+	awsSessionToken: z.string().optional(),
+	awsRegion: z.string().optional(),
+	awsUseCrossRegionInference: z.boolean().optional(),
+	awsUsePromptCache: z.boolean().optional(),
+	awspromptCacheId: z.string().optional(),
+	awsProfile: z.string().optional(),
+	awsUseProfile: z.boolean().optional(),
+	awsCustomArn: z.string().optional(),
+	// Google Vertex
+	vertexKeyFile: z.string().optional(),
+	vertexJsonCredentials: z.string().optional(),
+	vertexProjectId: z.string().optional(),
+	vertexRegion: z.string().optional(),
+	// OpenAI
+	openAiBaseUrl: z.string().optional(),
+	openAiApiKey: z.string().optional(),
+	openAiR1FormatEnabled: z.boolean().optional(),
+	openAiModelId: z.string().optional(),
+	openAiCustomModelInfo: modelInfoSchema.optional(),
+	openAiUseAzure: z.boolean().optional(),
+	// Ollama
+	ollamaModelId: z.string().optional(),
+	ollamaBaseUrl: z.string().optional(),
+	// VS Code LM
+	vsCodeLmModelSelector: z
+		.object({
+			vendor: z.string().optional(),
+			family: z.string().optional(),
+			version: z.string().optional(),
+			id: z.string().optional(),
+		})
+		.optional(),
+	// LM Studio
+	lmStudioModelId: z.string().optional(),
+	lmStudioBaseUrl: z.string().optional(),
+	lmStudioDraftModelId: z.string().optional(),
+	lmStudioSpeculativeDecodingEnabled: z.boolean().optional(),
+	// Gemini
+	geminiApiKey: z.string().optional(),
+	googleGeminiBaseUrl: z.string().optional(),
+	// OpenAI Native
+	openAiNativeApiKey: z.string().optional(),
+	// Mistral
+	mistralApiKey: z.string().optional(),
+	mistralCodestralUrl: z.string().optional(),
+	// Azure
+	azureApiVersion: z.string().optional(),
+	// OpenRouter
+	openRouterUseMiddleOutTransform: z.boolean().optional(),
+	openAiStreamingEnabled: z.boolean().optional(),
+	// DeepSeek
+	deepSeekBaseUrl: z.string().optional(),
+	deepSeekApiKey: z.string().optional(),
+	includeMaxTokens: z.boolean().optional(),
+	// Unbound
+	unboundApiKey: z.string().optional(),
+	unboundModelId: z.string().optional(),
+	unboundModelInfo: modelInfoSchema.optional(),
+	// Requesty
+	requestyApiKey: z.string().optional(),
+	requestyModelId: z.string().optional(),
+	requestyModelInfo: modelInfoSchema.optional(),
+	// Claude 3.7 Sonnet Thinking
+	modelTemperature: z.number().nullish(),
+	modelMaxTokens: z.number().optional(),
+	modelMaxThinkingTokens: z.number().optional(),
+	// Fake AI
+	fakeAi: z.unknown().optional(),
+})
+
+// Throws a type error if the inferred type of the schema is not equal to the
+// type of the ApiHandlerOptions.
+type _AssertApiHandlerOptionsMatchesSchema = AssertEqual<
+	Equals<ApiHandlerOptions, z.infer<typeof apiHandlerOptionsSchema>>
+>
+
 export type ApiConfiguration = ApiHandlerOptions & {
 	apiProvider?: ApiProvider
-	id?: string // stable unique identifier
+	id?: string // Stable unique identifier.
 }
 
-// Import GlobalStateKey type from globalState.ts
-import { GlobalStateKey } from "./globalState"
-
 // Define API configuration keys for dynamic object building.
-// TODO: This needs actual type safety; a type error should be thrown if
-// this is not an exhaustive list of all `GlobalStateKey` values.
-export const API_CONFIG_KEYS: GlobalStateKey[] = [
+export const API_CONFIG_KEYS: ApiHandlerOptionsKey[] = [
 	"apiModelId",
 	"anthropicBaseUrl",
 	"vsCodeLmModelSelector",
@@ -159,23 +291,6 @@ export const API_CONFIG_KEYS: GlobalStateKey[] = [
 	"modelMaxThinkingTokens",
 	"fakeAi",
 ]
-
-// Models
-
-export interface ModelInfo {
-	maxTokens?: number
-	contextWindow: number
-	supportsImages?: boolean
-	supportsComputerUse?: boolean
-	supportsPromptCache: boolean // this value is hardcoded for now
-	inputPrice?: number
-	outputPrice?: number
-	cacheWritesPrice?: number
-	cacheReadsPrice?: number
-	description?: string
-	reasoningEffort?: "low" | "medium" | "high"
-	thinking?: boolean
-}
 
 // Anthropic
 // https://docs.anthropic.com/en/docs/about-claude/models

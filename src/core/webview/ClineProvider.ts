@@ -31,6 +31,7 @@ import {
 	SECRET_KEYS,
 	GLOBAL_STATE_KEYS,
 	ConfigurationValues,
+	isGlobalStateKey,
 } from "../../shared/globalState"
 import { HistoryItem } from "../../shared/HistoryItem"
 import { ApiConfigMeta, ExtensionMessage } from "../../shared/ExtensionMessage"
@@ -99,6 +100,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 	private workspaceTracker?: WorkspaceTracker
 	protected mcpHub?: McpHub // Change from private to protected
 	private latestAnnouncementId = "mar-20-2025-3-10" // update to some unique identifier when we add a new announcement
+	private settingsImportedAt?: number
 	private contextProxy: ContextProxy
 	configManager: ConfigManager
 	customModesManager: CustomModesManager
@@ -1070,6 +1072,41 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 					}
 					case "exportTaskWithId":
 						this.exportTaskWithId(message.text!)
+						break
+					case "importSettings":
+						const uris = await vscode.window.showOpenDialog({
+							filters: { JSON: ["json"] },
+							canSelectMany: false,
+						})
+
+						if (uris) {
+							if (message.text === "global") {
+								await this.contextProxy.importGlobalConfiguration(uris[0].fsPath)
+							} else {
+								await this.contextProxy.importApiConfiguration(uris[0].fsPath)
+							}
+
+							this.settingsImportedAt = Date.now()
+							await this.postStateToWebview()
+							await vscode.window.showInformationMessage(t("common:info.settings_imported"))
+						}
+						break
+					case "exportSettings":
+						const uri = await vscode.window.showSaveDialog({
+							filters: { JSON: ["json"] },
+							defaultUri: vscode.Uri.file(
+								path.join(os.homedir(), "Documents", `roo-code-${message.text}.json`),
+							),
+						})
+
+						if (uri) {
+							if (message.text === "global") {
+								await this.contextProxy.exportGlobalConfiguration(uri.fsPath)
+							} else {
+								await this.contextProxy.exportApiConfiguration(uri.fsPath)
+							}
+						}
+
 						break
 					case "resetState":
 						await this.resetState()
@@ -2582,6 +2619,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			language,
 			renderContext: this.renderContext,
 			maxReadFileLine: maxReadFileLine ?? 500,
+			settingsImportedAt: this.settingsImportedAt,
 		}
 	}
 
@@ -2671,7 +2709,9 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		// Using the dynamic approach with API_CONFIG_KEYS
 		const apiConfiguration: ApiConfiguration = {
 			// Dynamically add all API-related keys from stateValues
-			...Object.fromEntries(API_CONFIG_KEYS.map((key) => [key, stateValues[key]])),
+			...Object.fromEntries(
+				API_CONFIG_KEYS.filter((key) => isGlobalStateKey(key)).map((key) => [key, stateValues[key]]),
+			),
 			// Add all secrets
 			...secretValues,
 		}
