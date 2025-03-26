@@ -66,7 +66,8 @@
 		"mcp_server_not_found": "Server \"{{serverName}}\" not found in configuration",
 		"settings_imported": "Settings imported successfully.",
 		"custom_storage_path_set": "Custom storage path set: {{path}}",
-		"default_storage_path": "Reverted to using default storage path"
+		"default_storage_path": "Reverted to using default storage path",
+		"settings_imported": "Settings imported successfully."
 	},
 	"answers": {
 		"yes": "Yes",
