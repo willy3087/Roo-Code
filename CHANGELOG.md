@@ -1,11 +1,9 @@
 # Roo Code Changelog
 
-## 3.10.5
+## [3.10.5] - 2025-03-25
 
-### Patch Changes
-
-- v3.10.5
-- Fix task completion events
+- Updated value of max tokens for gemini-2.5-pro-03-25 to 65,536 (thanks @linegel!)
+- Fix logic around when we fire task completion events
 
 ## [3.10.4] - 2025-03-25
 
