@@ -1,5 +1,7 @@
 // npx jest src/core/config/__tests__/ContextProxy.test.ts
 
+import fs from "fs/promises"
+
 import * as vscode from "vscode"
 import { ContextProxy } from "../ContextProxy"
 
