@@ -64,7 +64,6 @@
 		"mcp_server_connected": "Server MCP {{serverName}} connesso",
 		"mcp_server_deleted": "Server MCP eliminato: {{serverName}}",
 		"mcp_server_not_found": "Server \"{{serverName}}\" non trovato nella configurazione",
-		"settings_imported": "Impostazioni importate con successo.",
 		"custom_storage_path_set": "Percorso di archiviazione personalizzato impostato: {{path}}",
 		"default_storage_path": "Tornato al percorso di archiviazione predefinito",
 		"settings_imported": "Impostazioni importate con successo."
