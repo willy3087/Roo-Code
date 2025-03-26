@@ -1,5 +1,12 @@
 # Roo Code Changelog
 
+## 3.10.5
+
+### Patch Changes
+
+- v3.10.5
+- Fix task completion events
+
 ## [3.10.4] - 2025-03-25
 
 - Dynamically fetch instructions for creating/editing custom modes and MCP servers (thanks @diarmidmackenzie!)
