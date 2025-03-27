@@ -3,7 +3,7 @@ import { relations } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod"
 import { z } from "zod"
 
-import { languages } from "@benchmark/types"
+import { exerciseLanguages } from "@benchmark/types"
 
 /**
  * runs
@@ -45,7 +45,7 @@ export const tasks = sqliteTable(
 			.references(() => runs.id)
 			.notNull(),
 		taskMetricsId: integer({ mode: "number" }).references(() => taskMetrics.id),
-		language: text({ enum: languages }).notNull(),
+		language: text({ enum: exerciseLanguages }).notNull(),
 		exercise: text().notNull(),
 		passed: integer({ mode: "boolean" }),
 		startedAt: integer({ mode: "timestamp" }),

@@ -7,14 +7,14 @@ import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 import { runTests } from "@vscode/test-electron"
 import { execa, parseCommandString } from "execa"
 
-import { type Language, languages, IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
+import { type ExerciseLanguage, exerciseLanguages, IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
 import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks, updateTask } from "@benchmark/db"
 import { IpcServer } from "@benchmark/ipc"
 
 import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
 
-const testCommands: Record<Language, { commands: string[]; timeout?: number; cwd?: string }> = {
+const testCommands: Record<ExerciseLanguage, { commands: string[]; timeout?: number; cwd?: string }> = {
 	cpp: { commands: ["cmake -G 'Unix\\ Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 ..", "make"], cwd: "build" }, // timeout 15s bash -c "cd '$dir' && mkdir -p build && cd build && cmake -G 'Unix Makefiles' -DEXERCISM_RUN_ALL_TESTS=1 .. >/dev/null 2>&1 && make >/dev/null 2>&1"
 	go: { commands: ["go test"] }, // timeout 15s bash -c "cd '$dir' && go test > /dev/null 2>&1"
 	java: { commands: ["./gradlew test"] }, // timeout --foreground 15s bash -c "cd '$dir' && ./gradlew test > /dev/null 2>&1"
@@ -28,7 +28,7 @@ const run = async (toolbox: GluegunToolbox) => {
 
 	let { language, exercise } = config
 
-	if (![undefined, ...languages, "all"].includes(language)) {
+	if (![undefined, ...exerciseLanguages, "all"].includes(language)) {
 		throw new Error(`Language is invalid: ${language}`)
 	}
 
@@ -49,15 +49,15 @@ const run = async (toolbox: GluegunToolbox) => {
 		})
 
 		if (language === "all") {
-			for (const language of languages) {
-				const exercises = getExercises()[language as Language]
+			for (const language of exerciseLanguages) {
+				const exercises = getExercises()[language as ExerciseLanguage]
 
 				await pMap(exercises, (exercise) => createTask({ runId: run.id, language, exercise }), {
 					concurrency: 10,
 				})
 			}
 		} else if (exercise === "all") {
-			const exercises = getExercises()[language as Language]
+			const exercises = getExercises()[language as ExerciseLanguage]
 			await pMap(exercises, (exercise) => createTask({ runId: run.id, language, exercise }), { concurrency: 10 })
 		} else {
 			language = language || (await askLanguage(prompt))
@@ -166,17 +166,17 @@ const runExercise = async ({ run, task }: { run: Run; task: Task }) => {
 }
 
 const askLanguage = async (prompt: GluegunPrompt) => {
-	const { language } = await prompt.ask<{ language: Language }>({
+	const { language } = await prompt.ask<{ language: ExerciseLanguage }>({
 		type: "select",
 		name: "language",
 		message: "Which language?",
-		choices: [...languages],
+		choices: [...exerciseLanguages],
 	})
 
 	return language
 }
 
-const askExercise = async (prompt: GluegunPrompt, language: Language) => {
+const askExercise = async (prompt: GluegunPrompt, language: ExerciseLanguage) => {
 	const exercises = filesystem.subdirectories(path.join(exercisesPath, language))
 
 	if (exercises.length === 0) {

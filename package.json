@@ -73,9 +73,11 @@
 		"views": {
 			"roo-cline-ActivityBar": [
 				{
-					"type": "webview",
 					"id": "roo-cline.SidebarProvider",
-					"name": ""
+					"type": "webview",
+					"name": "Roo Code",
+					"icon": "$(rocket)",
+					"contextualTitle": "Roo Code!"
 				}
 			]
 		},

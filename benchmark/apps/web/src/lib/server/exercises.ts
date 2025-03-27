@@ -4,7 +4,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import { fileURLToPath } from "url"
 
-import { Language, languages } from "@benchmark/types"
+import { ExerciseLanguage, exerciseLanguages } from "@benchmark/types"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,7 +24,7 @@ const EXERCISES_BASE_PATH = path.resolve(__dirname, "../../../../../../../exerci
 
 export const getExercises = async () => {
 	const result = await Promise.all(
-		languages.map(async (language) => {
+		exerciseLanguages.map(async (language) => {
 			const languagePath = path.join(EXERCISES_BASE_PATH, language)
 			const exercises = await listDirectories(languagePath)
 			return exercises.map((exercise) => `${language}/${exercise}`)
@@ -34,5 +34,5 @@ export const getExercises = async () => {
 	return result.flat()
 }
 
-export const getExercisesForLanguage = async (language: Language) =>
+export const getExercisesForLanguage = async (language: ExerciseLanguage) =>
 	listDirectories(path.join(EXERCISES_BASE_PATH, language))

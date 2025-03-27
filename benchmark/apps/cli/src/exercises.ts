@@ -3,18 +3,18 @@ import * as fs from "fs"
 
 import { filesystem } from "gluegun"
 
-import { type Language, languages } from "@benchmark/types"
+import { type ExerciseLanguage, exerciseLanguages } from "@benchmark/types"
 
 import { exercisesPath } from "./paths.js"
 
-let exercisesByLanguage: Record<Language, string[]> | null = null
+let exercisesByLanguage: Record<ExerciseLanguage, string[]> | null = null
 
 export const getExercises = () => {
 	if (exercisesByLanguage !== null) {
 		return exercisesByLanguage
 	}
 
-	const getLanguageExercises = (language: Language) =>
+	const getLanguageExercises = (language: ExerciseLanguage) =>
 		fs.existsSync(path.resolve(exercisesPath, language))
 			? filesystem
 					.subdirectories(path.resolve(exercisesPath, language))
@@ -22,9 +22,9 @@ export const getExercises = () => {
 					.filter((exercise) => !exercise.startsWith("."))
 			: []
 
-	exercisesByLanguage = languages.reduce(
+	exercisesByLanguage = exerciseLanguages.reduce(
 		(collect, language) => ({ ...collect, [language]: getLanguageExercises(language) }),
-		{} as Record<Language, string[]>,
+		{} as Record<ExerciseLanguage, string[]>,
 	)
 
 	return exercisesByLanguage

@@ -7,7 +7,7 @@ import os from "os"
 import { revalidatePath } from "next/cache"
 import pMap from "p-map"
 
-import { Language, languages } from "@benchmark/types"
+import { ExerciseLanguage, exerciseLanguages } from "@benchmark/types"
 import * as db from "@benchmark/db"
 
 import { CreateRun } from "@/lib/schemas"
@@ -27,10 +27,10 @@ export async function createRun({ suite, exercises = [], ...values }: CreateRun)
 				throw new Error("Invalid exercise path: " + path)
 			}
 
-			await db.createTask({ ...values, runId: run.id, language: language as Language, exercise })
+			await db.createTask({ ...values, runId: run.id, language: language as ExerciseLanguage, exercise })
 		}
 	} else {
-		for (const language of languages) {
+		for (const language of exerciseLanguages) {
 			const exercises = await getExercisesForLanguage(language)
 
 			await pMap(exercises, (exercise) => db.createTask({ ...values, runId: run.id, language, exercise }), {

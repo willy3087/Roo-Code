@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm"
 
-import type { Language } from "@benchmark/types"
+import type { ExerciseLanguage } from "@benchmark/types"
 
 import { RecordNotFoundError, RecordNotCreatedError } from "./errors.js"
 import type { InsertTask, UpdateTask } from "../schema.js"
@@ -49,7 +49,7 @@ export const updateTask = async (id: number, values: UpdateTask) => {
 }
 type GetTask = {
 	runId: number
-	language: Language
+	language: ExerciseLanguage
 	exercise: string
 }
 
