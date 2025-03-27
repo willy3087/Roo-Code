@@ -1,11 +1,13 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { Fragment, useCallback, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import fuzzysort from "fuzzysort"
-import { X, Rocket, Check, ChevronsUpDown } from "lucide-react"
+import { X, Rocket, Check, ChevronsUpDown, HardDriveUpload, CircleCheck } from "lucide-react"
+
+import { ExperimentId, Experiments, globalSettingsSchema, rooCodeDefaults } from "@benchmark/types"
 
 import { createRun } from "@/lib/server/runs"
 import { createRunSchema as formSchema, type CreateRun as FormValues } from "@/lib/schemas"
@@ -18,6 +20,7 @@ import {
 	FormField,
 	FormItem,
 	FormLabel,
+	FormDescription,
 	FormMessage,
 	Textarea,
 	Tabs,
@@ -33,7 +36,16 @@ import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
+	ScrollArea,
 } from "@/components/ui"
+import { z } from "zod"
+import { SettingsDiff } from "./settings-diff"
+
+const recommendedModels = [
+	"anthropic/claude-3.7-sonnet",
+	"anthropic/claude-3.7-sonnet:thinking",
+	"google/gemini-2.0-flash-001",
+]
 
 export function NewRun() {
 	const router = useRouter()
@@ -53,38 +65,33 @@ export function NewRun() {
 			description: "",
 			suite: "full",
 			exercises: [],
+			settings: undefined,
 		},
 	})
 
 	const {
 		setValue,
+		setError,
+		clearErrors,
 		watch,
 		formState: { isSubmitting },
 	} = form
 
-	const [model, suite] = watch(["model", "suite"])
-
-	const selectModel = useCallback(
-		(model: string) => {
-			setValue("model", model)
-			setModelPopoverOpen(false)
-		},
-		[setValue],
-	)
+	const [model, suite, settings] = watch(["model", "suite", "settings"])
 
 	const onSubmit = useCallback(
 		async (data: FormValues) => {
 			try {
 				const { id } = await createRun(data)
 				router.push(`/runs/${id}`)
-			} catch (_) {
+			} catch (_e) {
 				// Surface error.
 			}
 		},
 		[router],
 	)
 
-	const onFilter = useCallback(
+	const onFilterModels = useCallback(
 		(value: string, search: string) => {
 			if (modelSearchValueRef.current !== search) {
 				modelSearchValueRef.current = search
@@ -105,16 +112,41 @@ export function NewRun() {
 		[models.data],
 	)
 
-	const recommendedModels = [
-		"anthropic/claude-3.7-sonnet",
-		"anthropic/claude-3.7-sonnet:thinking",
-		"google/gemini-2.0-flash-001",
-	]
+	const onSelectModel = useCallback(
+		(model: string) => {
+			setValue("model", model)
+			setModelPopoverOpen(false)
+		},
+		[setValue],
+	)
+
+	const onImportSettings = useCallback(
+		async (event: React.ChangeEvent<HTMLInputElement>) => {
+			const file = event.target.files?.[0]
+
+			if (!file) {
+				return
+			}
+
+			clearErrors("settings")
+
+			try {
+				const result = z.object({ globalSettings: globalSettingsSchema }).parse(JSON.parse(await file.text()))
+				setValue("settings", result.globalSettings)
+				event.target.value = ""
+			} catch (_error) {
+				setError("settings", { message: "Error parsing JSON file. Please check the file format." })
+			}
+		},
+		[clearErrors, setError, setValue],
+	)
 
 	return (
 		<>
 			<FormProvider {...form}>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col justify-center gap-6">
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="flex flex-col justify-center divide-y divide-primary *:py-5">
 					<FormField
 						control={form.control}
 						name="model"
@@ -135,7 +167,7 @@ export function NewRun() {
 										</Button>
 									</PopoverTrigger>
 									<PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
-										<Command filter={onFilter}>
+										<Command filter={onFilterModels}>
 											<CommandInput
 												placeholder="Search"
 												value={modelSearchValue}
@@ -146,7 +178,7 @@ export function NewRun() {
 												<CommandEmpty>No model found.</CommandEmpty>
 												<CommandGroup>
 													{models.data?.map(({ id, name }) => (
-														<CommandItem key={id} value={id} onSelect={selectModel}>
+														<CommandItem key={id} value={id} onSelect={onSelectModel}>
 															{name}
 															<Check
 																className={cn(
@@ -162,51 +194,77 @@ export function NewRun() {
 									</PopoverContent>
 								</Popover>
 								<FormMessage />
-								<div className="flex flex-wrap items-center gap-2 text-sm">
-									<div>Recommended:</div>
+								<FormDescription className="flex flex-wrap items-center gap-2">
+									<span>Recommended:</span>
 									{recommendedModels.map((modelId) => (
-										<div key={modelId} className="flex items-center gap-2">
-											<Button
-												variant="link"
-												className="break-all px-0!"
-												onClick={(e) => {
-													e.preventDefault()
-													setValue("model", modelId)
-												}}>
-												{modelId}
-											</Button>
-										</div>
+										<Button
+											key={modelId}
+											variant="link"
+											className="break-all px-0!"
+											onClick={(e) => {
+												e.preventDefault()
+												setValue("model", modelId)
+											}}>
+											{modelId}
+										</Button>
 									))}
-								</div>
+								</FormDescription>
 							</FormItem>
 						)}
 					/>
+
+					<FormItem>
+						<FormLabel>Import Settings</FormLabel>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							onClick={() => document.getElementById("json-upload")?.click()}>
+							<HardDriveUpload />
+						</Button>
+						<input
+							id="json-upload"
+							type="file"
+							accept="application/json"
+							className="hidden"
+							onChange={onImportSettings}
+						/>
+						{settings ? (
+							<ScrollArea className="max-h-64 border rounded-sm">
+								<>
+									<div className="flex items-center gap-1 p-2 border-b">
+										<CircleCheck className="size-4 text-ring" />
+										<div className="text-sm">
+											Imported valid Roo Code settings. Showing differences from default settings.
+										</div>
+									</div>
+									<SettingsDiff defaultSettings={rooCodeDefaults} customSettings={settings} />
+								</>
+							</ScrollArea>
+						) : (
+							<FormDescription>
+								Fully configure how Roo Code for this run using a settings file that was exported by Roo
+								Code.
+							</FormDescription>
+						)}
+						<FormMessage />
+					</FormItem>
 
 					<FormField
 						control={form.control}
 						name="suite"
 						render={() => (
 							<FormItem>
-								<FormLabel>Exercise Suite</FormLabel>
+								<FormLabel>Exercises</FormLabel>
 								<Tabs
 									defaultValue="full"
 									onValueChange={(value) => setValue("suite", value as "full" | "partial")}>
-									<TabsList className="grid w-full grid-cols-2">
-										<TabsTrigger value="full">Full</TabsTrigger>
-										<TabsTrigger value="partial">Partial</TabsTrigger>
+									<TabsList>
+										<TabsTrigger value="full">All</TabsTrigger>
+										<TabsTrigger value="partial">Some</TabsTrigger>
 									</TabsList>
 								</Tabs>
-							</FormItem>
-						)}
-					/>
-
-					{suite === "partial" && (
-						<FormField
-							control={form.control}
-							name="exercises"
-							render={() => (
-								<FormItem>
-									<FormLabel>Exercises</FormLabel>
+								{suite === "partial" && (
 									<MultiSelect
 										options={exercises.data?.map((path) => ({ value: path, label: path })) || []}
 										onValueChange={(value) => setValue("exercises", value)}
@@ -214,18 +272,18 @@ export function NewRun() {
 										variant="inverted"
 										maxCount={4}
 									/>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					)}
+								)}
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
 
 					<FormField
 						control={form.control}
 						name="description"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Description</FormLabel>
+								<FormLabel>Description / Notes</FormLabel>
 								<FormControl>
 									<Textarea placeholder="Optional" {...field} />
 								</FormControl>
@@ -234,10 +292,12 @@ export function NewRun() {
 						)}
 					/>
 
-					<Button type="submit" disabled={isSubmitting}>
-						<Rocket className="size-4" />
-						Launch
-					</Button>
+					<div className="flex justify-end">
+						<Button size="lg" type="submit" disabled={isSubmitting}>
+							<Rocket className="size-4" />
+							Launch
+						</Button>
+					</div>
 				</form>
 			</FormProvider>
 			<Button

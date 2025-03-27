@@ -5,7 +5,7 @@ import * as vscode from "vscode"
 
 import { RooCodeAPI } from "../../../../src/exports/roo-code.js"
 
-import { IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
+import { IpcOrigin, IpcMessageType, TaskEventName, rooCodeDefaults } from "@benchmark/types"
 import { IpcClient } from "@benchmark/ipc"
 import { findTask, findRun, createTaskMetrics, updateTask } from "@benchmark/db"
 
@@ -58,27 +58,16 @@ export async function run() {
 	await waitUntilReady({ api })
 
 	/**
-	 * Configure Roo Code as needed.
-	 *
-	 * Use Claude 3.7 Sonnet via OpenRouter.
-	 * Don't require approval for anything.
-	 * Run any command without approval.
-	 * Disable checkpoints (for performance).
+	 * Configure Roo Code as needed. First apply defaults, then apply the
+	 * run-specific settings.
 	 */
 
 	await api.setConfiguration({
 		apiProvider: "openrouter",
 		openRouterApiKey,
 		openRouterModelId,
-		autoApprovalEnabled: true,
-		alwaysAllowReadOnly: true,
-		alwaysAllowWrite: true,
-		alwaysAllowExecute: true,
-		alwaysAllowBrowser: true,
-		alwaysApproveResubmit: true,
-		alwaysAllowMcp: true,
-		alwaysAllowModeSwitch: true,
-		enableCheckpoints: false,
+		...rooCodeDefaults,
+		...Object.fromEntries(Object.entries(run.settings ?? {}).filter(([, value]) => value !== undefined)),
 	})
 
 	await vscode.workspace

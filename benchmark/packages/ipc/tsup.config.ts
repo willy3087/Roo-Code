@@ -1,20 +1,11 @@
-import { defineConfig, Options } from "tsup"
-
-const shared: Options = {
-	entry: ["src/index.ts"],
-	dts: true,
-	outDir: "dist",
-	clean: true,
-}
+import { defineConfig } from "tsup"
 
 export default defineConfig([
 	{
-		...shared,
-		format: ["esm"],
-		tsconfig: "./tsconfig.json",
-	},
-	{
-		...shared,
+		entry: ["src/index.ts"],
+		dts: true,
+		outDir: "dist",
+		clean: true,
 		format: ["cjs"],
 		tsconfig: "./tsconfig.cjs.json",
 		outExtension: () => ({ js: ".cjs" }),

@@ -1,9 +1,8 @@
-import { sqliteTable, text, real, integer, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text, real, integer, blob, uniqueIndex } from "drizzle-orm/sqlite-core"
 import { relations } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod"
-import { z } from "zod"
 
-import { exerciseLanguages } from "@benchmark/types"
+import { GlobalSettings, exerciseLanguages, globalSettingsSchema } from "@benchmark/types"
 
 /**
  * runs
@@ -14,6 +13,7 @@ export const runs = sqliteTable("runs", {
 	taskMetricsId: integer({ mode: "number" }).references(() => taskMetrics.id),
 	model: text().notNull(),
 	description: text(),
+	settings: blob({ mode: "json" }).$type<GlobalSettings>(),
 	pid: integer({ mode: "number" }),
 	socketPath: text().notNull(),
 	passed: integer({ mode: "number" }).default(0).notNull(),
@@ -27,9 +27,11 @@ export const runsRelations = relations(runs, ({ one }) => ({
 
 export type Run = typeof runs.$inferSelect
 
-export const insertRunSchema = createInsertSchema(runs).omit({ id: true, createdAt: true })
+export const insertRunSchema = createInsertSchema(runs).omit({ id: true, createdAt: true, settings: true }).extend({
+	settings: globalSettingsSchema,
+})
 
-export type InsertRun = z.infer<typeof insertRunSchema>
+export type InsertRun = Omit<typeof runs.$inferInsert, "id" | "createdAt">
 
 export type UpdateRun = Partial<Omit<Run, "id" | "createdAt">>
 
@@ -64,7 +66,7 @@ export type Task = typeof tasks.$inferSelect
 
 export const insertTaskSchema = createInsertSchema(tasks).omit({ id: true, createdAt: true })
 
-export type InsertTask = z.infer<typeof insertTaskSchema>
+export type InsertTask = Omit<typeof tasks.$inferInsert, "id" | "createdAt">
 
 export type UpdateTask = Partial<Omit<Task, "id" | "createdAt">>
 
@@ -88,7 +90,7 @@ export type TaskMetrics = typeof taskMetrics.$inferSelect
 
 export const insertTaskMetricsSchema = createInsertSchema(taskMetrics).omit({ id: true, createdAt: true })
 
-export type InsertTaskMetrics = z.infer<typeof insertTaskMetricsSchema>
+export type InsertTaskMetrics = Omit<typeof taskMetrics.$inferInsert, "id" | "createdAt">
 
 export type UpdateTaskMetrics = Partial<Omit<TaskMetrics, "id" | "createdAt">>
 
