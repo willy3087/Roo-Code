@@ -27,8 +27,8 @@ export const runsRelations = relations(runs, ({ one }) => ({
 
 export type Run = typeof runs.$inferSelect
 
-export const insertRunSchema = createInsertSchema(runs).omit({ id: true, createdAt: true, settings: true }).extend({
-	settings: globalSettingsSchema,
+export const insertRunSchema = createInsertSchema(runs).omit({ id: true, createdAt: true }).extend({
+	settings: globalSettingsSchema.optional(),
 })
 
 export type InsertRun = Omit<typeof runs.$inferInsert, "id" | "createdAt">

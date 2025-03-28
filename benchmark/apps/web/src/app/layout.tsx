@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
 import { ThemeProvider, ReactQueryProvider } from "@/components/providers"
+import { Toaster } from "@/components/ui"
 import { Header } from "@/components/layout/header"
 
 import "./globals.css"
@@ -27,6 +28,7 @@ export default function RootLayout({
 						{children}
 					</ReactQueryProvider>
 				</ThemeProvider>
+				<Toaster />
 			</body>
 		</html>
 	)

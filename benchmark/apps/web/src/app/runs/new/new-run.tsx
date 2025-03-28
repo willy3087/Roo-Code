@@ -1,13 +1,15 @@
 "use client"
 
-import { Fragment, useCallback, useRef, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { z } from "zod"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import fuzzysort from "fuzzysort"
+import { toast } from "sonner"
 import { X, Rocket, Check, ChevronsUpDown, HardDriveUpload, CircleCheck } from "lucide-react"
 
-import { ExperimentId, Experiments, globalSettingsSchema, rooCodeDefaults } from "@benchmark/types"
+import { globalSettingsSchema, rooCodeDefaults } from "@benchmark/types"
 
 import { createRun } from "@/lib/server/runs"
 import { createRunSchema as formSchema, type CreateRun as FormValues } from "@/lib/schemas"
@@ -38,7 +40,7 @@ import {
 	PopoverTrigger,
 	ScrollArea,
 } from "@/components/ui"
-import { z } from "zod"
+
 import { SettingsDiff } from "./settings-diff"
 
 const recommendedModels = [
@@ -84,8 +86,8 @@ export function NewRun() {
 			try {
 				const { id } = await createRun(data)
 				router.push(`/runs/${id}`)
-			} catch (_e) {
-				// Surface error.
+			} catch (e) {
+				toast.error(e instanceof Error ? e.message : "An unknown error occurred.")
 			}
 		},
 		[router],
