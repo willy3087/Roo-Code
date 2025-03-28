@@ -353,7 +353,7 @@
 		"vscode-test:extension": "tsc -p . --outDir out && node esbuild.js",
 		"vscode-test:webview": "cd webview-ui && npm run build",
 		"update-contributors": "node scripts/update-contributors.js",
-		"generate-types": "tsx scripts/generate-types.mts"
+		"generate-types": "npx tsx scripts/generate-types.mts"
 	},
 	"dependencies": {
 		"@anthropic-ai/bedrock-sdk": "^0.10.2",
