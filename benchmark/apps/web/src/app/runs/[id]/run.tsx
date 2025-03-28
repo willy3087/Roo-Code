@@ -102,7 +102,7 @@ export function Run({ run }: { run: db.Run }) {
 											</TableCell>
 										</>
 									) : (
-										<TableCell colSpan={3} />
+										<TableCell colSpan={4} />
 									)}
 								</TableRow>
 							))}
