@@ -15,9 +15,8 @@ import {
 	Language,
 	ProviderSettings,
 	RooCodeSettings,
-	GlobalStateKey,
-	SecretStateKey,
-} from "../../exports/roo-code"
+	ApiConfigMeta,
+} from "../../schemas"
 import { changeLanguage, t } from "../../i18n"
 import { setPanel } from "../../activate/registerCommands"
 import {
@@ -35,7 +34,7 @@ import { findLast } from "../../shared/array"
 import { supportPrompt } from "../../shared/support-prompt"
 import { GlobalFileNames } from "../../shared/globalFileNames"
 import { HistoryItem } from "../../shared/HistoryItem"
-import { ApiConfigMeta, ExtensionMessage } from "../../shared/ExtensionMessage"
+import { ExtensionMessage } from "../../shared/ExtensionMessage"
 import { checkoutDiffPayloadSchema, checkoutRestorePayloadSchema, WebviewMessage } from "../../shared/WebviewMessage"
 import { Mode, PromptComponent, defaultModeSlug, getModeBySlug, getGroupName } from "../../shared/modes"
 import { checkExistKey } from "../../shared/checkExistApiConfig"
@@ -2802,27 +2801,29 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 		return history
 	}
 
-	// global
+	// ContextProxy
 
-	public async updateGlobalState<K extends GlobalStateKey>(key: K, value: GlobalState[K]) {
+	// @deprecated - Use `ContextProxy#setValue` instead.
+	private async updateGlobalState<K extends keyof GlobalState>(key: K, value: GlobalState[K]) {
 		await this.contextProxy.setValue(key, value)
 	}
 
-	public getGlobalState<K extends GlobalStateKey>(key: K) {
+	// @deprecated - Use `ContextProxy#getValue` instead.
+	private getGlobalState<K extends keyof GlobalState>(key: K) {
 		return this.contextProxy.getValue(key)
 	}
 
-	// secrets
-
-	public async storeSecret(key: SecretStateKey, value?: string) {
+	public async setValue<K extends keyof RooCodeSettings>(key: K, value: RooCodeSettings[K]) {
 		await this.contextProxy.setValue(key, value)
 	}
 
-	private getSecret(key: SecretStateKey) {
+	public getValue<K extends keyof RooCodeSettings>(key: K) {
 		return this.contextProxy.getValue(key)
 	}
 
-	// global + secret
+	public getValues() {
+		return this.contextProxy.getValues()
+	}
 
 	public async setValues(values: RooCodeSettings) {
 		await this.contextProxy.setValues(values)
