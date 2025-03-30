@@ -1,6 +1,6 @@
 import * as assert from "assert"
 
-import { RooCodeEventName, ClineMessage } from "../../../src/exports/roo-code"
+import type { ClineMessage } from "../../../src/exports/roo-code"
 
 import { waitUntilCompleted } from "./utils"
 
@@ -18,7 +18,7 @@ suite("Roo Code Modes", () => {
 
 		let messages: ClineMessage[] = []
 
-		api.on(RooCodeEventName.Message, ({ message }) => messages.push(message))
+		api.on("message", ({ message }) => messages.push(message))
 
 		const switchModesTaskId = await api.startNewTask({
 			configuration: { mode: "Code", alwaysAllowModeSwitch: true, autoApprovalEnabled: true },

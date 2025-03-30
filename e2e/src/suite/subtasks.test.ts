@@ -1,6 +1,6 @@
 import * as assert from "assert"
 
-import { RooCodeEventName, ClineMessage } from "../../../src/exports/roo-code"
+import type { ClineMessage } from "../../../src/exports/roo-code"
 
 import { sleep, waitFor, waitUntilCompleted } from "./utils"
 
@@ -9,7 +9,7 @@ suite("Roo Code Subtasks", () => {
 		const api = globalThis.api
 
 		const messages: ClineMessage[] = []
-		api.on(RooCodeEventName.Message, ({ message }) => messages.push(message))
+		api.on("message", ({ message }) => messages.push(message))
 
 		await api.setConfiguration({
 			mode: "Code",
