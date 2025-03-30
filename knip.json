@@ -17,6 +17,7 @@
 		"benchmark/**",
 		"src/activate/**",
 		"src/exports/**",
+		"src/schemas/**",
 		"src/extension.ts",
 		"scripts/**"
 	],
