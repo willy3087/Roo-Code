@@ -3,158 +3,18 @@ import { Socket } from "node:net"
 import * as crypto from "node:crypto"
 
 import ipc from "node-ipc"
-import { z } from "zod"
 
-/**
- * IpcClient
- */
-
-export type IpcClientId = string
-
-export enum IpcClientMessageType {
-	Message = "Message",
-	StartNewTask = "StartNewTask",
-}
-
-export const ipcClientMessageSchema = z.discriminatedUnion("type", [
-	z.object({
-		type: z.literal(IpcClientMessageType.StartNewTask),
-		data: z.object({
-			text: z.string(),
-			images: z.array(z.string()).optional(),
-		}),
-	}),
-])
-
-export type IpcClientMessage = z.infer<typeof ipcClientMessageSchema>
-
-export interface IpcClientEvents {
-	connect: []
-	disconnect: []
-	message: [data: IpcServerMessage]
-}
-
-export class IpcClient extends EventEmitter<IpcClientEvents> {
-	private readonly _socketPath: string
-	private readonly _log: (...args: unknown[]) => void
-
-	private _isConnected = false
-	private _clientId?: IpcClientId
-
-	constructor(socketPath: string, log = console.log) {
-		super()
-
-		this._socketPath = socketPath
-		this._log = log
-
-		ipc.config.silent = true
-
-		ipc.connectTo("benchmarkServer", this.socketPath, () => {
-			ipc.of.benchmarkServer?.on("connect", (args) => this.onConnect(args))
-			ipc.of.benchmarkServer?.on("disconnect", (args) => this.onDisconnect(args))
-			ipc.of.benchmarkServer?.on("message", (data) => this.onMessage(data))
-		})
-	}
-
-	private onConnect(args: unknown) {
-		if (this._isConnected) {
-			return
-		}
-
-		this.log("[client#onConnect]", args)
-		this._isConnected = true
-		this.emit("connect")
-	}
-
-	private onDisconnect(args: unknown) {
-		if (!this._isConnected) {
-			return
-		}
-
-		this.log("[client#onDisconnect]", args)
-		this._isConnected = false
-		this.emit("disconnect")
-	}
-
-	private onMessage(data: unknown) {
-		if (typeof data !== "object") {
-			this._log("[client#onMessage] invalid data", data)
-			return
-		}
-
-		const result = ipcServerMessageSchema.safeParse(data)
-
-		if (!result.success) {
-			this.log("[client#onMessage] invalid payload", result.error)
-			return
-		}
-
-		this.emit("message", result.data)
-	}
-
-	private log(...args: unknown[]) {
-		this._log(...args)
-	}
-
-	public sendMessage(message: IpcClientMessage) {
-		ipc.of.benchmarkServer?.emit("message", message)
-	}
-
-	public disconnect() {
-		try {
-			ipc.disconnect("benchmarkServer")
-			// @TODO: Should we set _disconnect here?
-		} catch (error) {
-			this.log("[client#disconnect] error disconnecting", error)
-		}
-	}
-
-	public get socketPath() {
-		return this._socketPath
-	}
-
-	public get clientId() {
-		return this._clientId
-	}
-
-	public get isConnected() {
-		return this._isConnected
-	}
-
-	public get isReady() {
-		return this._isConnected && this._clientId !== undefined
-	}
-}
+import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, TaskEvent } from "../schemas/ipc"
 
 /**
  * IpcServer
  */
 
-export enum IpcServerMessageType {
-	Ack = "Ack",
-	TaskEvent = "TaskEvent",
-}
-
-export const ipcServerMessageSchema = z.discriminatedUnion("type", [
-	z.object({
-		type: z.literal(IpcServerMessageType.Ack),
-		data: z.object({ clientId: z.string() }),
-	}),
-	z.object({
-		type: z.literal(IpcServerMessageType.TaskEvent),
-		data: z.object({
-			eventName: z.string(),
-			data: z.unknown(),
-		}),
-	}),
-])
-
-export type IpcServerMessage = z.infer<typeof ipcServerMessageSchema>
-
 type IpcServerEvents = {
-	connect: [id: IpcClientId]
-	disconnect: [id: IpcClientId]
-	message: [data: IpcClientMessage]
+	[IpcMessageType.Connect]: [clientId: string]
+	[IpcMessageType.Disconnect]: [clientId: string]
+	[IpcMessageType.TaskCommand]: [clientId: string, data: TaskCommand]
+	[IpcMessageType.TaskEvent]: [relayClientId: string | undefined, data: TaskEvent]
 }
 
 export class IpcServer extends EventEmitter<IpcServerEvents> {
@@ -190,12 +50,18 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		const clientId = crypto.randomBytes(6).toString("hex")
 		this._clients.set(clientId, socket)
 		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
-		this.send(socket, { type: IpcServerMessageType.Ack, data: { clientId } })
-		this.emit("connect", clientId)
+
+		this.send(socket, {
+			type: IpcMessageType.Ack,
+			origin: IpcOrigin.Server,
+			data: { clientId, pid: process.pid, ppid: process.ppid },
+		})
+
+		this.emit(IpcMessageType.Connect, clientId)
 	}
 
 	private onDisconnect(destroyedSocket: Socket) {
-		let disconnectedClientId: IpcClientId | undefined
+		let disconnectedClientId: string | undefined
 
 		for (const [clientId, socket] of this._clients.entries()) {
 			if (socket === destroyedSocket) {
@@ -208,7 +74,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		this.log(`[server#socket.disconnected] clientId = ${disconnectedClientId}, # clients = ${this._clients.size}`)
 
 		if (disconnectedClientId) {
-			this.emit("disconnect", disconnectedClientId)
+			this.emit(IpcMessageType.Disconnect, disconnectedClientId)
 		}
 	}
 
@@ -218,7 +84,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 			return
 		}
 
-		const result = ipcClientMessageSchema.safeParse(data)
+		const result = ipcMessageSchema.safeParse(data)
 
 		if (!result.success) {
 			this.log("[server#onMessage] invalid payload", result.error)
@@ -226,19 +92,26 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		}
 
 		const payload = result.data
-		this.emit("message", payload)
+
+		if (payload.origin === IpcOrigin.Client) {
+			switch (payload.type) {
+				case IpcMessageType.TaskCommand:
+					this.emit(IpcMessageType.TaskCommand, payload.clientId, payload.data)
+					break
+			}
+		}
 	}
 
 	private log(...args: unknown[]) {
 		this._log(...args)
 	}
 
-	public broadcast(message: IpcServerMessage) {
+	public broadcast(message: IpcMessage) {
 		this.log("[server#broadcast] message =", message)
 		ipc.server.broadcast("message", message)
 	}
 
-	public send(client: IpcClientId | Socket, message: IpcServerMessage) {
+	public send(client: string | Socket, message: IpcMessage) {
 		this.log("[server#send] message =", message)
 
 		if (typeof client === "string") {

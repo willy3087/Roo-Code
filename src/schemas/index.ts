@@ -275,11 +275,11 @@ export type CustomSupportPrompts = z.infer<typeof customSupportPromptsSchema>
  */
 
 export const experimentIds = [
-	"experimentalDiffStrategy",
 	"search_and_replace",
+	"experimentalDiffStrategy",
+	"multi_search_and_replace",
 	"insert_content",
 	"powerSteering",
-	"multi_search_and_replace",
 ] as const
 
 export const experimentIdsSchema = z.enum(experimentIds)
@@ -291,11 +291,11 @@ export type ExperimentId = z.infer<typeof experimentIdsSchema>
  */
 
 const experimentsSchema = z.object({
-	experimentalDiffStrategy: z.boolean(),
 	search_and_replace: z.boolean(),
+	experimentalDiffStrategy: z.boolean(),
+	multi_search_and_replace: z.boolean(),
 	insert_content: z.boolean(),
 	powerSteering: z.boolean(),
-	multi_search_and_replace: z.boolean(),
 })
 
 export type Experiments = z.infer<typeof experimentsSchema>
@@ -314,12 +314,12 @@ export const providerSettingsSchema = z.object({
 	anthropicBaseUrl: z.string().optional(),
 	// Glama
 	glamaModelId: z.string().optional(),
-	glamaModelInfo: modelInfoSchema.optional(),
+	glamaModelInfo: modelInfoSchema.nullish(),
 	glamaApiKey: z.string().optional(),
 	// OpenRouter
 	openRouterApiKey: z.string().optional(),
 	openRouterModelId: z.string().optional(),
-	openRouterModelInfo: modelInfoSchema.optional(),
+	openRouterModelInfo: modelInfoSchema.nullish(),
 	openRouterBaseUrl: z.string().optional(),
 	openRouterSpecificProvider: z.string().optional(),
 	openRouterUseMiddleOutTransform: z.boolean().optional(),
@@ -344,7 +344,7 @@ export const providerSettingsSchema = z.object({
 	openAiApiKey: z.string().optional(),
 	openAiR1FormatEnabled: z.boolean().optional(),
 	openAiModelId: z.string().optional(),
-	openAiCustomModelInfo: modelInfoSchema.optional(),
+	openAiCustomModelInfo: modelInfoSchema.nullish(),
 	openAiUseAzure: z.boolean().optional(),
 	azureApiVersion: z.string().optional(),
 	openAiStreamingEnabled: z.boolean().optional(),
@@ -379,11 +379,11 @@ export const providerSettingsSchema = z.object({
 	// Unbound
 	unboundApiKey: z.string().optional(),
 	unboundModelId: z.string().optional(),
-	unboundModelInfo: modelInfoSchema.optional(),
+	unboundModelInfo: modelInfoSchema.nullish(),
 	// Requesty
 	requestyApiKey: z.string().optional(),
 	requestyModelId: z.string().optional(),
-	requestyModelInfo: modelInfoSchema.optional(),
+	requestyModelInfo: modelInfoSchema.nullish(),
 	// Claude 3.7 Sonnet Thinking
 	modelTemperature: z.number().nullish(),
 	modelMaxTokens: z.number().optional(),
@@ -513,6 +513,7 @@ export const globalSettingsSchema = z.object({
 	screenshotQuality: z.number().optional(),
 	remoteBrowserEnabled: z.boolean().optional(),
 	remoteBrowserHost: z.string().optional(),
+	cachedChromeHostUrl: z.string().optional(),
 
 	enableCheckpoints: z.boolean().optional(),
 	checkpointStorage: checkpointStoragesSchema.optional(),
@@ -618,6 +619,7 @@ const globalSettingsRecord: GlobalSettingsRecord = {
 	customModePrompts: undefined,
 	customSupportPrompts: undefined,
 	enhancementApiConfigId: undefined,
+	cachedChromeHostUrl: undefined,
 }
 
 export const GLOBAL_SETTINGS_KEYS = Object.keys(globalSettingsRecord) as Keys<GlobalSettings>[]
@@ -625,6 +627,8 @@ export const GLOBAL_SETTINGS_KEYS = Object.keys(globalSettingsRecord) as Keys<Gl
 /**
  * RooCodeSettings
  */
+
+export const rooCodeSettingsSchema = providerSettingsSchema.merge(globalSettingsSchema)
 
 export type RooCodeSettings = GlobalSettings & ProviderSettings
 
@@ -788,10 +792,48 @@ export const tokenUsageSchema = z.object({
 export type TokenUsage = z.infer<typeof tokenUsageSchema>
 
 /**
+ * RooCodeEvent
+ */
+
+export enum RooCodeEventName {
+	Message = "message",
+	TaskCreated = "taskCreated",
+	TaskStarted = "taskStarted",
+	TaskPaused = "taskPaused",
+	TaskUnpaused = "taskUnpaused",
+	TaskAskResponded = "taskAskResponded",
+	TaskAborted = "taskAborted",
+	TaskSpawned = "taskSpawned",
+	TaskCompleted = "taskCompleted",
+	TaskTokenUsageUpdated = "taskTokenUsageUpdated",
+}
+
+export const rooCodeEventsSchema = z.object({
+	[RooCodeEventName.Message]: z.tuple([
+		z.object({
+			taskId: z.string(),
+			action: z.union([z.literal("created"), z.literal("updated")]),
+			message: clineMessageSchema,
+		}),
+	]),
+	[RooCodeEventName.TaskCreated]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskStarted]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskPaused]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskUnpaused]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskAskResponded]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskAborted]: z.tuple([z.string()]),
+	[RooCodeEventName.TaskSpawned]: z.tuple([z.string(), z.string()]),
+	[RooCodeEventName.TaskCompleted]: z.tuple([z.string(), tokenUsageSchema]),
+	[RooCodeEventName.TaskTokenUsageUpdated]: z.tuple([z.string(), tokenUsageSchema]),
+})
+
+export type RooCodeEvents = z.infer<typeof rooCodeEventsSchema>
+
+/**
  * TypeDefinition
  */
 
-type TypeDefinition = {
+export type TypeDefinition = {
 	schema: z.ZodTypeAny
 	identifier: string
 }
@@ -801,4 +843,8 @@ export const typeDefinitions: TypeDefinition[] = [
 	{ schema: globalSettingsSchema, identifier: "GlobalSettings" },
 	{ schema: clineMessageSchema, identifier: "ClineMessage" },
 	{ schema: tokenUsageSchema, identifier: "TokenUsage" },
+	{ schema: rooCodeEventsSchema, identifier: "RooCodeEvents" },
 ]
+
+// Also export as default for ESM compatibility
+export default { typeDefinitions }

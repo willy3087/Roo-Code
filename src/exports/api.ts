@@ -2,57 +2,41 @@ import { EventEmitter } from "events"
 import * as vscode from "vscode"
 
 import { ClineProvider } from "../core/webview/ClineProvider"
+import { openClineInNewTab } from "../activate/registerCommands"
 
-import { RooCodeAPI, RooCodeEvents, TokenUsage, RooCodeSettings } from "./roo-code"
-import { MessageHistory } from "./message-history"
-import { IpcClientMessageType, IpcServerMessageType, IpcServer } from "./ipc"
+import { RooCodeSettings, RooCodeEvents, RooCodeEventName } from "../schemas"
+import { IpcOrigin, IpcMessageType, TaskCommandName, TaskEvent } from "../schemas/ipc"
+import { RooCodeAPI } from "./interface"
+import { IpcServer } from "./ipc"
 
 export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 	private readonly outputChannel: vscode.OutputChannel
-	private readonly provider: ClineProvider
-	private readonly history: MessageHistory
-	private readonly tokenUsage: Record<string, TokenUsage>
+	private readonly sidebarProvider: ClineProvider
+	private tabProvider?: ClineProvider
+	private readonly context: vscode.ExtensionContext
 	private readonly ipc?: IpcServer
 
 	constructor(outputChannel: vscode.OutputChannel, provider: ClineProvider, socketPath?: string) {
 		super()
 
 		this.outputChannel = outputChannel
-		this.provider = provider
-		this.history = new MessageHistory()
-		this.tokenUsage = {}
+		this.sidebarProvider = provider
+		this.context = provider.context
 
-		this.provider.on("clineCreated", (cline) => {
-			cline.on("message", (message) => this.emit("message", { taskId: cline.taskId, ...message }))
-			cline.on("taskStarted", () => this.emit("taskStarted", cline.taskId))
-			cline.on("taskPaused", () => this.emit("taskPaused", cline.taskId))
-			cline.on("taskUnpaused", () => this.emit("taskUnpaused", cline.taskId))
-			cline.on("taskAskResponded", () => this.emit("taskAskResponded", cline.taskId))
-			cline.on("taskAborted", () => this.emit("taskAborted", cline.taskId))
-			cline.on("taskSpawned", (childTaskId) => this.emit("taskSpawned", cline.taskId, childTaskId))
-			cline.on("taskCompleted", (_, usage) => this.emit("taskCompleted", cline.taskId, usage))
-			cline.on("taskTokenUsageUpdated", (_, usage) => this.emit("taskTokenUsageUpdated", cline.taskId, usage))
-			this.emit("taskCreated", cline.taskId)
-		})
-
-		this.on("message", ({ taskId, action, message }) => {
-			if (action === "created") {
-				this.history.add(taskId, message)
-			} else if (action === "updated") {
-				this.history.update(taskId, message)
-			}
-		})
-
-		this.on("taskTokenUsageUpdated", (taskId, usage) => (this.tokenUsage[taskId] = usage))
+		this.registerListeners(this.sidebarProvider)
 
 		if (socketPath) {
 			this.ipc = new IpcServer(socketPath)
 			this.ipc.listen()
 
-			this.ipc.on("message", (message) => {
-				switch (message.type) {
-					case IpcClientMessageType.StartNewTask:
-						this.startNewTask(message.data.text, message.data.images)
+			this.outputChannel.appendLine(
+				`IPC server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`,
+			)
+
+			this.ipc.on(IpcMessageType.TaskCommand, async (_clientId, { commandName, data }) => {
+				switch (commandName) {
+					case TaskCommandName.StartNewTask:
+						this.startNewTask(data)
 						break
 				}
 			})
@@ -63,76 +47,118 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		eventName: K,
 		...args: K extends keyof RooCodeEvents ? RooCodeEvents[K] : never
 	) {
-		if (this.ipc) {
-			this.ipc.broadcast({ type: IpcServerMessageType.TaskEvent, data: { eventName, data: { ...args } } })
-		}
-
+		const data = { eventName: eventName as RooCodeEventName, payload: args } as TaskEvent
+		this.ipc?.broadcast({ type: IpcMessageType.TaskEvent, origin: IpcOrigin.Server, data })
 		return super.emit(eventName, ...args)
 	}
 
-	public async startNewTask(text?: string, images?: string[]) {
-		await this.provider.removeClineFromStack()
-		await this.provider.postStateToWebview()
-		await this.provider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
-		await this.provider.postMessageToWebview({ type: "invoke", invoke: "newChat", text, images })
+	public async startNewTask({
+		configuration,
+		text,
+		images,
+		newTab,
+	}: {
+		configuration: RooCodeSettings
+		text?: string
+		images?: string[]
+		newTab?: boolean
+	}) {
+		let provider: ClineProvider
 
-		const cline = await this.provider.initClineWithTask(text, images)
-		return cline.taskId
+		if (newTab) {
+			if (!this.tabProvider) {
+				this.tabProvider = await openClineInNewTab({ context: this.context, outputChannel: this.outputChannel })
+				this.registerListeners(this.tabProvider)
+			}
+
+			provider = this.tabProvider
+		} else {
+			provider = this.sidebarProvider
+		}
+
+		if (configuration) {
+			await provider.setValues(configuration)
+
+			if (configuration.allowedCommands) {
+				await vscode.workspace
+					.getConfiguration("roo-cline")
+					.update("allowedCommands", configuration.allowedCommands, vscode.ConfigurationTarget.Global)
+			}
+		}
+
+		await provider.removeClineFromStack()
+		await provider.postStateToWebview()
+		await provider.postMessageToWebview({ type: "action", action: "chatButtonClicked" })
+		await provider.postMessageToWebview({ type: "invoke", invoke: "newChat", text, images })
+
+		const { taskId } = await provider.initClineWithTask(text, images)
+
+		return taskId
 	}
 
 	public getCurrentTaskStack() {
-		return this.provider.getCurrentTaskStack()
+		return this.sidebarProvider.getCurrentTaskStack()
 	}
 
 	public async clearCurrentTask(lastMessage?: string) {
-		await this.provider.finishSubTask(lastMessage)
+		await this.sidebarProvider.finishSubTask(lastMessage)
 	}
 
 	public async cancelCurrentTask() {
-		await this.provider.cancelTask()
+		await this.sidebarProvider.cancelTask()
 	}
 
 	public async sendMessage(text?: string, images?: string[]) {
-		await this.provider.postMessageToWebview({ type: "invoke", invoke: "sendMessage", text, images })
+		await this.sidebarProvider.postMessageToWebview({ type: "invoke", invoke: "sendMessage", text, images })
 	}
 
 	public async pressPrimaryButton() {
-		await this.provider.postMessageToWebview({ type: "invoke", invoke: "primaryButtonClick" })
+		await this.sidebarProvider.postMessageToWebview({ type: "invoke", invoke: "primaryButtonClick" })
 	}
 
 	public async pressSecondaryButton() {
-		await this.provider.postMessageToWebview({ type: "invoke", invoke: "secondaryButtonClick" })
+		await this.sidebarProvider.postMessageToWebview({ type: "invoke", invoke: "secondaryButtonClick" })
 	}
 
 	public getConfiguration() {
-		return this.provider.getValues()
+		return this.sidebarProvider.getValues()
 	}
 
 	public getConfigurationValue<K extends keyof RooCodeSettings>(key: K) {
-		return this.provider.getValue(key)
+		return this.sidebarProvider.getValue(key)
 	}
 
 	public async setConfiguration(values: RooCodeSettings) {
-		await this.provider.setValues(values)
+		await this.sidebarProvider.setValues(values)
 	}
 
 	public async setConfigurationValue<K extends keyof RooCodeSettings>(key: K, value: RooCodeSettings[K]) {
-		await this.provider.setValue(key, value)
+		await this.sidebarProvider.setValue(key, value)
 	}
 
 	public isReady() {
-		return this.provider.viewLaunched
-	}
-
-	public getMessages(taskId: string) {
-		return this.history.getMessages(taskId)
-	}
-
-	public getTokenUsage(taskId: string) {
-		return this.tokenUsage[taskId]
+		return this.sidebarProvider.viewLaunched
 	}
 
 	public log(message: string) {
 		this.outputChannel.appendLine(message)
+	}
+
+	private registerListeners(provider: ClineProvider) {
+		provider.on("clineCreated", (cline) => {
+			cline.on("message", (message) => this.emit(RooCodeEventName.Message, { taskId: cline.taskId, ...message }))
+			cline.on("taskStarted", () => this.emit(RooCodeEventName.TaskStarted, cline.taskId))
+			cline.on("taskPaused", () => this.emit(RooCodeEventName.TaskPaused, cline.taskId))
+			cline.on("taskUnpaused", () => this.emit(RooCodeEventName.TaskUnpaused, cline.taskId))
+			cline.on("taskAskResponded", () => this.emit(RooCodeEventName.TaskAskResponded, cline.taskId))
+			cline.on("taskAborted", () => this.emit(RooCodeEventName.TaskAborted, cline.taskId))
+			cline.on("taskSpawned", (childTaskId) => this.emit(RooCodeEventName.TaskSpawned, cline.taskId, childTaskId))
+			cline.on("taskCompleted", (_, usage) => this.emit(RooCodeEventName.TaskCompleted, cline.taskId, usage))
+			cline.on("taskTokenUsageUpdated", (_, usage) =>
+				this.emit(RooCodeEventName.TaskTokenUsageUpdated, cline.taskId, usage),
+			)
+
+			this.emit(RooCodeEventName.TaskCreated, cline.taskId)
+		})
 	}
 }

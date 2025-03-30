@@ -2,7 +2,7 @@ import { ExtensionContext } from "vscode"
 import { z } from "zod"
 
 import { providerSettingsSchema, ApiConfigMeta } from "../../schemas"
-import { Mode } from "../../shared/modes"
+import { Mode, modes } from "../../shared/modes"
 
 const providerSettingsWithIdSchema = providerSettingsSchema.extend({ id: z.string().optional() })
 
@@ -16,24 +16,18 @@ export const providerProfilesSchema = z.object({
 
 export type ProviderProfiles = z.infer<typeof providerProfilesSchema>
 
-const providerProfilesExportSchema = providerProfilesSchema.extend({
-	apiConfigs: z.record(
-		z.string(),
-		providerSettingsWithIdSchema.omit({
-			glamaModelInfo: true,
-			openRouterModelInfo: true,
-			unboundModelInfo: true,
-			requestyModelInfo: true,
-		}),
-	),
-})
-
 export class ProviderSettingsManager {
 	private static readonly SCOPE_PREFIX = "roo_cline_config_"
+	private readonly defaultConfigId = this.generateId()
+
+	private readonly defaultModeApiConfigs: Record<string, string> = Object.fromEntries(
+		modes.map((mode) => [mode.slug, this.defaultConfigId]),
+	)
 
 	private readonly defaultProviderProfiles: ProviderProfiles = {
 		currentApiConfigName: "default",
-		apiConfigs: { default: { id: this.generateId() } },
+		apiConfigs: { default: { id: this.defaultConfigId } },
+		modeApiConfigs: this.defaultModeApiConfigs,
 	}
 
 	private readonly context: ExtensionContext
@@ -246,7 +240,7 @@ export class ProviderSettingsManager {
 
 	public async export() {
 		try {
-			return await this.lock(async () => providerProfilesExportSchema.parse(await this.load()))
+			return await this.lock(async () => providerProfilesSchema.parse(await this.load()))
 		} catch (error) {
 			throw new Error(`Failed to export provider profiles: ${error}`)
 		}

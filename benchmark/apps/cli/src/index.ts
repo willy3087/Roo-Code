@@ -3,15 +3,33 @@ import * as path from "path"
 import * as os from "os"
 
 import pMap from "p-map"
-import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
-import { runTests } from "@vscode/test-electron"
+import pWaitFor from "p-wait-for"
 import { execa, parseCommandString } from "execa"
+import { build, filesystem, GluegunPrompt, GluegunToolbox } from "gluegun"
 
-import { type ExerciseLanguage, exerciseLanguages, IpcOrigin, IpcMessageType, TaskEventName } from "@benchmark/types"
-import { type Run, findRun, createRun, finishRun, createTask, Task, getTasks, updateTask } from "@benchmark/db"
-import { IpcServer } from "@benchmark/ipc"
+import {
+	type ExerciseLanguage,
+	exerciseLanguages,
+	RooCodeEventName,
+	IpcOrigin,
+	IpcMessageType,
+	TaskCommandName,
+	rooCodeDefaults,
+} from "@benchmark/types"
+import {
+	type Run,
+	findRun,
+	createRun,
+	finishRun,
+	createTask,
+	Task,
+	getTasks,
+	updateTask,
+	createTaskMetrics,
+} from "@benchmark/db"
+import { IpcServer, IpcClient } from "@benchmark/ipc"
 
-import { __dirname, extensionDevelopmentPath, extensionTestsPath, exercisesPath } from "./paths.js"
+import { __dirname, extensionDevelopmentPath, exercisesPath } from "./paths.js"
 import { getExercises } from "./exercises.js"
 
 const testCommands: Record<ExerciseLanguage, { commands: string[]; timeout?: number; cwd?: string }> = {
@@ -67,36 +85,28 @@ const run = async (toolbox: GluegunToolbox) => {
 	}
 
 	const tasks = await getTasks(run.id)
-	let currentTask = tasks[0]
 
-	if (!currentTask) {
+	if (!tasks[0]) {
 		throw new Error("No tasks found.")
 	}
+
+	let currentTask = tasks[0]
 
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
-	server.on("connect", (clientId) => {
+	server.on(IpcMessageType.Connect, (clientId) => {
 		server.send(clientId, {
 			type: IpcMessageType.TaskEvent,
 			origin: IpcOrigin.Server,
-			data: { eventName: TaskEventName.Connect, data: { task: currentTask! } },
-		})
-	})
-
-	server.on("taskEvent", (relayClientId, data) => {
-		server.broadcast({
-			type: IpcMessageType.TaskEvent,
-			origin: IpcOrigin.Server,
-			relayClientId,
-			data,
+			data: { eventName: RooCodeEventName.Connect, taskId: currentTask.id },
 		})
 	})
 
 	for (const task of tasks) {
 		currentTask = task
 
-		await runExercise({ run, task })
+		await runExercise({ run, task, server })
 
 		const cmd = testCommands[task.language]
 		const exercisePath = path.resolve(exercisesPath, task.language, task.exercise)
@@ -112,7 +122,7 @@ const run = async (toolbox: GluegunToolbox) => {
 
 			try {
 				const result = await execa({ cwd, shell: true, reject: false, cancelSignal })`${command}`
-				console.log({ ...result, cwd, command })
+				// console.log('[cli#run] execa result =', { ...result, cwd, command })
 
 				clearTimeout(timeout)
 
@@ -121,7 +131,7 @@ const run = async (toolbox: GluegunToolbox) => {
 					break
 				}
 			} catch (error) {
-				console.log(error)
+				console.log("[cli#run] execa error =", error)
 				passed = false
 				break
 			}
@@ -131,38 +141,136 @@ const run = async (toolbox: GluegunToolbox) => {
 	}
 
 	const result = await finishRun(run.id)
-	console.log(result)
+	console.log("[cli#run]", result)
 }
 
-const runExercise = async ({ run, task }: { run: Run; task: Task }) => {
+const runExercise = async ({ run, task, server }: { run: Run; task: Task; server: IpcServer }) => {
 	const { language, exercise } = task
-	const workspacePath = path.resolve(exercisesPath, language, exercise)
-	const promptPath = path.resolve(exercisesPath, `prompts/${language}.md`)
-
-	if (!fs.existsSync(promptPath)) {
-		throw new Error(`Prompt file does not exist: ${promptPath}`)
-	}
 
 	if (task.finishedAt) {
 		console.log(`Test result exists for ${language} / ${exercise}, skipping`)
 		return false
 	}
 
-	console.log(`Running ${language} / ${exercise}`)
+	const prompt = fs.readFileSync(path.resolve(exercisesPath, `prompts/${language}.md`), "utf-8")
 
-	await runTests({
-		extensionDevelopmentPath,
-		extensionTestsPath,
-		launchArgs: [workspacePath, "--disable-extensions"],
-		extensionTestsEnv: {
-			TASK_ID: task.id.toString(),
-			PROMPT_PATH: promptPath,
-			WORKSPACE_PATH: workspacePath,
-			OPENROUTER_MODEL_ID: run.model,
+	const dirname = path.dirname(run.socketPath)
+	const basename = path.basename(run.socketPath, ".sock")
+	const taskSocketPath = path.resolve(dirname, `${dirname}/${basename}-${task.id}.sock`)
+	await execa({
+		env: { ROO_CODE_IPC_SOCKET_PATH: taskSocketPath },
+	})`code -n ${path.resolve(exercisesPath, language, exercise)}`
+
+	console.log(`Connecting to ${taskSocketPath}`)
+	let tries = 0
+	let client = new IpcClient(taskSocketPath)
+
+	while (++tries < 5) {
+		try {
+			await pWaitFor(() => client.isConnected, { interval: 100, timeout: 2_000 })
+			break
+		} catch (error) {
+			console.error(error)
+			client.disconnect()
+			client = new IpcClient(taskSocketPath)
+		}
+	}
+
+	let isTaskFinished = false
+
+	client.on(IpcMessageType.Disconnect, () => {
+		console.log("disconnect")
+		isTaskFinished = true
+	})
+
+	const ignoreEvents = [
+		RooCodeEventName.Message,
+		RooCodeEventName.TaskTokenUsageUpdated,
+		RooCodeEventName.TaskAskResponded,
+	]
+
+	let taskStartedAt = Date.now()
+
+	client.on(IpcMessageType.TaskEvent, async (taskEvent) => {
+		const { eventName, payload } = taskEvent
+
+		server.broadcast({
+			type: IpcMessageType.TaskEvent,
+			origin: IpcOrigin.Server,
+			relayClientId: client.clientId!,
+			data: { ...taskEvent, taskId: task.id },
+		})
+
+		if (!ignoreEvents.includes(eventName)) {
+			console.log(`[cli#runExercise] taskEvent -> ${eventName}`)
+		}
+
+		// if (eventName === RooCodeEventName.Message) {
+		// 	const { message: { ts, text, partial } } = payload[0]
+
+		// 	if (!partial) {
+		// 		console.log(`${ts}: ${text}`)
+		// 	}
+		// }
+
+		if (eventName === RooCodeEventName.TaskStarted) {
+			taskStartedAt = Date.now()
+		}
+
+		if (eventName === RooCodeEventName.TaskCompleted) {
+			const duration = Date.now() - taskStartedAt
+
+			const { totalCost, totalTokensIn, totalTokensOut, contextTokens, totalCacheWrites, totalCacheReads } =
+				payload[1]
+
+			const taskMetrics = await createTaskMetrics({
+				cost: totalCost,
+				tokensIn: totalTokensIn,
+				tokensOut: totalTokensOut,
+				tokensContext: contextTokens,
+				duration,
+				cacheWrites: totalCacheWrites ?? 0,
+				cacheReads: totalCacheReads ?? 0,
+			})
+
+			await updateTask(task.id, { taskMetricsId: taskMetrics.id })
+			isTaskFinished = true
+		}
+
+		if (eventName === RooCodeEventName.TaskAborted) {
+			isTaskFinished = true
+		}
+	})
+
+	console.log(`[cli#runExercise] StartNewTask -> ${language} / ${exercise}`)
+
+	client.sendMessage({
+		type: IpcMessageType.TaskCommand,
+		origin: IpcOrigin.Client,
+		clientId: client.clientId!,
+		data: {
+			commandName: TaskCommandName.StartNewTask,
+			data: {
+				configuration: {
+					...rooCodeDefaults,
+					openRouterApiKey: process.env.OPENROUTER_API_KEY!,
+					...run.settings,
+				},
+				text: prompt,
+				newTab: true,
+			},
 		},
 	})
 
-	return true
+	try {
+		await pWaitFor(() => isTaskFinished, { interval: 1_000, timeout: 300 * 1_000 })
+		client.disconnect()
+		return true
+	} catch (error) {
+		console.error(error)
+		client.disconnect()
+		return false
+	}
 }
 
 const askLanguage = async (prompt: GluegunPrompt) => {
@@ -215,29 +323,19 @@ const main = async () => {
 		.create()
 
 	const toolbox = await cli.run(process.argv)
-	const { print, command } = toolbox
+	const { command } = toolbox
 
-	try {
-		switch (command?.name) {
-			case "run":
-				await run(toolbox)
-				break
-		}
-
-		process.exit(0)
-	} catch (error: unknown) {
-		print.error(error instanceof Error ? error.message : String(error))
-		process.exit(1)
+	switch (command?.name) {
+		case "run":
+			await run(toolbox)
+			break
 	}
+
+	process.exit(0)
 }
 
 if (!fs.existsSync(extensionDevelopmentPath)) {
 	console.error(`"extensionDevelopmentPath" does not exist.`)
-	process.exit(1)
-}
-
-if (!fs.existsSync(extensionTestsPath)) {
-	console.error(`"extensionTestsPath" does not exist. Please run "pnpm --filter @benchmark/runner build".`)
 	process.exit(1)
 }
 

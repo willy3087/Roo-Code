@@ -1,60 +1,6 @@
 import { z } from "zod"
 
-/**
- * TaskEvent
- */
-
-export enum TaskEventName {
-	Connect = "Connect",
-	TaskStarted = "TaskStarted",
-	Message = "Message",
-	TaskTokenUsageUpdated = "TaskTokenUsageUpdated",
-	TaskFinished = "TaskFinished",
-}
-
-export const taskEventSchema = z.discriminatedUnion("eventName", [
-	z.object({
-		eventName: z.literal(TaskEventName.Connect),
-		data: z.object({ task: z.object({ id: z.number() }) }),
-	}),
-	z.object({
-		eventName: z.literal(TaskEventName.TaskStarted),
-		data: z.object({ task: z.object({ id: z.number() }) }),
-	}),
-	z.object({
-		eventName: z.literal(TaskEventName.Message),
-		data: z.object({
-			task: z.object({ id: z.number() }),
-			message: z.object({
-				taskId: z.string(),
-				action: z.enum(["created", "updated"]),
-				message: z.object({
-					// See ClineMessage.
-					ts: z.number(),
-					type: z.enum(["ask", "say"]),
-					ask: z.string().optional(),
-					say: z.string().optional(),
-					partial: z.boolean().optional(),
-					text: z.string().optional(),
-					reasoning: z.string().optional(),
-				}),
-			}),
-		}),
-	}),
-	z.object({
-		eventName: z.literal(TaskEventName.TaskTokenUsageUpdated),
-		data: z.object({
-			task: z.object({ id: z.number() }),
-			usage: z.object({}),
-		}),
-	}),
-	z.object({
-		eventName: z.literal(TaskEventName.TaskFinished),
-		data: z.object({ task: z.object({ id: z.number() }), taskMetrics: z.unknown() }),
-	}),
-])
-
-export type TaskEvent = z.infer<typeof taskEventSchema>
+import { RooCodeEventName, rooCodeEventsSchema, rooCodeSettingsSchema } from "./roo-code.js"
 
 /**
  * TaskCommand
@@ -68,8 +14,10 @@ export const taskCommandSchema = z.discriminatedUnion("commandName", [
 	z.object({
 		commandName: z.literal(TaskCommandName.StartNewTask),
 		data: z.object({
+			configuration: rooCodeSettingsSchema,
 			text: z.string(),
 			images: z.array(z.string()).optional(),
+			newTab: z.boolean().optional(),
 		}),
 	}),
 ])
@@ -77,10 +25,76 @@ export const taskCommandSchema = z.discriminatedUnion("commandName", [
 export type TaskCommand = z.infer<typeof taskCommandSchema>
 
 /**
+ * TaskEvent
+ */
+
+export const taskEventSchema = z.discriminatedUnion("eventName", [
+	z.object({
+		eventName: z.literal(RooCodeEventName.Connect),
+		payload: z.unknown(),
+		taskId: z.number(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.Message),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.Message],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskCreated),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskCreated],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskStarted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskStarted],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskPaused),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskPaused],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskUnpaused),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskUnpaused],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskAskResponded),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskAskResponded],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskAborted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskAborted],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskSpawned),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskSpawned],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskCompleted),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskCompleted],
+		taskId: z.number().optional(),
+	}),
+	z.object({
+		eventName: z.literal(RooCodeEventName.TaskTokenUsageUpdated),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskTokenUsageUpdated],
+		taskId: z.number().optional(),
+	}),
+])
+
+export type TaskEvent = z.infer<typeof taskEventSchema>
+
+/**
  * IpcMessage
  */
 
 export enum IpcMessageType {
+	Connect = "Connect",
+	Disconnect = "Disconnect",
 	Ack = "Ack",
 	TaskCommand = "TaskCommand",
 	TaskEvent = "TaskEvent",
@@ -89,7 +103,6 @@ export enum IpcMessageType {
 export enum IpcOrigin {
 	Client = "client",
 	Server = "server",
-	Relay = "relay",
 }
 
 export const ipcMessageSchema = z.discriminatedUnion("type", [
@@ -106,7 +119,7 @@ export const ipcMessageSchema = z.discriminatedUnion("type", [
 	}),
 	z.object({
 		type: z.literal(IpcMessageType.TaskEvent),
-		origin: z.union([z.literal(IpcOrigin.Server), z.literal(IpcOrigin.Relay)]),
+		origin: z.literal(IpcOrigin.Server),
 		relayClientId: z.string().optional(),
 		data: taskEventSchema,
 	}),

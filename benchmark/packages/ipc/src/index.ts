@@ -10,12 +10,12 @@ import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, T
  * IpcClient
  */
 
-type IpcClientEvents = {
-	connect: []
-	disconnect: []
-	ack: [clientId: string]
-	taskCommand: [data: TaskCommand]
-	taskEvent: [data: TaskEvent]
+export type IpcClientEvents = {
+	[IpcMessageType.Connect]: []
+	[IpcMessageType.Disconnect]: []
+	[IpcMessageType.Ack]: [clientId: string]
+	[IpcMessageType.TaskCommand]: [data: TaskCommand]
+	[IpcMessageType.TaskEvent]: [data: TaskEvent]
 }
 
 export class IpcClient extends EventEmitter<IpcClientEvents> {
@@ -34,30 +34,30 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 		ipc.config.silent = true
 
 		ipc.connectTo("benchmarkServer", this.socketPath, () => {
-			ipc.of.benchmarkServer?.on("connect", (args) => this.onConnect(args))
-			ipc.of.benchmarkServer?.on("disconnect", (args) => this.onDisconnect(args))
+			ipc.of.benchmarkServer?.on("connect", () => this.onConnect())
+			ipc.of.benchmarkServer?.on("disconnect", () => this.onDisconnect())
 			ipc.of.benchmarkServer?.on("message", (data) => this.onMessage(data))
 		})
 	}
 
-	private onConnect(args: unknown) {
+	private onConnect() {
 		if (this._isConnected) {
 			return
 		}
 
-		this.log("[client#onConnect]", args)
+		this.log("[client#onConnect]")
 		this._isConnected = true
-		this.emit("connect")
+		this.emit(IpcMessageType.Connect)
 	}
 
-	private onDisconnect(args: unknown) {
+	private onDisconnect() {
 		if (!this._isConnected) {
 			return
 		}
 
-		this.log("[client#onDisconnect]", args)
+		this.log("[client#onDisconnect]")
 		this._isConnected = false
-		this.emit("disconnect")
+		this.emit(IpcMessageType.Disconnect)
 	}
 
 	private onMessage(data: unknown) {
@@ -69,7 +69,7 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 		const result = ipcMessageSchema.safeParse(data)
 
 		if (!result.success) {
-			this.log("[client#onMessage] invalid payload", result.error)
+			this.log("[client#onMessage] invalid payload", data)
 			return
 		}
 
@@ -79,10 +79,10 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 			switch (payload.type) {
 				case IpcMessageType.Ack:
 					this._clientId = payload.data.clientId
-					this.emit("ack", payload.data.clientId)
+					this.emit(IpcMessageType.Ack, payload.data.clientId)
 					break
 				case IpcMessageType.TaskEvent:
-					this.emit("taskEvent", payload.data)
+					this.emit(IpcMessageType.TaskEvent, payload.data)
 					break
 			}
 		}
@@ -127,10 +127,10 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
  */
 
 type IpcServerEvents = {
-	connect: [clientId: string]
-	disconnect: [clientId: string]
-	taskCommand: [clientId: string, data: TaskCommand]
-	taskEvent: [relayClientId: string | undefined, data: TaskEvent]
+	[IpcMessageType.Connect]: [clientId: string]
+	[IpcMessageType.Disconnect]: [clientId: string]
+	[IpcMessageType.TaskCommand]: [clientId: string, data: TaskCommand]
+	[IpcMessageType.TaskEvent]: [relayClientId: string | undefined, data: TaskEvent]
 }
 
 export class IpcServer extends EventEmitter<IpcServerEvents> {
@@ -167,7 +167,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		this._clients.set(clientId, socket)
 		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
 		this.send(socket, { type: IpcMessageType.Ack, origin: IpcOrigin.Server, data: { clientId } })
-		this.emit("connect", clientId)
+		this.emit(IpcMessageType.Connect, clientId)
 	}
 
 	private onDisconnect(destroyedSocket: Socket) {
@@ -184,7 +184,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		this.log(`[server#socket.disconnected] clientId = ${disconnectedClientId}, # clients = ${this._clients.size}`)
 
 		if (disconnectedClientId) {
-			this.emit("disconnect", disconnectedClientId)
+			this.emit(IpcMessageType.Disconnect, disconnectedClientId)
 		}
 	}
 
@@ -206,13 +206,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		if (payload.origin === IpcOrigin.Client) {
 			switch (payload.type) {
 				case IpcMessageType.TaskCommand:
-					this.emit("taskCommand", payload.clientId, payload.data)
-					break
-			}
-		} else if (payload.origin === IpcOrigin.Relay) {
-			switch (payload.type) {
-				case IpcMessageType.TaskEvent:
-					this.emit("taskEvent", payload.relayClientId, payload.data)
+					this.emit(IpcMessageType.TaskCommand, payload.clientId, payload.data)
 					break
 			}
 		}
