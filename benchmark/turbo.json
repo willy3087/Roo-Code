@@ -12,12 +12,12 @@
 		"BENCHMARKS_DB_PATH"
 	],
 	"tasks": {
-		"format": {},
 		"lint": {},
 		"check-types": {
 			"dependsOn": []
 		},
 		"test": {},
+		"format": {},
 		"dev": {
 			"dependsOn": [],
 			"cache": false,

@@ -27,6 +27,7 @@ import {
 	updateTask,
 	createTaskMetrics,
 } from "@benchmark/db"
+import { inChunksOf } from "@benchmark/lib"
 import { IpcServer, IpcClient } from "@benchmark/ipc"
 
 import { __dirname, extensionDevelopmentPath, exercisesPath } from "./paths.js"
@@ -90,8 +91,6 @@ const run = async (toolbox: GluegunToolbox) => {
 		throw new Error("No tasks found.")
 	}
 
-	let currentTask = tasks[0]
-
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
@@ -99,45 +98,23 @@ const run = async (toolbox: GluegunToolbox) => {
 		server.send(clientId, {
 			type: IpcMessageType.TaskEvent,
 			origin: IpcOrigin.Server,
-			data: { eventName: RooCodeEventName.Connect, taskId: currentTask.id },
+			// TODO: Broacast the set of running tasks.
+			data: { eventName: RooCodeEventName.Connect, taskId: -1 },
 		})
 	})
 
-	for (const task of tasks) {
-		currentTask = task
+	const chunks = inChunksOf(tasks, 2)
 
-		await runExercise({ run, task, server })
+	for (const chunk of chunks) {
+		await Promise.all(
+			chunk.map(async (task) => {
+				const runSucceeded = await runExercise({ run, task, server })
+				const passed = runSucceeded ? await runUnitTest({ task }) : false
+				await updateTask(task.id, { passed })
+			}),
+		)
 
-		const cmd = testCommands[task.language]
-		const exercisePath = path.resolve(exercisesPath, task.language, task.exercise)
-		const cwd = cmd.cwd ? path.resolve(exercisePath, cmd.cwd) : exercisePath
-		const commands = cmd.commands.map((cs) => parseCommandString(cs))
-
-		let passed = true
-
-		for (const command of commands) {
-			const controller = new AbortController()
-			const cancelSignal = controller.signal
-			const timeout = setTimeout(() => controller.abort(), cmd.timeout ?? 15_000)
-
-			try {
-				const result = await execa({ cwd, shell: true, reject: false, cancelSignal })`${command}`
-				// console.log('[cli#run] execa result =', { ...result, cwd, command })
-
-				clearTimeout(timeout)
-
-				if (result.failed) {
-					passed = false
-					break
-				}
-			} catch (error) {
-				console.log("[cli#run] execa error =", error)
-				passed = false
-				break
-			}
-		}
-
-		await updateTask(task.id, { passed })
+		break
 	}
 
 	const result = await finishRun(run.id)
@@ -155,8 +132,8 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	const prompt = fs.readFileSync(path.resolve(exercisesPath, `prompts/${language}.md`), "utf-8")
 
 	const dirname = path.dirname(run.socketPath)
-	const basename = path.basename(run.socketPath, ".sock")
-	const taskSocketPath = path.resolve(dirname, `${dirname}/${basename}-${task.id}.sock`)
+	const taskSocketPath = path.resolve(dirname, `${dirname}/task-${task.id}.sock`)
+
 	await execa({
 		env: { ROO_CODE_IPC_SOCKET_PATH: taskSocketPath },
 	})`code -n ${path.resolve(exercisesPath, language, exercise)}`
@@ -179,7 +156,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	let isTaskFinished = false
 
 	client.on(IpcMessageType.Disconnect, () => {
-		console.log("disconnect")
+		console.log(`[cli#runExercise | ${language} / ${exercise}] disconnect`)
 		isTaskFinished = true
 	})
 
@@ -202,7 +179,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		})
 
 		if (!ignoreEvents.includes(eventName)) {
-			console.log(`[cli#runExercise] taskEvent -> ${eventName}`)
+			console.log(`[cli#runExercise | ${language} / ${exercise}] taskEvent -> ${eventName}`)
 		}
 
 		// if (eventName === RooCodeEventName.Message) {
@@ -215,6 +192,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 		if (eventName === RooCodeEventName.TaskStarted) {
 			taskStartedAt = Date.now()
+			await updateTask(task.id, { startedAt: new Date() })
 		}
 
 		if (eventName === RooCodeEventName.TaskCompleted) {
@@ -233,7 +211,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 				cacheReads: totalCacheReads ?? 0,
 			})
 
-			await updateTask(task.id, { taskMetricsId: taskMetrics.id })
+			await updateTask(task.id, { taskMetricsId: taskMetrics.id, finishedAt: new Date() })
 			isTaskFinished = true
 		}
 
@@ -242,7 +220,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		}
 	})
 
-	console.log(`[cli#runExercise] StartNewTask -> ${language} / ${exercise}`)
+	console.log(`[cli#runExercise | ${language} / ${exercise}] StartNewTask (${taskSocketPath})`)
 
 	client.sendMessage({
 		type: IpcMessageType.TaskCommand,
@@ -271,6 +249,39 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		client.disconnect()
 		return false
 	}
+}
+
+const runUnitTest = async ({ task }: { task: Task }) => {
+	const cmd = testCommands[task.language]
+	const exercisePath = path.resolve(exercisesPath, task.language, task.exercise)
+	const cwd = cmd.cwd ? path.resolve(exercisePath, cmd.cwd) : exercisePath
+	const commands = cmd.commands.map((cs) => parseCommandString(cs))
+
+	let passed = true
+
+	for (const command of commands) {
+		const controller = new AbortController()
+		const cancelSignal = controller.signal
+		const timeout = setTimeout(() => controller.abort(), cmd.timeout ?? 15_000)
+
+		try {
+			const result = await execa({ cwd, shell: true, reject: false, cancelSignal })`${command}`
+			// console.log('[cli#run] execa result =', { ...result, cwd, command })
+
+			clearTimeout(timeout)
+
+			if (result.failed) {
+				passed = false
+				break
+			}
+		} catch (error) {
+			console.log("[cli#run] execa error =", error)
+			passed = false
+			break
+		}
+	}
+
+	return passed
 }
 
 const askLanguage = async (prompt: GluegunPrompt) => {

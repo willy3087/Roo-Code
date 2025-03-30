@@ -20,8 +20,8 @@ export type IpcClientEvents = {
 
 export class IpcClient extends EventEmitter<IpcClientEvents> {
 	private readonly _socketPath: string
+	private readonly _id: string
 	private readonly _log: (...args: unknown[]) => void
-
 	private _isConnected = false
 	private _clientId?: string
 
@@ -29,14 +29,15 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 		super()
 
 		this._socketPath = socketPath
+		this._id = `benchmark-${crypto.randomBytes(6).toString("hex")}`
 		this._log = log
 
 		ipc.config.silent = true
 
-		ipc.connectTo("benchmarkServer", this.socketPath, () => {
-			ipc.of.benchmarkServer?.on("connect", () => this.onConnect())
-			ipc.of.benchmarkServer?.on("disconnect", () => this.onDisconnect())
-			ipc.of.benchmarkServer?.on("message", (data) => this.onMessage(data))
+		ipc.connectTo(this._id, this.socketPath, () => {
+			ipc.of[this._id]?.on("connect", () => this.onConnect())
+			ipc.of[this._id]?.on("disconnect", () => this.onDisconnect())
+			ipc.of[this._id]?.on("message", (data) => this.onMessage(data))
 		})
 	}
 
@@ -93,12 +94,12 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 	}
 
 	public sendMessage(message: IpcMessage) {
-		ipc.of.benchmarkServer?.emit("message", message)
+		ipc.of[this._id]?.emit("message", message)
 	}
 
 	public disconnect() {
 		try {
-			ipc.disconnect("benchmarkServer")
+			ipc.disconnect(this._id)
 			// @TODO: Should we set _disconnect here?
 		} catch (error) {
 			this.log("[client#disconnect] error disconnecting", error)
