@@ -1,11 +1,11 @@
 # Roo Code Changelog
 
-## 3.11.2
+## [3.11.2] - 2025-03-31
 
-### Patch Changes
-
-- Update the webview when changing settings via the API
 - Fix bug in loading Requesty key balance
+- Fix bug with Bedrock inference profiles
+- Update the webview when changing settings via the API
+- Refactor webview messages code (thanks @diarmidmackenzie!)
 
 ## [3.11.1] - 2025-03-30
 
