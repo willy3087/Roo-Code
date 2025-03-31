@@ -95,23 +95,27 @@ const run = async (toolbox: GluegunToolbox) => {
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
 
-	server.on(IpcMessageType.Connect, (clientId) => {
-		server.send(clientId, {
-			type: IpcMessageType.TaskEvent,
-			origin: IpcOrigin.Server,
-			// TODO: Broacast the set of running tasks.
-			data: { eventName: RooCodeEventName.Connect, taskId: -1 },
-		})
-	})
+	// server.on(IpcMessageType.Connect, (clientId) => {
+	// 	server.send(clientId, {
+	// 		type: IpcMessageType.TaskEvent,
+	// 		origin: IpcOrigin.Server,
+	// 		data: { eventName: RooCodeEventName.Connect, taskId: -1 },
+	// 	})
+	// })
 
 	const chunks = inChunksOf(tasks, 3)
 
 	for (const chunk of chunks) {
 		await Promise.all(
 			chunk.map(async (task) => {
-				const runSucceeded = await runExercise({ run, task, server })
-				const passed = runSucceeded ? await runUnitTest({ task }) : false
-				await updateTask(task.id, { passed })
+				if (task.finishedAt === null) {
+					await runExercise({ run, task, server })
+				}
+
+				if (task.passed === null) {
+					const passed = await runUnitTest({ task })
+					await updateTask(task.id, { passed })
+				}
 			}),
 		)
 
@@ -124,14 +128,7 @@ const run = async (toolbox: GluegunToolbox) => {
 
 const runExercise = async ({ run, task, server }: { run: Run; task: Task; server: IpcServer }) => {
 	const { language, exercise } = task
-
-	if (task.finishedAt) {
-		console.log(`Test result exists for ${language} / ${exercise}, skipping`)
-		return false
-	}
-
 	const prompt = fs.readFileSync(path.resolve(exercisesPath, `prompts/${language}.md`), "utf-8")
-
 	const dirname = path.dirname(run.socketPath)
 	const taskSocketPath = path.resolve(dirname, `${dirname}/task-${task.id}.sock`)
 
@@ -157,11 +154,10 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	if (!client.isReady) {
 		client.disconnect()
 		console.log(`[cli#runExercise | ${language} / ${exercise}] unable to connect`)
-		return false
+		return
 	}
 
 	let isTaskFinished = false
-	let isTaskAborted = false
 
 	client.on(IpcMessageType.Disconnect, () => {
 		console.log(`[cli#runExercise | ${language} / ${exercise}] disconnect`)
@@ -176,6 +172,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 	let taskStartedAt = Date.now()
 	let taskMetricsId: number | undefined
+	let rooTaskId: string | undefined
 
 	client.on(IpcMessageType.TaskEvent, async (taskEvent) => {
 		const { eventName, payload } = taskEvent
@@ -190,14 +187,6 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		if (!ignoreEvents.includes(eventName)) {
 			console.log(`[cli#runExercise | ${language} / ${exercise}] taskEvent -> ${eventName}`)
 		}
-
-		// if (eventName === RooCodeEventName.Message) {
-		// 	const { message: { ts, text, partial } } = payload[0]
-
-		// 	if (!partial) {
-		// 		console.log(`${ts}: ${text}`)
-		// 	}
-		// }
 
 		if (eventName === RooCodeEventName.TaskStarted) {
 			taskStartedAt = Date.now()
@@ -216,6 +205,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 			taskStartedAt = Date.now()
 			taskMetricsId = taskMetrics.id
+			rooTaskId = payload[0]
 		}
 
 		if (
@@ -238,13 +228,9 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 			})
 		}
 
-		if (eventName === RooCodeEventName.TaskCompleted) {
+		if (eventName === RooCodeEventName.TaskCompleted || eventName === RooCodeEventName.TaskAborted) {
 			await updateTask(task.id, { finishedAt: new Date() })
 			isTaskFinished = true
-		}
-
-		if (eventName === RooCodeEventName.TaskAborted) {
-			isTaskAborted = true
 		}
 	})
 
@@ -269,13 +255,33 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	console.log(`[cli#runExercise | ${language} / ${exercise}] starting task`)
 
 	try {
-		await pWaitFor(() => isTaskFinished || isTaskAborted, { interval: 1_000, timeout: 1 * 60 * 1_000 })
+		await pWaitFor(() => isTaskFinished, { interval: 1_000, timeout: 1 * 60 * 1_000 })
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	} catch (error) {
 		console.log(`[cli#runExercise | ${language} / ${exercise}] time limit reached`)
+
+		if (rooTaskId) {
+			client.sendMessage({
+				type: IpcMessageType.TaskCommand,
+				origin: IpcOrigin.Client,
+				clientId: client.clientId!,
+				data: { commandName: TaskCommandName.CancelTask, data: rooTaskId },
+			})
+
+			await new Promise((resolve) => setTimeout(resolve, 2_000))
+		}
+
+		await updateTask(task.id, { finishedAt: new Date() })
 	}
 
 	try {
+		client.sendMessage({
+			type: IpcMessageType.VSCodeCommand,
+			origin: IpcOrigin.Client,
+			clientId: client.clientId!,
+			data: "workbench.action.files.saveFiles",
+		})
+
 		client.sendMessage({
 			type: IpcMessageType.VSCodeCommand,
 			origin: IpcOrigin.Client,
@@ -287,8 +293,6 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	} catch (error) {
 		console.error(error)
 	}
-
-	return isTaskFinished
 }
 
 const runUnitTest = async ({ task }: { task: Task }) => {

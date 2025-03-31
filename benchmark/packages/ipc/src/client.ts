@@ -3,12 +3,12 @@ import * as crypto from "node:crypto"
 
 import ipc from "node-ipc"
 
-import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, TaskEvent } from "@benchmark/types"
+import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, Ack, TaskCommand, TaskEvent } from "@benchmark/types"
 
 export type IpcClientEvents = {
 	[IpcMessageType.Connect]: []
 	[IpcMessageType.Disconnect]: []
-	[IpcMessageType.Ack]: [clientId: string]
+	[IpcMessageType.Ack]: [data: Ack]
 	[IpcMessageType.TaskCommand]: [data: TaskCommand]
 	[IpcMessageType.TaskEvent]: [data: TaskEvent]
 }
@@ -75,7 +75,7 @@ export class IpcClient extends EventEmitter<IpcClientEvents> {
 			switch (payload.type) {
 				case IpcMessageType.Ack:
 					this._clientId = payload.data.clientId
-					this.emit(IpcMessageType.Ack, payload.data.clientId)
+					this.emit(IpcMessageType.Ack, payload.data)
 					break
 				case IpcMessageType.TaskEvent:
 					this.emit(IpcMessageType.TaskEvent, payload.data)

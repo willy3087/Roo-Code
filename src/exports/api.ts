@@ -16,6 +16,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 	private tabProvider?: ClineProvider
 	private readonly context: vscode.ExtensionContext
 	private readonly ipc?: IpcServer
+	private readonly taskMap = new Map<string, ClineProvider>()
 
 	constructor(outputChannel: vscode.OutputChannel, provider: ClineProvider, socketPath?: string) {
 		super()
@@ -39,7 +40,10 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 
 				switch (commandName) {
 					case TaskCommandName.StartNewTask:
-						this.startNewTask(data)
+						await this.startNewTask(data)
+						break
+					case TaskCommandName.CancelTask:
+						await this.cancelTask(data)
 						break
 				}
 			})
@@ -102,7 +106,6 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		await provider.postMessageToWebview({ type: "invoke", invoke: "newChat", text, images })
 
 		const { taskId } = await provider.initClineWithTask(text, images)
-
 		return taskId
 	}
 
@@ -112,6 +115,15 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 
 	public async clearCurrentTask(lastMessage?: string) {
 		await this.sidebarProvider.finishSubTask(lastMessage)
+	}
+
+	public async cancelTask(taskId: string) {
+		const provider = this.taskMap.get(taskId)
+
+		if (provider) {
+			await provider.cancelTask()
+			this.taskMap.delete(taskId)
+		}
 	}
 
 	public async cancelCurrentTask() {
@@ -156,17 +168,32 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 
 	private registerListeners(provider: ClineProvider) {
 		provider.on("clineCreated", (cline) => {
+			cline.on("taskStarted", () => {
+				this.emit(RooCodeEventName.TaskStarted, cline.taskId)
+				this.taskMap.set(cline.taskId, provider)
+			})
+
 			cline.on("message", (message) => this.emit(RooCodeEventName.Message, { taskId: cline.taskId, ...message }))
-			cline.on("taskStarted", () => this.emit(RooCodeEventName.TaskStarted, cline.taskId))
-			cline.on("taskPaused", () => this.emit(RooCodeEventName.TaskPaused, cline.taskId))
-			cline.on("taskUnpaused", () => this.emit(RooCodeEventName.TaskUnpaused, cline.taskId))
-			cline.on("taskAskResponded", () => this.emit(RooCodeEventName.TaskAskResponded, cline.taskId))
-			cline.on("taskAborted", () => this.emit(RooCodeEventName.TaskAborted, cline.taskId))
-			cline.on("taskSpawned", (childTaskId) => this.emit(RooCodeEventName.TaskSpawned, cline.taskId, childTaskId))
-			cline.on("taskCompleted", (_, usage) => this.emit(RooCodeEventName.TaskCompleted, cline.taskId, usage))
+
 			cline.on("taskTokenUsageUpdated", (_, usage) =>
 				this.emit(RooCodeEventName.TaskTokenUsageUpdated, cline.taskId, usage),
 			)
+
+			cline.on("taskAskResponded", () => this.emit(RooCodeEventName.TaskAskResponded, cline.taskId))
+
+			cline.on("taskAborted", () => {
+				this.emit(RooCodeEventName.TaskAborted, cline.taskId)
+				this.taskMap.delete(cline.taskId)
+			})
+
+			cline.on("taskCompleted", (_, usage) => {
+				this.emit(RooCodeEventName.TaskCompleted, cline.taskId, usage)
+				this.taskMap.delete(cline.taskId)
+			})
+
+			cline.on("taskSpawned", (childTaskId) => this.emit(RooCodeEventName.TaskSpawned, cline.taskId, childTaskId))
+			cline.on("taskPaused", () => this.emit(RooCodeEventName.TaskPaused, cline.taskId))
+			cline.on("taskUnpaused", () => this.emit(RooCodeEventName.TaskUnpaused, cline.taskId))
 
 			this.emit(RooCodeEventName.TaskCreated, cline.taskId)
 		})

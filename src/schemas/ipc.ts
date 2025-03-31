@@ -3,11 +3,24 @@ import { z } from "zod"
 import { RooCodeEventName, rooCodeEventsSchema, rooCodeSettingsSchema } from "./index"
 
 /**
+ * Ack
+ */
+
+export const ackSchema = z.object({
+	clientId: z.string(),
+	pid: z.number(),
+	ppid: z.number(),
+})
+
+export type Ack = z.infer<typeof ackSchema>
+
+/**
  * TaskCommand
  */
 
 export enum TaskCommandName {
 	StartNewTask = "StartNewTask",
+	CancelTask = "CancelTask",
 }
 
 export const taskCommandSchema = z.discriminatedUnion("commandName", [
@@ -19,6 +32,10 @@ export const taskCommandSchema = z.discriminatedUnion("commandName", [
 			images: z.array(z.string()).optional(),
 			newTab: z.boolean().optional(),
 		}),
+	}),
+	z.object({
+		commandName: z.literal(TaskCommandName.CancelTask),
+		data: z.string(),
 	}),
 ])
 
@@ -95,7 +112,7 @@ export const ipcMessageSchema = z.discriminatedUnion("type", [
 	z.object({
 		type: z.literal(IpcMessageType.Ack),
 		origin: z.literal(IpcOrigin.Server),
-		data: z.object({ clientId: z.string(), pid: z.number(), ppid: z.number() }),
+		data: ackSchema,
 	}),
 	z.object({
 		type: z.literal(IpcMessageType.TaskCommand),

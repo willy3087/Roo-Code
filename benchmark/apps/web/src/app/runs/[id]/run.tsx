@@ -25,7 +25,7 @@ import { TaskStatus } from "./task-status"
 import { ConnectionStatus } from "./connection-status"
 
 export function Run({ run }: { run: db.Run }) {
-	const { tasks, status, runningTaskId, output, outputCounts } = useRunStatus(run)
+	const { tasks, status, output, outputCounts } = useRunStatus(run)
 	const scrollAreaRef = useRef<HTMLDivElement>(null)
 	const [selectedTask, setSelectedTask] = useState<db.Task>()
 
@@ -67,7 +67,7 @@ export function Run({ run }: { run: db.Run }) {
 								<TableRow key={task.id}>
 									<TableCell>
 										<div className="flex items-center gap-2">
-											<TaskStatus task={task} runningTaskId={runningTaskId} />
+											<TaskStatus task={task} />
 											<div>
 												{task.language}/{task.exercise}
 											</div>

@@ -8,12 +8,12 @@ import { getTasks } from "@/lib/server/tasks"
 import { useEventSource } from "@/hooks/use-event-source"
 
 export const useRunStatus = (run: Run) => {
-	const [runningTaskId, setRunningTaskId] = useState<number>()
+	const [tasksUpdatedAt, setTasksUpdatedAt] = useState<number>()
 	const outputRef = useRef<Map<number, string[]>>(new Map())
 	const [outputCounts, setOutputCounts] = useState<Record<number, number>>({})
 
 	const { data: tasks } = useQuery({
-		queryKey: ["run", run.id, runningTaskId],
+		queryKey: ["run", run.id, tasksUpdatedAt],
 		queryFn: async () => getTasks(run.id),
 		placeholderData: keepPreviousData,
 		refetchInterval: 10_000,
@@ -46,13 +46,10 @@ export const useRunStatus = (run: Run) => {
 		}
 
 		switch (eventName) {
-			case RooCodeEventName.Connect:
-			case RooCodeEventName.TaskCreated:
 			case RooCodeEventName.TaskStarted:
-				setRunningTaskId(taskId)
-				break
 			case RooCodeEventName.TaskCompleted:
-				setRunningTaskId(undefined)
+			case RooCodeEventName.TaskAborted:
+				setTasksUpdatedAt(Date.now())
 				break
 			case RooCodeEventName.Message: {
 				const [
@@ -79,5 +76,5 @@ export const useRunStatus = (run: Run) => {
 
 	const status = useEventSource({ url, onMessage })
 
-	return { tasks, status, runningTaskId, output: outputRef.current, outputCounts }
+	return { tasks, status, output: outputRef.current, outputCounts }
 }
