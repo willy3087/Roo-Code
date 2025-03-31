@@ -193,16 +193,9 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		return this.sidebarProvider.getValues()
 	}
 
-	public getConfigurationValue<K extends keyof RooCodeSettings>(key: K) {
-		return this.sidebarProvider.getValue(key)
-	}
-
 	public async setConfiguration(values: RooCodeSettings) {
 		await this.sidebarProvider.setValues(values)
-	}
-
-	public async setConfigurationValue<K extends keyof RooCodeSettings>(key: K, value: RooCodeSettings[K]) {
-		await this.sidebarProvider.setValue(key, value)
+		await this.sidebarProvider.postStateToWebview()
 	}
 
 	public isReady() {
