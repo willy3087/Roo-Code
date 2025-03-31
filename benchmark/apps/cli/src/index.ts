@@ -57,9 +57,6 @@ const run = async (toolbox: GluegunToolbox) => {
 		throw new Error(`Exercise is invalid: ${exercise}`)
 	}
 
-	console.log(await execa({ cwd: exercisesPath })`git checkout -f`)
-	console.log(await execa({ cwd: exercisesPath })`git clean -fd`)
-
 	const id = config.runId ? Number(config.runId) : undefined
 	let run: Run
 
@@ -95,6 +92,15 @@ const run = async (toolbox: GluegunToolbox) => {
 	if (!tasks[0]) {
 		throw new Error("No tasks found.")
 	}
+
+	console.log(await execa({ cwd: exercisesPath })`git checkout -f`)
+	console.log(await execa({ cwd: exercisesPath })`git clean -fd`)
+	console.log(await execa({ cwd: exercisesPath })`git checkout -b runs/${run.id} main`)
+
+	fs.writeFileSync(
+		path.resolve(exercisesPath, "settings.json"),
+		JSON.stringify({ ...rooCodeDefaults, ...run.settings }, null, 2),
+	)
 
 	const server = new IpcServer(run.socketPath, () => {})
 	server.listen()
@@ -146,6 +152,9 @@ const run = async (toolbox: GluegunToolbox) => {
 	if (parentPid) {
 		console.log(await execa`kill -INT ${parentPid}`)
 	}
+
+	console.log(await execa({ cwd: exercisesPath })`git add .`)
+	console.log(await execa({ cwd: exercisesPath })`git commit -m ${`Run #${run.id}`} --no-verify`)
 }
 
 const runExercise = async ({ run, task, server }: { run: Run; task: Task; server: IpcServer }) => {
