@@ -1,8 +1,6 @@
 # Roo Code Changelog
 
-## 3.11.3
-
-### Patch Changes
+## [3.11.3]
 
 - Revert mention changes in case they're causing performance issues/crashes
 
