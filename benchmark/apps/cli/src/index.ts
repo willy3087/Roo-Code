@@ -58,6 +58,9 @@ const run = async (toolbox: GluegunToolbox) => {
 		throw new Error(`Exercise is invalid: ${exercise}`)
 	}
 
+	console.log(await execa({ cwd: exercisesPath })`git checkout -f`)
+	console.log(await execa({ cwd: exercisesPath })`git clean -fd`)
+
 	const id = config.runId ? Number(config.runId) : undefined
 	let run: Run
 
