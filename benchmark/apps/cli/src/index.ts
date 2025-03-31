@@ -21,11 +21,12 @@ import {
 	findRun,
 	createRun,
 	finishRun,
+	type Task,
 	createTask,
-	Task,
 	getTasks,
 	updateTask,
 	createTaskMetrics,
+	updateTaskMetrics,
 } from "@benchmark/db"
 import { inChunksOf } from "@benchmark/lib"
 import { IpcServer, IpcClient } from "@benchmark/ipc"
@@ -62,7 +63,7 @@ const run = async (toolbox: GluegunToolbox) => {
 		run = await findRun(id)
 	} else {
 		run = await createRun({
-			model: "anthropic/claude-3.7-sonnet",
+			model: rooCodeDefaults.openRouterModelId!,
 			pid: process.pid,
 			socketPath: path.resolve(os.tmpdir(), `benchmark-${crypto.randomUUID()}.sock`),
 		})
@@ -103,7 +104,7 @@ const run = async (toolbox: GluegunToolbox) => {
 		})
 	})
 
-	const chunks = inChunksOf(tasks, 2)
+	const chunks = inChunksOf(tasks, 3)
 
 	for (const chunk of chunks) {
 		await Promise.all(
@@ -144,13 +145,19 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 	while (++tries < 5) {
 		try {
-			await pWaitFor(() => client.isConnected, { interval: 100, timeout: 2_000 })
+			await pWaitFor(() => client.isReady, { interval: 100, timeout: 2_000 })
 			break
 		} catch (error) {
 			console.error(error)
 			client.disconnect()
 			client = new IpcClient(taskSocketPath)
 		}
+	}
+
+	if (!client.isReady) {
+		client.disconnect()
+		console.log(`[cli#runExercise | ${language} / ${exercise}] unable to connect`)
+		return false
 	}
 
 	let isTaskFinished = false
@@ -168,6 +175,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	]
 
 	let taskStartedAt = Date.now()
+	let taskMetricsId: number | undefined
 
 	client.on(IpcMessageType.TaskEvent, async (taskEvent) => {
 		const { eventName, payload } = taskEvent
@@ -193,16 +201,33 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 		if (eventName === RooCodeEventName.TaskStarted) {
 			taskStartedAt = Date.now()
-			await updateTask(task.id, { startedAt: new Date() })
+
+			const taskMetrics = await createTaskMetrics({
+				cost: 0,
+				tokensIn: 0,
+				tokensOut: 0,
+				tokensContext: 0,
+				duration: 0,
+				cacheWrites: 0,
+				cacheReads: 0,
+			})
+
+			await updateTask(task.id, { taskMetricsId: taskMetrics.id, startedAt: new Date() })
+
+			taskStartedAt = Date.now()
+			taskMetricsId = taskMetrics.id
 		}
 
-		if (eventName === RooCodeEventName.TaskCompleted) {
+		if (
+			(eventName === RooCodeEventName.TaskTokenUsageUpdated || eventName === RooCodeEventName.TaskCompleted) &&
+			taskMetricsId
+		) {
 			const duration = Date.now() - taskStartedAt
 
 			const { totalCost, totalTokensIn, totalTokensOut, contextTokens, totalCacheWrites, totalCacheReads } =
 				payload[1]
 
-			const taskMetrics = await createTaskMetrics({
+			await updateTaskMetrics(taskMetricsId, {
 				cost: totalCost,
 				tokensIn: totalTokensIn,
 				tokensOut: totalTokensOut,
@@ -211,8 +236,10 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 				cacheWrites: totalCacheWrites ?? 0,
 				cacheReads: totalCacheReads ?? 0,
 			})
+		}
 
-			await updateTask(task.id, { taskMetricsId: taskMetrics.id, finishedAt: new Date() })
+		if (eventName === RooCodeEventName.TaskCompleted) {
+			await updateTask(task.id, { finishedAt: new Date() })
 			isTaskFinished = true
 		}
 
@@ -239,12 +266,13 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		},
 	})
 
-	console.log(`[cli#runExercise | ${language} / ${exercise}] StartNewTask`)
+	console.log(`[cli#runExercise | ${language} / ${exercise}] starting task`)
 
 	try {
-		await pWaitFor(() => isTaskFinished || isTaskAborted, { interval: 1_000, timeout: 300 * 1_000 })
+		await pWaitFor(() => isTaskFinished || isTaskAborted, { interval: 1_000, timeout: 1 * 60 * 1_000 })
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	} catch (error) {
-		console.error(error)
+		console.log(`[cli#runExercise | ${language} / ${exercise}] time limit reached`)
 	}
 
 	try {
@@ -254,8 +282,6 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 			clientId: client.clientId!,
 			data: "workbench.action.closeWindow",
 		})
-
-		console.log(`[cli#runExercise | ${language} / ${exercise}] VSCodeCommand (workbench.action.closeWindow)`)
 
 		client.disconnect()
 	} catch (error) {

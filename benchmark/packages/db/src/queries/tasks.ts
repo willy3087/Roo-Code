@@ -47,6 +47,7 @@ export const updateTask = async (id: number, values: UpdateTask) => {
 
 	return record
 }
+
 type GetTask = {
 	runId: number
 	language: ExerciseLanguage
