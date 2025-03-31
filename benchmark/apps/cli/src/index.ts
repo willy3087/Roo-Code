@@ -28,7 +28,6 @@ import {
 	createTaskMetrics,
 	updateTaskMetrics,
 } from "@benchmark/db"
-import { inChunksOf } from "@benchmark/lib"
 import { IpcServer, IpcClient } from "@benchmark/ipc"
 
 import { __dirname, extensionDevelopmentPath, exercisesPath } from "./paths.js"
@@ -108,24 +107,38 @@ const run = async (toolbox: GluegunToolbox) => {
 	// 	})
 	// })
 
-	const chunks = inChunksOf(tasks, 3)
+	const maxConcurrency = 3
+	const runningPromises: Promise<void>[] = []
 
-	for (const chunk of chunks) {
-		await Promise.all(
-			chunk.map(async (task) => {
-				if (task.finishedAt === null) {
-					await runExercise({ run, task, server })
-				}
+	const processTask = async (task: Task) => {
+		if (task.finishedAt === null) {
+			await runExercise({ run, task, server })
+		}
 
-				if (task.passed === null) {
-					const passed = await runUnitTest({ task })
-					await updateTask(task.id, { passed })
-				}
-			}),
-		)
-
-		break
+		if (task.passed === null) {
+			const passed = await runUnitTest({ task })
+			await updateTask(task.id, { passed })
+		}
 	}
+
+	for (const task of tasks) {
+		const taskPromise = processTask(task)
+		runningPromises.push(taskPromise)
+
+		taskPromise.finally(() => {
+			const index = runningPromises.indexOf(taskPromise)
+
+			if (index > -1) {
+				runningPromises.splice(index, 1)
+			}
+		})
+
+		if (runningPromises.length >= maxConcurrency) {
+			await Promise.race(runningPromises)
+		}
+	}
+
+	await Promise.all(runningPromises)
 
 	const result = await finishRun(run.id)
 	console.log("[cli#run]", result)

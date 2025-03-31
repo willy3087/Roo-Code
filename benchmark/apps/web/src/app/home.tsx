@@ -8,6 +8,7 @@ import type { Run, TaskMetrics } from "@benchmark/db"
 import { formatCurrency, formatDuration } from "@/lib"
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui"
 import { useMemo } from "react"
+import Link from "next/link"
 
 export function Home({ runs }: { runs: (Run & { taskMetrics: TaskMetrics | null })[] }) {
 	const router = useRouter()
@@ -33,7 +34,11 @@ export function Home({ runs }: { runs: (Run & { taskMetrics: TaskMetrics | null 
 					{visibleRuns.length ? (
 						visibleRuns.map(({ taskMetrics, ...run }) => (
 							<TableRow key={run.id}>
-								<TableCell>{run.id}</TableCell>
+								<TableCell>
+									<Button variant="link" asChild>
+										<Link href={`/runs/${run.id}`}>{run.id}</Link>
+									</Button>
+								</TableCell>
 								<TableCell>{run.model}</TableCell>
 								<TableCell>{new Date(run.createdAt).toLocaleString()}</TableCell>
 								<TableCell>{run.passed}</TableCell>
