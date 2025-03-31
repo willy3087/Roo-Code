@@ -222,29 +222,22 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	})
 
 	client.sendMessage({
-		type: IpcMessageType.VSCodeCommand,
+		type: IpcMessageType.TaskCommand,
 		origin: IpcOrigin.Client,
 		clientId: client.clientId!,
-		data: "workbench.action.closeWindow",
+		data: {
+			commandName: TaskCommandName.StartNewTask,
+			data: {
+				configuration: {
+					...rooCodeDefaults,
+					openRouterApiKey: process.env.OPENROUTER_API_KEY!,
+					...run.settings,
+				},
+				text: prompt,
+				newTab: true,
+			},
+		},
 	})
-
-	// client.sendMessage({
-	// 	type: IpcMessageType.TaskCommand,
-	// 	origin: IpcOrigin.Client,
-	// 	clientId: client.clientId!,
-	// 	data: {
-	// 		commandName: TaskCommandName.StartNewTask,
-	// 		data: {
-	// 			configuration: {
-	// 				...rooCodeDefaults,
-	// 				openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-	// 				...run.settings,
-	// 			},
-	// 			text: prompt,
-	// 			newTab: true,
-	// 		},
-	// 	},
-	// })
 
 	console.log(`[cli#runExercise | ${language} / ${exercise}] StartNewTask`)
 

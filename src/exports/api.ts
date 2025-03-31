@@ -6,9 +6,9 @@ import { openClineInNewTab } from "../activate/registerCommands"
 
 import { RooCodeSettings, RooCodeEvents, RooCodeEventName } from "../schemas"
 import { IpcOrigin, IpcMessageType, TaskCommandName, TaskEvent } from "../schemas/ipc"
-import { formatLog } from "./formatLog"
 import { RooCodeAPI } from "./interface"
 import { IpcServer } from "./ipc"
+import { outputChannelLog } from "./log"
 
 export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 	private readonly outputChannel: vscode.OutputChannel
@@ -27,8 +27,7 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		this.registerListeners(this.sidebarProvider)
 
 		if (socketPath) {
-			this.ipc = new IpcServer(socketPath, (...args: unknown[]) => formatLog(this.outputChannel, ...args))
-
+			this.ipc = new IpcServer(socketPath, (...args: unknown[]) => outputChannelLog(this.outputChannel, ...args))
 			this.ipc.listen()
 
 			this.outputChannel.appendLine(
