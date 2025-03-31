@@ -43,6 +43,8 @@ const testCommands: Record<ExerciseLanguage, { commands: string[]; timeout?: num
 	rust: { commands: ["cargo test"] }, // timeout 15s bash -c "cd '$dir' && cargo test > /dev/null 2>&1"
 }
 
+let parentPid: number | undefined = undefined
+
 const run = async (toolbox: GluegunToolbox) => {
 	const { config, prompt } = toolbox
 
@@ -124,6 +126,10 @@ const run = async (toolbox: GluegunToolbox) => {
 
 	const result = await finishRun(run.id)
 	console.log("[cli#run]", result)
+
+	if (parentPid) {
+		console.log(await execa`kill -INT ${parentPid}`)
+	}
 }
 
 const runExercise = async ({ run, task, server }: { run: Run; task: Task; server: IpcServer }) => {
@@ -137,8 +143,20 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	})`code -n ${path.resolve(exercisesPath, language, exercise)}`
 
 	console.log(`Connecting to ${taskSocketPath}`)
+
+	const createClient = (taskSocketPath: string) => {
+		const ipcClient = new IpcClient(taskSocketPath)
+
+		ipcClient.on(IpcMessageType.Ack, (ack) => {
+			console.log(`[cli#runExercise | ${language} / ${exercise}] ack`, ack)
+			parentPid = ack.ppid
+		})
+
+		return ipcClient
+	}
+
 	let tries = 0
-	let client = new IpcClient(taskSocketPath)
+	let client = createClient(taskSocketPath)
 
 	while (++tries < 5) {
 		try {
@@ -147,7 +165,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		} catch (error) {
 			console.error(error)
 			client.disconnect()
-			client = new IpcClient(taskSocketPath)
+			client = createClient(taskSocketPath)
 		}
 	}
 
@@ -159,8 +177,9 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 	let isTaskFinished = false
 
-	client.on(IpcMessageType.Disconnect, () => {
+	client.on(IpcMessageType.Disconnect, async () => {
 		console.log(`[cli#runExercise | ${language} / ${exercise}] disconnect`)
+		// await updateTask(task.id, { finishedAt: new Date() })
 		isTaskFinished = true
 	})
 
