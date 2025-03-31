@@ -88,7 +88,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		const result = ipcMessageSchema.safeParse(data)
 
 		if (!result.success) {
-			this.log("[server#onMessage] invalid payload", result.error)
+			this.log("[server#onMessage] invalid payload", result.error.format(), data)
 			return
 		}
 
@@ -114,12 +114,12 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 	}
 
 	public broadcast(message: IpcMessage) {
-		this.log("[server#broadcast] message =", message)
+		// this.log("[server#broadcast] message =", message)
 		ipc.server.broadcast("message", message)
 	}
 
 	public send(client: string | Socket, message: IpcMessage) {
-		this.log("[server#send] message =", message)
+		// this.log("[server#send] message =", message)
 
 		if (typeof client === "string") {
 			const socket = this._clients.get(client)
