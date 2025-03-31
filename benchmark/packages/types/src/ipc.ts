@@ -98,6 +98,7 @@ export enum IpcMessageType {
 	Ack = "Ack",
 	TaskCommand = "TaskCommand",
 	TaskEvent = "TaskEvent",
+	VSCodeCommand = "VSCodeCommand",
 }
 
 export enum IpcOrigin {
@@ -122,6 +123,12 @@ export const ipcMessageSchema = z.discriminatedUnion("type", [
 		origin: z.literal(IpcOrigin.Server),
 		relayClientId: z.string().optional(),
 		data: taskEventSchema,
+	}),
+	z.object({
+		type: z.literal(IpcMessageType.VSCodeCommand),
+		origin: z.literal(IpcOrigin.Client),
+		clientId: z.string(),
+		data: z.string(),
 	}),
 ])
 

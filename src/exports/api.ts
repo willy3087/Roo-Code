@@ -6,6 +6,7 @@ import { openClineInNewTab } from "../activate/registerCommands"
 
 import { RooCodeSettings, RooCodeEvents, RooCodeEventName } from "../schemas"
 import { IpcOrigin, IpcMessageType, TaskCommandName, TaskEvent } from "../schemas/ipc"
+import { formatLog } from "./formatLog"
 import { RooCodeAPI } from "./interface"
 import { IpcServer } from "./ipc"
 
@@ -26,19 +27,27 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		this.registerListeners(this.sidebarProvider)
 
 		if (socketPath) {
-			this.ipc = new IpcServer(socketPath)
+			this.ipc = new IpcServer(socketPath, (...args: unknown[]) => formatLog(this.outputChannel, ...args))
+
 			this.ipc.listen()
 
 			this.outputChannel.appendLine(
-				`IPC server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`,
+				`[API] ipc server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`,
 			)
 
 			this.ipc.on(IpcMessageType.TaskCommand, async (_clientId, { commandName, data }) => {
+				this.outputChannel.appendLine(`[API] TaskCommand -> ${commandName}`)
+
 				switch (commandName) {
 					case TaskCommandName.StartNewTask:
 						this.startNewTask(data)
 						break
 				}
+			})
+
+			this.ipc.on(IpcMessageType.VSCodeCommand, async (_clientId, command) => {
+				this.outputChannel.appendLine(`[API] VSCodeCommand -> ${command}`)
+				await vscode.commands.executeCommand(command)
 			})
 		}
 	}
@@ -66,6 +75,8 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 		let provider: ClineProvider
 
 		if (newTab) {
+			await vscode.commands.executeCommand("workbench.action.closeAllEditors")
+
 			if (!this.tabProvider) {
 				this.tabProvider = await openClineInNewTab({ context: this.context, outputChannel: this.outputChannel })
 				this.registerListeners(this.tabProvider)

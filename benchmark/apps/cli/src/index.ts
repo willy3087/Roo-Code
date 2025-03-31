@@ -154,6 +154,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	}
 
 	let isTaskFinished = false
+	let isTaskAborted = false
 
 	client.on(IpcMessageType.Disconnect, () => {
 		console.log(`[cli#runExercise | ${language} / ${exercise}] disconnect`)
@@ -216,39 +217,59 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 		}
 
 		if (eventName === RooCodeEventName.TaskAborted) {
-			isTaskFinished = true
+			isTaskAborted = true
 		}
 	})
 
-	console.log(`[cli#runExercise | ${language} / ${exercise}] StartNewTask (${taskSocketPath})`)
-
 	client.sendMessage({
-		type: IpcMessageType.TaskCommand,
+		type: IpcMessageType.VSCodeCommand,
 		origin: IpcOrigin.Client,
 		clientId: client.clientId!,
-		data: {
-			commandName: TaskCommandName.StartNewTask,
-			data: {
-				configuration: {
-					...rooCodeDefaults,
-					openRouterApiKey: process.env.OPENROUTER_API_KEY!,
-					...run.settings,
-				},
-				text: prompt,
-				newTab: true,
-			},
-		},
+		data: "workbench.action.closeWindow",
 	})
 
+	// client.sendMessage({
+	// 	type: IpcMessageType.TaskCommand,
+	// 	origin: IpcOrigin.Client,
+	// 	clientId: client.clientId!,
+	// 	data: {
+	// 		commandName: TaskCommandName.StartNewTask,
+	// 		data: {
+	// 			configuration: {
+	// 				...rooCodeDefaults,
+	// 				openRouterApiKey: process.env.OPENROUTER_API_KEY!,
+	// 				...run.settings,
+	// 			},
+	// 			text: prompt,
+	// 			newTab: true,
+	// 		},
+	// 	},
+	// })
+
+	console.log(`[cli#runExercise | ${language} / ${exercise}] StartNewTask`)
+
 	try {
-		await pWaitFor(() => isTaskFinished, { interval: 1_000, timeout: 300 * 1_000 })
-		client.disconnect()
-		return true
+		await pWaitFor(() => isTaskFinished || isTaskAborted, { interval: 1_000, timeout: 300 * 1_000 })
 	} catch (error) {
 		console.error(error)
-		client.disconnect()
-		return false
 	}
+
+	try {
+		client.sendMessage({
+			type: IpcMessageType.VSCodeCommand,
+			origin: IpcOrigin.Client,
+			clientId: client.clientId!,
+			data: "workbench.action.closeWindow",
+		})
+
+		console.log(`[cli#runExercise | ${language} / ${exercise}] VSCodeCommand (workbench.action.closeWindow)`)
+
+		client.disconnect()
+	} catch (error) {
+		console.error(error)
+	}
+
+	return isTaskFinished
 }
 
 const runUnitTest = async ({ task }: { task: Task }) => {

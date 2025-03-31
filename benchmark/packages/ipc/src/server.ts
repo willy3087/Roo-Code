@@ -4,11 +4,7 @@ import * as crypto from "node:crypto"
 
 import ipc from "node-ipc"
 
-import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, TaskEvent } from "../schemas/ipc"
-
-/**
- * IpcServer
- */
+import { IpcOrigin, IpcMessageType, IpcMessage, ipcMessageSchema, TaskCommand, TaskEvent } from "@benchmark/types"
 
 type IpcServerEvents = {
 	[IpcMessageType.Connect]: [clientId: string]
@@ -51,13 +47,7 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 		const clientId = crypto.randomBytes(6).toString("hex")
 		this._clients.set(clientId, socket)
 		this.log(`[server#onConnect] clientId = ${clientId}, # clients = ${this._clients.size}`)
-
-		this.send(socket, {
-			type: IpcMessageType.Ack,
-			origin: IpcOrigin.Server,
-			data: { clientId, pid: process.pid, ppid: process.ppid },
-		})
-
+		this.send(socket, { type: IpcMessageType.Ack, origin: IpcOrigin.Server, data: { clientId } })
 		this.emit(IpcMessageType.Connect, clientId)
 	}
 
@@ -98,12 +88,6 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 			switch (payload.type) {
 				case IpcMessageType.TaskCommand:
 					this.emit(IpcMessageType.TaskCommand, payload.clientId, payload.data)
-					break
-				case IpcMessageType.VSCodeCommand:
-					this.emit(IpcMessageType.VSCodeCommand, payload.clientId, payload.data)
-					break
-				default:
-					throw new Error(`[server#onMessage] unhandled payload: ${JSON.stringify(payload)}`)
 					break
 			}
 		}
