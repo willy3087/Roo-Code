@@ -15,7 +15,6 @@ type IpcServerEvents = {
 	[IpcMessageType.Disconnect]: [clientId: string]
 	[IpcMessageType.TaskCommand]: [clientId: string, data: TaskCommand]
 	[IpcMessageType.TaskEvent]: [relayClientId: string | undefined, data: TaskEvent]
-	[IpcMessageType.VSCodeCommand]: [clientId: string, data: string]
 }
 
 export class IpcServer extends EventEmitter<IpcServerEvents> {
@@ -98,9 +97,6 @@ export class IpcServer extends EventEmitter<IpcServerEvents> {
 			switch (payload.type) {
 				case IpcMessageType.TaskCommand:
 					this.emit(IpcMessageType.TaskCommand, payload.clientId, payload.data)
-					break
-				case IpcMessageType.VSCodeCommand:
-					this.emit(IpcMessageType.VSCodeCommand, payload.clientId, payload.data)
 					break
 				default:
 					throw new Error(`[server#onMessage] unhandled payload: ${JSON.stringify(payload)}`)

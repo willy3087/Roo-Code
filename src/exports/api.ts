@@ -38,66 +38,19 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 			ipc.on(IpcMessageType.TaskCommand, async (_clientId, { commandName, data }) => {
 				switch (commandName) {
 					case TaskCommandName.StartNewTask:
-						this.log(`[API] StartNewTask -> ${data.text}`)
-						this.log(`[API] StartNewTask -> ${JSON.stringify(data.configuration)}`)
-
-						try {
-							await this.startNewTask(data)
-
-							ipc.broadcast({
-								type: IpcMessageType.TaskEvent,
-								origin: IpcOrigin.Server,
-								data: {
-									eventName: RooCodeEventName.Message,
-									payload: [
-										{
-											taskId: "[system]",
-											action: "created",
-											message: {
-												ts: Date.now(),
-												type: "say",
-												text: `ACK: TaskCommand -> ${commandName}`,
-											},
-										},
-									],
-								},
-							})
-						} catch (error) {
-							this.log(`[API] error starting new task: ${error}`)
-						}
-
+						this.log(`[API] StartNewTask -> ${data.text}, ${JSON.stringify(data.configuration)}`)
+						await this.startNewTask(data)
 						break
 					case TaskCommandName.CancelTask:
 						this.log(`[API] CancelTask -> ${data}`)
-
 						await this.cancelTask(data)
-
-						ipc.broadcast({
-							type: IpcMessageType.TaskEvent,
-							origin: IpcOrigin.Server,
-							data: {
-								eventName: RooCodeEventName.Message,
-								payload: [
-									{
-										taskId: "[system]",
-										action: "created",
-										message: {
-											ts: Date.now(),
-											type: "say",
-											text: `ACK: CancelTask -> ${data}`,
-										},
-									},
-								],
-							},
-						})
-
+						break
+					case TaskCommandName.CloseTask:
+						this.log(`[API] CloseTask -> ${data}`)
+						await vscode.commands.executeCommand("workbench.action.files.saveFiles")
+						await vscode.commands.executeCommand("workbench.action.closeWindow")
 						break
 				}
-			})
-
-			ipc.on(IpcMessageType.VSCodeCommand, async (_clientId, command) => {
-				this.log(`[API] VSCodeCommand -> ${command}`)
-				await vscode.commands.executeCommand(command)
 			})
 		}
 	}

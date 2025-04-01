@@ -346,19 +346,14 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 	if (!isClientDisconnected) {
 		try {
-			client.sendMessage({
-				type: IpcMessageType.VSCodeCommand,
-				origin: IpcOrigin.Client,
-				clientId: client.clientId!,
-				data: "workbench.action.files.saveFiles",
-			})
-
-			client.sendMessage({
-				type: IpcMessageType.VSCodeCommand,
-				origin: IpcOrigin.Client,
-				clientId: client.clientId!,
-				data: "workbench.action.closeWindow",
-			})
+			if (rooTaskId) {
+				client.sendMessage({
+					type: IpcMessageType.TaskCommand,
+					origin: IpcOrigin.Client,
+					clientId: client.clientId!,
+					data: { commandName: TaskCommandName.CloseTask, data: rooTaskId },
+				})
+			}
 
 			client.disconnect()
 		} catch (error) {

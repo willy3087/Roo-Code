@@ -21,6 +21,7 @@ export type Ack = z.infer<typeof ackSchema>
 export enum TaskCommandName {
 	StartNewTask = "StartNewTask",
 	CancelTask = "CancelTask",
+	CloseTask = "CloseTask",
 }
 
 export const taskCommandSchema = z.discriminatedUnion("commandName", [
@@ -35,6 +36,10 @@ export const taskCommandSchema = z.discriminatedUnion("commandName", [
 	}),
 	z.object({
 		commandName: z.literal(TaskCommandName.CancelTask),
+		data: z.string(),
+	}),
+	z.object({
+		commandName: z.literal(TaskCommandName.CloseTask),
 		data: z.string(),
 	}),
 ])
@@ -115,7 +120,6 @@ export enum IpcMessageType {
 	Ack = "Ack",
 	TaskCommand = "TaskCommand",
 	TaskEvent = "TaskEvent",
-	VSCodeCommand = "VSCodeCommand",
 }
 
 export enum IpcOrigin {
@@ -140,12 +144,6 @@ export const ipcMessageSchema = z.discriminatedUnion("type", [
 		origin: z.literal(IpcOrigin.Server),
 		relayClientId: z.string().optional(),
 		data: taskEventSchema,
-	}),
-	z.object({
-		type: z.literal(IpcMessageType.VSCodeCommand),
-		origin: z.literal(IpcOrigin.Client),
-		clientId: z.string(),
-		data: z.string(),
 	}),
 ])
 
