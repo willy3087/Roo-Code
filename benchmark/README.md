@@ -14,6 +14,8 @@ Install nvm:
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.2/install.sh | bash
 # Reload shell.
 nvm install
+node --version
+# Verify the version is v20.18.1.
 ```
 
 Install pnpm:
@@ -29,7 +31,6 @@ Build the Roo Code extension:
 ```sh
 npm run install:all
 npx vsce package --out bin/roo-code-latest.vsix
-code --install-extension bin/roo-code-latest.vsix
 ```
 
 [Install](https://docs.docker.com/desktop/) and run Docker Desktop.
@@ -39,7 +40,9 @@ Build a container to run the Roo Code evals:
 ```sh
 cd benchmark
 pnpm install
+cp .env.sample .env
+# Update OPENROUTER_API_KEY=... with your actual API key.
 pnpm docker:start
 ```
 
-Navigation to [localhost:3000](http://localhost:3000/) in your browser.
+Navigate to [localhost:3000](http://localhost:3000/) in your browser.

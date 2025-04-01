@@ -12,11 +12,11 @@
 		"cli": "turbo dev --filter @benchmark/cli --output-logs new-only --ui tui -- run",
 		"drizzle:studio": "pnpm --filter @benchmark/db db:studio",
 		"docker:build": "docker build -f Dockerfile -t roo-code-benchmark --progress=plain ..",
-		"docker:run": "touch /tmp/benchmarks.db && docker run -d -it -p 3000:3000 -v /tmp/benchmarks.db:/tmp/benchmarks.db roo-code-benchmark",
+		"docker:run": "docker run -d -it -p 3000:3000 -v /tmp/benchmarks.db:/tmp/benchmarks.db roo-code-benchmark",
 		"docker:start": "pnpm docker:build && pnpm docker:run",
-		"docker:shell": "docker exec -it $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) /bin/bash",
-		"docker:stop": "docker stop $(docker ps --filter \"ancestor=roo-code-benchmark\" -q)",
-		"docker:rm": "docker rm $(docker ps -a --filter \"ancestor=roo-code-benchmark\" -q)",
+		"docker:shell": "docker exec -it $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) /bin/zsh",
+		"docker:stop": "docker stop $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) >/dev/null 2>&1 || true",
+		"docker:rm": "docker rm $(docker ps -a --filter \"ancestor=roo-code-benchmark\" -q) >/dev/null 2>&1 || true",
 		"docker:clean": "pnpm docker:stop && pnpm docker:rm"
 	},
 	"devDependencies": {

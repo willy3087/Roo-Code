@@ -227,9 +227,9 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	})
 
 	const ignoreEvents: RooCodeEventName[] = [
-		RooCodeEventName.Message,
-		// RooCodeEventName.TaskTokenUsageUpdated,
-		// RooCodeEventName.TaskAskResponded,
+		// RooCodeEventName.Message,
+		RooCodeEventName.TaskTokenUsageUpdated,
+		RooCodeEventName.TaskAskResponded,
 	]
 
 	let taskStartedAt = Date.now()
@@ -248,7 +248,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 		if (!ignoreEvents.includes(eventName)) {
 			console.log(`[cli#runExercise | ${language} / ${exercise}] taskEvent -> ${eventName}`)
-			// console.log(payload)
+			console.log(payload)
 		}
 
 		if (eventName === RooCodeEventName.TaskStarted) {
