@@ -115,6 +115,11 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 
 	public async clearCurrentTask(lastMessage?: string) {
 		await this.sidebarProvider.finishSubTask(lastMessage)
+		await this.sidebarProvider.postStateToWebview()
+	}
+
+	public async cancelCurrentTask() {
+		await this.sidebarProvider.cancelTask()
 	}
 
 	public async cancelTask(taskId: string) {
@@ -124,10 +129,6 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 			await provider.cancelTask()
 			this.taskMap.delete(taskId)
 		}
-	}
-
-	public async cancelCurrentTask() {
-		await this.sidebarProvider.cancelTask()
 	}
 
 	public async sendMessage(text?: string, images?: string[]) {
