@@ -1,13 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "Only macOS is currently supported."
   exit 1
 fi
 
-options=("nodejs" "python" "golang" "rust")
-binaries=("node" "python" "go" "rustc")
-choices[0]="*"
+options=("nodejs" "python" "golang" "rust" "java")
+binaries=("node" "python" "go" "rustc" "javac")
+
+declare -A has_asdf_plugin
+has_asdf_plugin=([nodejs]=true [python]=true [golang]=true [rust]=true [java]=false)
+
+for i in "${!options[@]}"; do
+  choices[i]="*"
+done
 
 menu() {
   echo -e "\nWhich eval types would you like to support?\n"
@@ -70,8 +76,8 @@ if ! command -v brew &>/dev/null; then
   read -p "Homebrew (https://brew.sh) is required. Install it? (Y/n): " install_brew
 
   if [[ "$install_brew" =~ ^[Yy]|^$ ]]; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo "☕ Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || exit 1
     # Can be undone with:
     # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" && sudo rm -rvf /opt/homebrew
 
@@ -87,7 +93,8 @@ if ! command -v brew &>/dev/null; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
     fi
 
-    echo "✅ Homebrew is installed"
+    BREW_VERSION=$(brew --version)
+    echo "✅ Homebrew is installed ($BREW_VERSION)"
   else
     exit 1
   fi
@@ -105,12 +112,13 @@ if ! command -v asdf &>/dev/null; then
   fi
 
   read -p "asdf (https://asdf-vm.com) is required. Install it? (Y/n): " install_asdf
-  # Can be undone with:
-  # rm -rvf ~/.asdf
 
   if [[ "$install_asdf" =~ ^[Yy]|^$ ]]; then
     echo "Installing asdf..."
-    brew install asdf
+    brew install asdf || exit 1
+    # Can be undone with:
+    # brew uninstall asdf
+    # rm -rvf ~/.asdf
 
     . "$ASDF_PATH"
 
@@ -120,7 +128,8 @@ if ! command -v asdf &>/dev/null; then
       echo '[[ -s "/opt/homebrew/bin/brew" ]] && [[ -s "$(brew --prefix asdf)/libexec/asdf.sh" ]] && source "$(brew --prefix asdf)/libexec/asdf.sh"' >>~/.bash_profile
     fi
 
-    echo "✅ asdf is installed"
+    ASDF_VERSION=$(asdf --version)
+    echo "✅ asdf is installed ($ASDF_VERSION)"
   else
     exit 1
   fi
@@ -129,66 +138,116 @@ else
   echo "✅ asdf is installed ($ASDF_VERSION)"
 fi
 
+if ! command -v gh &>/dev/null; then
+  read -p "GitHub cli is needed to submit evals results. Install it? (Y/n): " install_gh
+
+  if [[ "$install_gh" =~ ^[Yy]|^$ ]]; then
+    brew install gh || exit 1
+    GH_VERSION=$(gh --version | head -n 1)
+    echo "✅ gh is installed ($GH_VERSION)"
+    gh auth status || gh auth login -w -p https
+  fi
+else
+  GH_VERSION=$(gh --version | head -n 1)
+  echo "✅ gh is installed ($GH_VERSION)"
+fi
+
 for i in "${!options[@]}"; do
   [[ "${choices[i]}" ]] || continue
 
   plugin="${options[$i]}"
   binary="${binaries[$i]}"
 
-  if ! asdf plugin list | grep -q "^${plugin}$" && ! command -v "${binary[$i]}" &>/dev/null; then
-    asdf plugin add "${plugin}"
+  if [[ "${has_asdf_plugin[$plugin]}" == "true" ]]; then
+    missing_plugin=$(! asdf plugin list | grep -q "^${plugin}$")
 
-    if ! asdf plugin list | grep -q "^${plugin}$"; then
-      echo "Failed to install ${plugin} asdf plugin. Please install it manually."
-      exit 1
-    else
+    if [[ "$missing_plugin" == true ]] && ! command -v "${binary}" &>/dev/null; then
+      echo "Installing ${plugin} asdf plugin..."
+      asdf plugin add "${plugin}" || exit 1
       echo "✅ asdf ${plugin} plugin installed"
     fi
   fi
 
-  if [[ "${plugin}" == "nodejs" ]] && ! command -v node &>/dev/null; then
-    asdf install nodejs v20.18.1
-    asdf set nodejs v20.18.1
-    NODE_VERSION=$(node --version)
-    echo "✅ Node.js is installed ($NODE_VERSION)"
-  elif [[ "${plugin}" == "nodejs" ]]; then
-    NODE_VERSION=$(node --version)
-    echo "✅ Node.js is installed ($NODE_VERSION)"
-  fi
+  case "${plugin}" in
+  "nodejs")
+    if ! command -v node &>/dev/null; then
+      asdf install nodejs v20.18.1 || exit 1
+      asdf set nodejs v20.18.1 || exit 1
+      NODE_VERSION=$(node --version)
+      echo "✅ Node.js is installed ($NODE_VERSION)"
+    else
+      NODE_VERSION=$(node --version)
+      echo "✅ Node.js is installed ($NODE_VERSION)"
+    fi
 
-  if [[ "${plugin}" == "python" ]] && ! command -v python &>/dev/null; then
-    asdf install python 3.13.2
-    asdf set python 3.13.2
-    PYTHON_VERSION=$(python --version)
-    echo "✅ Python is installed ($PYTHON_VERSION)"
-  elif [[ "${plugin}" == "python" ]]; then
-    PYTHON_VERSION=$(python --version)
-    echo "✅ Python is installed ($PYTHON_VERSION)"
-  fi
+    if [[ $(node --version) != "v20.18.1" ]]; then
+      NODE_VERSION=$(node --version)
+      echo "🚨 You have the wrong version of node installed ($NODE_VERSION)."
+      echo "If you are using nvm then run 'nvm install' to install the version specified by the repo's .nvmrc."
+      exit 1
+    fi
+    ;;
 
-  if [[ "${plugin}" == "golang" ]] && ! command -v go &>/dev/null; then
-    asdf install golang 1.24.2
-    asdf set golang 1.24.2
-    GO_VERSION=$(go version)
-    echo "✅ Go is installed ($GO_VERSION)"
-  elif [[ "${plugin}" == "golang" ]]; then
-    GO_VERSION=$(go version)
-    echo "✅ Go is installed ($GO_VERSION)"
-  fi
+  "python")
+    if ! command -v python &>/dev/null; then
+      asdf install python 3.13.2 || exit 1
+      asdf set python 3.13.2 || exit 1
+      PYTHON_VERSION=$(python --version)
+      echo "✅ Python is installed ($PYTHON_VERSION)"
+    else
+      PYTHON_VERSION=$(python --version)
+      echo "✅ Python is installed ($PYTHON_VERSION)"
+    fi
 
-  if [[ "${plugin}" == "rust" ]] && ! command -v rustc &>/dev/null; then
-    asdf install rust 1.85.1
-    asdf set rust 1.85.1
-    RUST_VERSION=$(rustc --version)
-    echo "✅ Rust is installed ($RUST_VERSION)"
-  elif [[ "${plugin}" == "rust" ]]; then
-    RUST_VERSION=$(rustc --version)
-    echo "✅ Rust is installed ($RUST_VERSION)"
-  fi
+    if ! command -v uv &>/dev/null; then
+      brew install uv || exit 1
+      UV_VERSION=$(uv --version)
+      echo "✅ uv is installed ($UV_VERSION)"
+    else
+      UV_VERSION=$(uv --version)
+      echo "✅ uv is installed ($UV_VERSION)"
+    fi
+    ;;
+
+  "golang")
+    if ! command -v go &>/dev/null; then
+      asdf install golang 1.24.2 || exit 1
+      asdf set golang 1.24.2 || exit 1
+      GO_VERSION=$(go version)
+      echo "✅ Go is installed ($GO_VERSION)"
+    else
+      GO_VERSION=$(go version)
+      echo "✅ Go is installed ($GO_VERSION)"
+    fi
+    ;;
+
+  "rust")
+    if ! command -v rustc &>/dev/null; then
+      asdf install rust 1.85.1 || exit 1
+      asdf set rust 1.85.1 || exit 1
+      RUST_VERSION=$(rustc --version)
+      echo "✅ Rust is installed ($RUST_VERSION)"
+    else
+      RUST_VERSION=$(rustc --version)
+      echo "✅ Rust is installed ($RUST_VERSION)"
+    fi
+    ;;
+
+  "java")
+    if ! command -v javac &>/dev/null; then
+      brew install openjdk@17 || exit 1
+      JAVA_VERSION=$(java --version | head -n 1)
+      echo "✅ Java is installed ($JAVA_VERSION)"
+    else
+      JAVA_VERSION=$(java --version | head -n 1)
+      echo "✅ Java is installed ($JAVA_VERSION)"
+    fi
+    ;;
+  esac
 done
 
 if ! command -v pnpm &>/dev/null; then
-  brew install pnpm
+  brew install pnpm || exit 1
   PNPM_VERSION=$(pnpm --version)
   echo "✅ pnpm is installed ($PNPM_VERSION)"
 else
@@ -196,4 +255,29 @@ else
   echo "✅ pnpm is installed ($PNPM_VERSION)"
 fi
 
-pnpm install
+pnpm install || exit 1
+
+if [[ ! -d "evals" ]]; then
+  if gh auth status &>/dev/null; then
+    read -p "Would you like to be able to share eval results? (Y/n): " fork_evals
+
+    if [[ "$fork_evals" =~ ^[Yy]|^$ ]]; then
+      gh repo fork cte/evals || exit 1
+    else
+      gh repo clone cte/evals || exit 1
+    fi
+  else
+    git clone https://github.com/cte/evals.git || exit 1
+  fi
+fi
+
+if [[ ! -s .env ]]; then
+  cp .env.sample .env || exit 1
+fi
+
+if ! grep -q "OPENROUTER_API_KEY" .env; then
+  read -p "Enter your OpenRouter API Key (sk-or-v1-...): " openrouter_api_key
+  echo "Validating OpenRouter API Key..."
+  curl --silent --fail https://openrouter.ai/api/v1/key -H "Authorization: Bearer $openrouter_api_key" | jq || exit 1
+  echo "OPENROUTER_API_KEY=$openrouter_api_key" >> .env
+fi
