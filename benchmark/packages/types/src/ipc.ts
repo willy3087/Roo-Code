@@ -72,6 +72,11 @@ export const taskEventSchema = z.discriminatedUnion("eventName", [
 		taskId: z.number().optional(),
 	}),
 	z.object({
+		eventName: z.literal(RooCodeEventName.TaskModeSwitched),
+		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskModeSwitched],
+		taskId: z.number().optional(),
+	}),
+	z.object({
 		eventName: z.literal(RooCodeEventName.TaskPaused),
 		payload: rooCodeEventsSchema.shape[RooCodeEventName.TaskPaused],
 		taskId: z.number().optional(),

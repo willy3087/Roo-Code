@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 menu() {
-  echo -e "\nWhich eval types would you like to support?\n"
+  echo -e "\n📋 Which eval types would you like to support?\n"
 
   for i in ${!options[@]}; do
-    printf "%d %6s [%s]" $((i + 1)) "${options[i]}" "${choices[i]:- }"
+    printf " %d) %-6s [%s]" $((i + 1)) "${options[i]}" "${choices[i]:- }"
 
     if [[ $i == 0 ]]; then
       printf " (required)"
@@ -13,11 +13,11 @@ menu() {
     printf "\n"
   done
 
-  echo
+  echo -e " q) quit\n"
 }
 
 build_extension() {
-  echo "Building the Roo Code extension..."
+  echo "🔨 Building the Roo Code extension..."
   cd ..
   mkdir -p bin
   npm run install-extension -- --silent --no-audit || exit 1
@@ -29,7 +29,7 @@ build_extension() {
 }
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "Only macOS is currently supported."
+  echo "⚠️ Only macOS is currently supported."
   exit 1
 fi
 
@@ -43,18 +43,10 @@ for i in "${!options[@]}"; do
   choices[i]="*"
 done
 
-prompt="Type 🔢 to select, 'a' for all, 'q' to quit, ⏎ to continue: "
+prompt="Type 1-5 to select, 'q' to quit, ⏎ to continue: "
 
 while menu && read -rp "$prompt" num && [[ "$num" ]]; do
   [[ "$num" == "q" ]] && exit 0
-
-  [[ "$num" == "a" ]] && {
-    for i in ${!options[@]}; do
-      choices[i]="*"
-    done
-
-    continue
-  }
 
   [[ "$num" != *[![:digit:]]* ]] &&
     ((num > 1 && num <= ${#options[@]})) ||
@@ -81,14 +73,14 @@ printf "\n"
 
 if ! command -v brew &>/dev/null; then
   if [[ -f "/opt/homebrew/bin/brew" ]]; then
-    echo "Homebrew is installed but not in your PATH"
+    echo "⚠️ Homebrew is installed but not in your PATH"
     exit 1
   fi
 
-  read -p "Homebrew (https://brew.sh) is required. Install it? (Y/n): " install_brew
+  read -p "🍺 Homebrew (https://brew.sh) is required. Install it? (Y/n): " install_brew
 
   if [[ "$install_brew" =~ ^[Yy]|^$ ]]; then
-    echo "☕ Installing Homebrew..."
+    echo "🍺 Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || exit 1
     # Can be undone with:
     # /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)" && sudo rm -rvf /opt/homebrew
@@ -119,14 +111,14 @@ ASDF_PATH="$(brew --prefix asdf)/libexec/asdf.sh"
 
 if ! command -v asdf &>/dev/null; then
   if [[ -f "$ASDF_PATH" ]]; then
-    echo "asdf is installed but not in your PATH"
+    echo "⚠️ asdf is installed but not in your PATH"
     exit 1
   fi
 
-  read -p "asdf (https://asdf-vm.com) is required. Install it? (Y/n): " install_asdf
+  read -p "🛠️ asdf (https://asdf-vm.com) is required. Install it? (Y/n): " install_asdf
 
   if [[ "$install_asdf" =~ ^[Yy]|^$ ]]; then
-    echo "Installing asdf..."
+    echo "🛠️ Installing asdf..."
     brew install asdf || exit 1
     # Can be undone with:
     # brew uninstall asdf
@@ -152,7 +144,7 @@ else
 fi
 
 if ! command -v gh &>/dev/null; then
-  read -p "GitHub cli is needed to submit evals results. Install it? (Y/n): " install_gh
+  read -p "👨‍💻 GitHub cli is needed to submit evals results. Install it? (Y/n): " install_gh
 
   if [[ "$install_gh" =~ ^[Yy]|^$ ]]; then
     brew install gh || exit 1
@@ -173,9 +165,9 @@ for i in "${!options[@]}"; do
 
   if [[ "${has_asdf_plugin[$plugin]}" == "true" ]]; then
     if ! asdf plugin list | grep -q "^${plugin}$" && ! command -v "${binary}" &>/dev/null; then
-      echo "Installing ${plugin} asdf plugin..."
+      echo "📦 Installing ${plugin} asdf plugin..."
       asdf plugin add "${plugin}" || exit 1
-      echo "✅ asdf ${plugin} plugin installed"
+      echo "✅ asdf ${plugin} plugin installed successfully"
     fi
   fi
 
@@ -194,7 +186,7 @@ for i in "${!options[@]}"; do
     if [[ $(node --version) != "v20.18.1" ]]; then
       NODE_VERSION=$(node --version)
       echo "🚨 You have the wrong version of node installed ($NODE_VERSION)."
-      echo "If you are using nvm then run 'nvm install' to install the version specified by the repo's .nvmrc."
+      echo "💡 If you are using nvm then run 'nvm install' to install the version specified by the repo's .nvmrc."
       exit 1
     fi
     ;;
@@ -246,7 +238,7 @@ for i in "${!options[@]}"; do
 
   "java")
     if ! command -v javac &>/dev/null || ! javac --version &>/dev/null; then
-      echo "Installing Java..."
+      echo "☕ Installing Java..."
       brew install openjdk@17 || exit 1
 
       export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
@@ -280,7 +272,7 @@ pnpm install --silent || exit 1
 
 if [[ ! -d "../../evals" ]]; then
   if gh auth status &>/dev/null; then
-    read -p "Would you like to be able to share eval results? (Y/n): " fork_evals
+    read -p "🔗 Would you like to be able to share eval results? (Y/n): " fork_evals
 
     if [[ "$fork_evals" =~ ^[Yy]|^$ ]]; then
       gh repo fork cte/evals ../../evals || exit 1
@@ -297,14 +289,14 @@ if [[ ! -s .env ]]; then
 fi
 
 if ! grep -q "OPENROUTER_API_KEY" .env; then
-  read -p "Enter your OpenRouter API Key (sk-or-v1-...): " openrouter_api_key
-  echo "Validating OpenRouter API Key..."
-  curl --silent --fail https://openrouter.ai/api/v1/key -H "Authorization: Bearer $openrouter_api_key" | jq || exit 1
+  read -p "🔐 Enter your OpenRouter API key (sk-or-v1-...): " openrouter_api_key
+  echo "🔑 Validating..."
+  curl --silent --fail https://openrouter.ai/api/v1/key -H "Authorization: Bearer $openrouter_api_key" || echo "⚠️ Invalid API key" && exit 1
   echo "OPENROUTER_API_KEY=$openrouter_api_key" >>.env
 fi
 
 if ! command -v code &>/dev/null; then
-  echo "Visual Studio Code cli is not installed"
+  echo "⚠️ Visual Studio Code cli is not installed"
   exit 1
 else
   VSCODE_VERSION=$(code --version | head -n 1)
@@ -314,7 +306,7 @@ fi
 if [[ ! -s "../bin/roo-code-latest.vsix" ]]; then
   build_extension
 else
-  read -p "Do you want to build a new version of the Roo Code extension? (y/N): " build_extension
+  read -p "💻 Do you want to build a new version of the Roo Code extension? (y/N): " build_extension
 
   if [[ "$build_extension" =~ ^[Yy]$ ]]; then
     build_extension
@@ -323,16 +315,16 @@ else
   fi
 fi
 
-echo -e "\n🤘 You're ready to rock and roll!\n"
+echo -e "\n🚀 You're ready to rock and roll! \n"
 
 if ! nc -z localhost 3000; then
-  read -p "Would you like to start the evals web app? (y/N): " start_evals
+  read -p "🚀 Would you like to start the evals web app? (y/N): " start_evals
 
   if [[ "$start_evals" =~ ^[Yy]$ ]]; then
     pnpm web
   else
-    echo "You can start it anytime with 'pnpm web'."
+    echo "💡 You can start it anytime with 'pnpm web'."
   fi
 else
-  echo "🤖 The evals web app is running at http://localhost:3000"
+  echo "🌐 The evals web app is running at http://localhost:3000"
 fi
