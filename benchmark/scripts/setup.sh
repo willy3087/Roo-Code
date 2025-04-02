@@ -1,20 +1,5 @@
 #!/usr/bin/env bash
 
-if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "Only macOS is currently supported."
-  exit 1
-fi
-
-options=("nodejs" "python" "golang" "rust" "java")
-binaries=("node" "python" "go" "rustc" "javac")
-
-declare -A has_asdf_plugin
-has_asdf_plugin=([nodejs]=true [python]=true [golang]=true [rust]=true [java]=false)
-
-for i in "${!options[@]}"; do
-  choices[i]="*"
-done
-
 menu() {
   echo -e "\nWhich eval types would you like to support?\n"
 
@@ -30,6 +15,33 @@ menu() {
 
   echo
 }
+
+build_extension() {
+  echo "Building the Roo Code extension..."
+  cd ..
+  mkdir -p bin
+  npm run install-extension -- --silent --no-audit || exit 1
+  npm run install-webview -- --silent --no-audit || exit 1
+  npm run install-e2e -- --silent --no-audit || exit 1
+  npx vsce package --out bin/roo-code-latest.vsix || exit 1
+  code --install-extension bin/roo-code-latest.vsix || exit 1
+  cd benchmark
+}
+
+if [[ "$(uname -s)" != "Darwin" ]]; then
+  echo "Only macOS is currently supported."
+  exit 1
+fi
+
+options=("nodejs" "python" "golang" "rust" "java")
+binaries=("node" "python" "go" "rustc" "javac")
+
+declare -A has_asdf_plugin
+has_asdf_plugin=([nodejs]=true [python]=true [golang]=true [rust]=true [java]=false)
+
+for i in "${!options[@]}"; do
+  choices[i]="*"
+done
 
 prompt="Type 🔢 to select, 'a' for all, 'q' to quit, ⏎ to continue: "
 
@@ -136,6 +148,7 @@ if ! command -v asdf &>/dev/null; then
 else
   ASDF_VERSION=$(asdf --version)
   echo "✅ asdf is installed ($ASDF_VERSION)"
+  . "$ASDF_PATH"
 fi
 
 if ! command -v gh &>/dev/null; then
@@ -159,9 +172,7 @@ for i in "${!options[@]}"; do
   binary="${binaries[$i]}"
 
   if [[ "${has_asdf_plugin[$plugin]}" == "true" ]]; then
-    missing_plugin=$(! asdf plugin list | grep -q "^${plugin}$")
-
-    if [[ "$missing_plugin" == true ]] && ! command -v "${binary}" &>/dev/null; then
+    if ! asdf plugin list | grep -q "^${plugin}$" && ! command -v "${binary}" &>/dev/null; then
       echo "Installing ${plugin} asdf plugin..."
       asdf plugin add "${plugin}" || exit 1
       echo "✅ asdf ${plugin} plugin installed"
@@ -234,12 +245,22 @@ for i in "${!options[@]}"; do
     ;;
 
   "java")
-    if ! command -v javac &>/dev/null; then
+    if ! command -v javac &>/dev/null || ! javac --version &>/dev/null; then
+      echo "Installing Java..."
       brew install openjdk@17 || exit 1
-      JAVA_VERSION=$(java --version | head -n 1)
+
+      export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
+
+      if [[ "$SHELL" == "/bin/zsh" ]] && ! grep -q 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' ~/.zprofile; then
+        echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zprofile
+      elif [[ "$SHELL" == "/bin/bash" ]] && ! grep -q 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' ~/.bash_profile; then
+        echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.bash_profile
+      fi
+
+      JAVA_VERSION=$(javac --version | head -n 1)
       echo "✅ Java is installed ($JAVA_VERSION)"
     else
-      JAVA_VERSION=$(java --version | head -n 1)
+      JAVA_VERSION=$(javac --version | head -n 1)
       echo "✅ Java is installed ($JAVA_VERSION)"
     fi
     ;;
@@ -257,17 +278,17 @@ fi
 
 pnpm install --silent || exit 1
 
-if [[ ! -d "evals" ]]; then
+if [[ ! -d "../../evals" ]]; then
   if gh auth status &>/dev/null; then
     read -p "Would you like to be able to share eval results? (Y/n): " fork_evals
 
     if [[ "$fork_evals" =~ ^[Yy]|^$ ]]; then
-      gh repo fork cte/evals || exit 1
+      gh repo fork cte/evals ../../evals || exit 1
     else
-      gh repo clone cte/evals || exit 1
+      gh repo clone cte/evals ../../evals || exit 1
     fi
   else
-    git clone https://github.com/cte/evals.git || exit 1
+    git clone https://github.com/cte/evals.git ../../evals || exit 1
   fi
 fi
 
@@ -282,12 +303,24 @@ if ! grep -q "OPENROUTER_API_KEY" .env; then
   echo "OPENROUTER_API_KEY=$openrouter_api_key" >>.env
 fi
 
+if ! command -v code &>/dev/null; then
+  echo "Visual Studio Code cli is not installed"
+  exit 1
+else
+  VSCODE_VERSION=$(code --version | head -n 1)
+  echo "✅ Visual Studio Code is installed ($VSCODE_VERSION)"
+fi
+
 if [[ ! -s "../bin/roo-code-latest.vsix" ]]; then
-  echo "Building the Roo Code extension..."
-  cd .. &&
-    npm run install-extension -- --silent --no-audit &&
-    npm run install-webview -- --silent --no-audit &&
-    npx vsce package --out bin/roo-code-latest.vsix || exit 1
+  build_extension
+else
+  read -p "Do you want to build a new version of the Roo Code extension? (y/N): " build_extension
+
+  if [[ "$build_extension" =~ ^[Yy]$ ]]; then
+    build_extension
+    code --install-extension bin/roo-code-latest.vsix || exit 1
+    cd benchmark
+  fi
 fi
 
 echo -e "\n🤘 You're ready to rock and roll!\n"

@@ -20,7 +20,7 @@ export const listDirectories = async (relativePath: string) => {
 }
 
 // __dirname = <repo>/benchmark/apps/web/src/lib/server
-const EXERCISES_BASE_PATH = path.resolve(__dirname, "../../../../../../../exercises")
+const EXERCISES_BASE_PATH = path.resolve(__dirname, "../../../../../../../evals")
 
 export const getExercises = async () => {
 	const result = await Promise.all(

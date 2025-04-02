@@ -12,16 +12,4 @@ cd benchmark
 ./scripts/setup.sh
 ```
 
-[Install](https://docs.docker.com/desktop/) and run Docker Desktop.
-
-Build a container to run the Roo Code evals:
-
-```sh
-cd benchmark
-pnpm install
-cp .env.sample .env
-# Update OPENROUTER_API_KEY=... with your actual API key.
-pnpm docker:start
-```
-
 Navigate to [localhost:3000](http://localhost:3000/) in your browser.

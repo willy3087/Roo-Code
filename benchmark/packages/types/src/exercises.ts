@@ -2,7 +2,7 @@
  * ExerciseLanguage
  */
 
-export const exerciseLanguages = ["cpp", "go", "java", "javascript", "python", "rust"] as const
+export const exerciseLanguages = ["go", "java", "javascript", "python", "rust"] as const
 
 export type ExerciseLanguage = (typeof exerciseLanguages)[number]
 

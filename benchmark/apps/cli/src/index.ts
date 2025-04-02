@@ -171,12 +171,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 
 	// If debugging:
 	// Use --wait --log trace or --verbose.
-	let codeCommand = `code --disable-workspace-trust`
-	const isDocker = fs.existsSync("/.dockerenv")
-
-	if (isDocker) {
-		codeCommand = `xvfb-run --auto-servernum --server-num=1 ${codeCommand} --wait --log trace --disable-gpu --password-store="basic"`
-	}
+	const codeCommand = `code --disable-workspace-trust`
 
 	const subprocess = execa({
 		env: {
@@ -190,7 +185,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	// subprocess.stdout.pipe(process.stdout)
 
 	// Give VSCode some time to spawn before connectint to its unix socket.
-	await new Promise((resolve) => setTimeout(resolve, isDocker ? 5_000 : 1_000))
+	await new Promise((resolve) => setTimeout(resolve, 1_000))
 	console.log(`Connecting to ${taskSocketPath} (pid: ${subprocess.pid})`)
 
 	const createClient = (taskSocketPath: string) => {
