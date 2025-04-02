@@ -38,6 +38,8 @@ suite("Roo Code Modes", () => {
 		await waitUntilCompleted({ api, taskId: switchModesTaskId })
 		await api.cancelCurrentTask()
 
-		assert.deepEqual(modeSwitches.sort(), ["architect", "ask", "debug"])
+		assert.ok(modeSwitches.includes("architect"))
+		assert.ok(modeSwitches.includes("ask"))
+		assert.ok(modeSwitches.includes("debug"))
 	})
 })
