@@ -3,7 +3,7 @@ import pWaitFor from "p-wait-for"
 import { ExitCodeDetails, mergePromise, TerminalProcess, TerminalProcessResultPromise } from "./TerminalProcess"
 import { truncateOutput, applyRunLengthEncoding } from "../misc/extract-text"
 
-export const TERMINAL_SHELL_INTEGRATION_TIMEOUT = 15_000
+export const TERMINAL_SHELL_INTEGRATION_TIMEOUT = 5000
 
 export class Terminal {
 	private static shellIntegrationTimeout: number = TERMINAL_SHELL_INTEGRATION_TIMEOUT

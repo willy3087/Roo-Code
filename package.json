@@ -73,11 +73,9 @@
 		"views": {
 			"roo-cline-ActivityBar": [
 				{
-					"id": "roo-cline.SidebarProvider",
 					"type": "webview",
-					"name": "Roo Code",
-					"icon": "$(rocket)",
-					"contextualTitle": "Roo Code!"
+					"id": "roo-cline.SidebarProvider",
+					"name": ""
 				}
 			]
 		},
@@ -353,7 +351,7 @@
 		"vscode-test:extension": "tsc -p . --outDir out && node esbuild.js",
 		"vscode-test:webview": "cd webview-ui && npm run build",
 		"update-contributors": "node scripts/update-contributors.js",
-		"generate-types": "npx tsx scripts/generate-types.mts"
+		"generate-types": "tsx scripts/generate-types.mts"
 	},
 	"dependencies": {
 		"@anthropic-ai/bedrock-sdk": "^0.10.2",
