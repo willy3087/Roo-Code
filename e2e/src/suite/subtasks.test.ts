@@ -8,11 +8,17 @@ suite("Roo Code Subtasks", () => {
 	test("Should handle subtask cancellation and resumption correctly", async () => {
 		const api = globalThis.api
 
-		const messages: ClineMessage[] = []
-		api.on("message", ({ message }) => messages.push(message))
+		const messages: Record<string, ClineMessage[]> = {}
+
+		api.on("message", ({ taskId, message }) => {
+			if (message.type === "say" && message.partial === false) {
+				messages[taskId] = messages[taskId] || []
+				messages[taskId].push(message)
+			}
+		})
 
 		await api.setConfiguration({
-			mode: "Code",
+			mode: "ask",
 			alwaysAllowModeSwitch: true,
 			alwaysAllowSubtasks: true,
 			autoApprovalEnabled: true,
@@ -34,7 +40,7 @@ suite("Roo Code Subtasks", () => {
 		// Wait for the subtask to be spawned and then cancel it.
 		api.on("taskSpawned", (_, childTaskId) => (spawnedTaskId = childTaskId))
 		await waitFor(() => !!spawnedTaskId)
-		await sleep(2_000) // Give the task a chance to start and populate the history.
+		await sleep(1_000) // Give the task a chance to start and populate the history.
 		await api.cancelCurrentTask()
 
 		// Wait a bit to ensure any task resumption would have happened.
@@ -42,15 +48,11 @@ suite("Roo Code Subtasks", () => {
 
 		// The parent task should not have resumed yet, so we shouldn't see
 		// "Parent task resumed".
-		// assert.ok(
-		// 	getMessage({
-		// 		api,
-		// 		taskId: parentTaskId,
-		// 		include: "Parent task resumed",
-		// 		exclude: "You are the parent task",
-		// 	}) === undefined,
-		// 	"Parent task should not have resumed after subtask cancellation",
-		// )
+		assert.ok(
+			messages[parentTaskId].find(({ type, text }) => type === "say" && text === "Parent task resumed") ===
+				undefined,
+			"Parent task should not have resumed after subtask cancellation",
+		)
 
 		// Start a new task with the same message as the subtask.
 		const anotherTaskId = await api.startNewTask({ text: childPrompt })
@@ -60,15 +62,11 @@ suite("Roo Code Subtasks", () => {
 		await sleep(2_000)
 
 		// The parent task should still not have resumed.
-		// assert.ok(
-		// 	getMessage({
-		// 		api,
-		// 		taskId: parentTaskId,
-		// 		include: "Parent task resumed",
-		// 		exclude: "You are the parent task",
-		// 	}) === undefined,
-		// 	"Parent task should not have resumed after subtask cancellation",
-		// )
+		assert.ok(
+			messages[parentTaskId].find(({ type, text }) => type === "say" && text === "Parent task resumed") ===
+				undefined,
+			"Parent task should not have resumed after subtask cancellation",
+		)
 
 		// Clean up - cancel all tasks.
 		await api.clearCurrentTask()

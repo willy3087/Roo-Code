@@ -575,11 +575,6 @@ interface RooCodeAPI extends EventEmitter<RooCodeEvents> {
 	 * Returns true if the API is ready to use.
 	 */
 	isReady(): boolean
-	/**
-	 * Logs a message to the output channel.
-	 * @param message The message to log.
-	 */
-	log(message: string): void
 }
 
 export {

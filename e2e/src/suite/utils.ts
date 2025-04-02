@@ -9,7 +9,7 @@ type WaitForOptions = {
 
 export const waitFor = (
 	condition: (() => Promise<boolean>) | (() => boolean),
-	{ timeout = 60_000, interval = 250 }: WaitForOptions = {},
+	{ timeout = 30_000, interval = 250 }: WaitForOptions = {},
 ) => {
 	let timeoutId: NodeJS.Timeout | undefined = undefined
 
@@ -39,15 +39,6 @@ export const waitFor = (
 			}, timeout)
 		}),
 	])
-}
-
-type WaitUntilReadyOptions = WaitForOptions & {
-	api: RooCodeAPI
-}
-
-export const waitUntilReady = async ({ api, ...options }: WaitUntilReadyOptions) => {
-	await vscode.commands.executeCommand("roo-cline.SidebarProvider.focus")
-	await waitFor(() => api.isReady(), options)
 }
 
 type WaitUntilAbortedOptions = WaitForOptions & {

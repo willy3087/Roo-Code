@@ -17,20 +17,31 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 	private readonly context: vscode.ExtensionContext
 	private readonly ipc?: IpcServer
 	private readonly taskMap = new Map<string, ClineProvider>()
+	private readonly log: (...args: unknown[]) => void
 
-	constructor(outputChannel: vscode.OutputChannel, provider: ClineProvider, socketPath?: string) {
+	constructor(
+		outputChannel: vscode.OutputChannel,
+		provider: ClineProvider,
+		socketPath?: string,
+		enableLogging = false,
+	) {
 		super()
 
 		this.outputChannel = outputChannel
 		this.sidebarProvider = provider
 		this.context = provider.context
 
+		this.log = enableLogging
+			? (...args: unknown[]) => {
+					outputChannelLog(this.outputChannel, ...args)
+					console.log(args)
+				}
+			: () => {}
+
 		this.registerListeners(this.sidebarProvider)
 
 		if (socketPath) {
-			const ipc = (this.ipc = new IpcServer(socketPath, (...args: unknown[]) =>
-				outputChannelLog(this.outputChannel, ...args),
-			))
+			const ipc = (this.ipc = new IpcServer(socketPath, this.log))
 
 			ipc.listen()
 			this.log(`[API] ipc server started: socketPath=${socketPath}, pid=${process.pid}, ppid=${process.ppid}`)
@@ -154,11 +165,6 @@ export class API extends EventEmitter<RooCodeEvents> implements RooCodeAPI {
 
 	public isReady() {
 		return this.sidebarProvider.viewLaunched
-	}
-
-	public log(message: string) {
-		this.outputChannel.appendLine(message)
-		console.log(`${message}\n`)
 	}
 
 	private registerListeners(provider: ClineProvider) {
