@@ -8,16 +8,9 @@
 		"test": "turbo test --log-order grouped --output-logs new-only",
 		"format": "turbo format --log-order grouped --output-logs new-only",
 		"build": "turbo build --log-order grouped --output-logs new-only",
-		"web": "turbo dev --filter @benchmark/web --output-logs new-only --ui tui",
-		"cli": "turbo dev --filter @benchmark/cli --output-logs new-only --ui tui -- run",
-		"drizzle:studio": "pnpm --filter @benchmark/db db:studio",
-		"docker:build": "docker build -f Dockerfile -t roo-code-benchmark --progress=plain ..",
-		"docker:run": "docker run -d -it -p 3000:3000 -v /tmp/benchmarks.db:/tmp/benchmarks.db roo-code-benchmark",
-		"docker:start": "pnpm docker:build && pnpm docker:run",
-		"docker:shell": "docker exec -it $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) /bin/zsh",
-		"docker:stop": "docker stop $(docker ps --filter \"ancestor=roo-code-benchmark\" -q) >/dev/null 2>&1 || true",
-		"docker:rm": "docker rm $(docker ps -a --filter \"ancestor=roo-code-benchmark\" -q) >/dev/null 2>&1 || true",
-		"docker:clean": "pnpm docker:stop && pnpm docker:rm"
+		"web": "turbo dev --filter @benchmark/web",
+		"cli": "turbo dev --filter @benchmark/cli -- run",
+		"drizzle:studio": "pnpm --filter @benchmark/db db:studio"
 	},
 	"devDependencies": {
 		"@dotenvx/dotenvx": "^1.39.0",

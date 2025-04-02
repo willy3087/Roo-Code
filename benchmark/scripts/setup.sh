@@ -65,7 +65,7 @@ done
 
 [[ "$empty" == true ]] && exit 0
 
-echo -e "\nInstalling dependencies..."
+printf "\n"
 
 if ! command -v brew &>/dev/null; then
   if [[ -f "/opt/homebrew/bin/brew" ]]; then
@@ -255,7 +255,7 @@ else
   echo "✅ pnpm is installed ($PNPM_VERSION)"
 fi
 
-pnpm install || exit 1
+pnpm install --silent || exit 1
 
 if [[ ! -d "evals" ]]; then
   if gh auth status &>/dev/null; then
@@ -279,5 +279,27 @@ if ! grep -q "OPENROUTER_API_KEY" .env; then
   read -p "Enter your OpenRouter API Key (sk-or-v1-...): " openrouter_api_key
   echo "Validating OpenRouter API Key..."
   curl --silent --fail https://openrouter.ai/api/v1/key -H "Authorization: Bearer $openrouter_api_key" | jq || exit 1
-  echo "OPENROUTER_API_KEY=$openrouter_api_key" >> .env
+  echo "OPENROUTER_API_KEY=$openrouter_api_key" >>.env
+fi
+
+if [[ ! -s "../bin/roo-code-latest.vsix" ]]; then
+  echo "Building the Roo Code extension..."
+  cd .. &&
+    npm run install-extension -- --silent --no-audit &&
+    npm run install-webview -- --silent --no-audit &&
+    npx vsce package --out bin/roo-code-latest.vsix || exit 1
+fi
+
+echo -e "\n🤘 You're ready to rock and roll!\n"
+
+if ! nc -z localhost 3000; then
+  read -p "Would you like to start the evals web app? (y/N): " start_evals
+
+  if [[ "$start_evals" =~ ^[Yy]$ ]]; then
+    pnpm web
+  else
+    echo "You can start it anytime with 'pnpm web'."
+  fi
+else
+  echo "🤖 The evals web app is running at http://localhost:3000"
 fi
