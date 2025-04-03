@@ -1,5 +1,13 @@
 # Roo Code Changelog
 
+## 3.11.4
+
+### Patch Changes
+
+- fix: ensure consistent line endings in git fallback strategy
+- v3.11.4
+- Remove the experimental unified diff
+
 ## [3.11.3] - 2025-03-31
 
 - Revert mention changes in case they're causing performance issues/crashes
