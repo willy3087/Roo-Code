@@ -1,8 +1,6 @@
 # Roo Code Changelog
 
-## 3.11.6
-
-### Patch Changes
+## [3.11.6]
 
 - Add the gemini 2.5 pro preview model with upper bound pricing
 
