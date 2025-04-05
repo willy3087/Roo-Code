@@ -1,5 +1,11 @@
 # Roo Code Changelog
 
+## 3.11.8
+
+### Patch Changes
+
+- v3.11.8
+
 ## [3.11.7] - 2025-04-04
 
 - Improve file tool context formatting and diff error guidance
