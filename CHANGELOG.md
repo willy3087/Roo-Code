@@ -1,8 +1,6 @@
 # Roo Code Changelog
 
-## 3.12.0
-
-### Minor Changes
+## [3.12.0]
 
 - Rate-limit setting updated to be per-profile
 
