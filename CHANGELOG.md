@@ -1,5 +1,15 @@
 # Roo Code Changelog
 
+## 3.12.0
+
+### Minor Changes
+
+- Rate-limit setting updated to be per-profile
+
+### Patch Changes
+
+- v3.11.9
+
 ## [3.11.8] - 2025-04-05
 
 - Improve combineApiRequests performance to reduce gray screens of death (thanks @kyle-apex!)
