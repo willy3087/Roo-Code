@@ -3,7 +3,7 @@
 ## [3.11.9] - 2025-04-07
 
 - Rate-limit setting updated to be per-profile (thanks @ross!)
-- Enhance rule file loading with .roo/rules directory support (thanks @upamune!)
+- You can now place multiple rules files in the .roo/rules/ and .roo/rules-{mode}/ folders (thanks @upamune!)
 - Add Gemini 2.5 Pro Preview to Vertex AI (thanks @nbihan-mediware!)
 - Tidy up following ClineProvider refactor (thanks @diarmidmackenzie!)
 - Clamp negative line numbers when reading files (thanks @KJ7LNW!)
