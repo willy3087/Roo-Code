@@ -1,12 +1,20 @@
 # Roo Code Changelog
 
-## [3.12.0]
+## [3.11.9] - 2025-04-07
 
-- Rate-limit setting updated to be per-profile
-
-### Patch Changes
-
-- v3.11.9
+- Rate-limit setting updated to be per-profile (thanks @ross!)
+- Enhance rule file loading with .roo/rules directory support (thanks @upamune!)
+- Add Gemini 2.5 Pro Preview to Vertex AI (thanks @nbihan-mediware!)
+- Tidy up following ClineProvider refactor (thanks @diarmidmackenzie!)
+- Clamp negative line numbers when reading files (thanks @KJ7LNW!)
+- Enhance Rust tree-sitter parser with advanced language structures (thanks @KJ7LNW!)
+- Persist settings on api.setConfiguration (thanks @gtaylor!)
+- Add deep links to settings sections
+- Add command to focus Roo Code input field (thanks @axkirillov!)
+- Add resize and hover actions to the browser (thanks @SplittyDev!)
+- Add resumeTask and isTaskInHistory to the API (thanks @franekp!)
+- Fix bug displaying boolean/numeric suggested answers
+- Dynamic Vite port detection for webview development (thanks @KJ7LNW!)
 
 ## [3.11.8] - 2025-04-05
 
