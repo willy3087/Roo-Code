@@ -1,11 +1,12 @@
 # Roo Code Changelog
 
-## 3.11.10
+## [3.11.10] - 2025-04-08
 
-### Patch Changes
-
-- Fix bug where nested .roo/rules directories are not respected properly
-- v3.11.10
+- Fix bug where nested .roo/rules directories are not respected properly (thanks @taisukeoe!)
+- Handle long command output more efficiently in the chat row (thanks @samhvw8!)
+- Fix cache usage tracking for OpenAI-compatible providers
+- Add custom translation instructions for zh-CN (thanks @System233!)
+- Code cleanup after making rate-limits per-profile (thanks @ross!)
 
 ## [3.11.9] - 2025-04-07
 
