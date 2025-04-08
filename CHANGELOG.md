@@ -1,5 +1,12 @@
 # Roo Code Changelog
 
+## 3.11.10
+
+### Patch Changes
+
+- Fix bug where nested .roo/rules directories are not respected properly
+- v3.11.10
+
 ## [3.11.9] - 2025-04-07
 
 - Rate-limit setting updated to be per-profile (thanks @ross and @olweraltuve!)
