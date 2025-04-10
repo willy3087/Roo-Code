@@ -1,5 +1,11 @@
 # Roo Code Changelog
 
+## 3.11.12
+
+### Patch Changes
+
+- v3.11.12
+
 ## [3.11.11] - 2025-04-09
 
 - Fix highlighting interaction with mode/profile dropdowns (thanks @atlasgong!)
