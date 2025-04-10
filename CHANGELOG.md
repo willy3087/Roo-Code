@@ -1,8 +1,9 @@
 # Roo Code Changelog
 
-## [3.11.12]
+## [3.11.12] - 2025-04-09
 
-- v3.11.12
+- Make Grok3 streaming work with OpenAI Compatible (thanks @amittell!)
+- Tweak diff editing logic to make it more tolerant of model errors
 
 ## [3.11.11] - 2025-04-09
 
