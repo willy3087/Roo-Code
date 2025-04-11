@@ -3,8 +3,7 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui"
 
 import { ApiConfiguration, ModelInfo } from "../../../../src/shared/api"
-
-export const EFFORTS = ["high", "medium", "low"] as const
+import { reasoningEfforts } from "../../../../src/schemas"
 
 interface ReasoningEffortProps {
 	setApiConfigurationField: <K extends keyof ApiConfiguration>(field: K, value: ApiConfiguration[K]) => void
@@ -22,10 +21,7 @@ export const ReasoningEffort = ({ setApiConfigurationField, modelInfo }: Reasoni
 			<Select
 				value={modelInfo.reasoningEffort}
 				onValueChange={(value) =>
-					setApiConfigurationField("openRouterModelInfo", {
-						...modelInfo,
-						reasoningEffort: value as "high" | "medium" | "low",
-					})
+					setApiConfigurationField("reasoningEffort", value as "high" | "medium" | "low")
 				}>
 				<SelectTrigger className="w-full">
 					<SelectValue placeholder={t("settings:common.select")} />
@@ -33,7 +29,7 @@ export const ReasoningEffort = ({ setApiConfigurationField, modelInfo }: Reasoni
 				<SelectContent>
 					<SelectItem value="openrouter">OpenRouter</SelectItem>
 					<SelectSeparator />
-					{EFFORTS.map((value) => (
+					{reasoningEfforts.map((value) => (
 						<SelectItem key={value} value={value}>
 							{value}
 						</SelectItem>

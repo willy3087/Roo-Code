@@ -96,6 +96,16 @@ export const telemetrySettingsSchema = z.enum(telemetrySettings)
 export type TelemetrySetting = z.infer<typeof telemetrySettingsSchema>
 
 /**
+ * ReasoningEffort
+ */
+
+export const reasoningEfforts = ["low", "medium", "high"] as const
+
+export const reasoningEffortsSchema = z.enum(reasoningEfforts)
+
+export type ReasoningEffort = z.infer<typeof reasoningEffortsSchema>
+
+/**
  * ModelInfo
  */
 
@@ -110,7 +120,7 @@ export const modelInfoSchema = z.object({
 	cacheWritesPrice: z.number().optional(),
 	cacheReadsPrice: z.number().optional(),
 	description: z.string().optional(),
-	reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+	reasoningEffort: reasoningEffortsSchema.optional(),
 	thinking: z.boolean().optional(),
 	minTokensPerCachePoint: z.number().optional(),
 	maxCachePoints: z.number().optional(),
@@ -388,7 +398,7 @@ export const providerSettingsSchema = z.object({
 	// Generic
 	includeMaxTokens: z.boolean().optional(),
 	modelTemperature: z.number().nullish(),
-	reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+	reasoningEffort: reasoningEffortsSchema.optional(),
 	rateLimitSeconds: z.number().optional(),
 	// Fake AI
 	fakeAi: z.unknown().optional(),
