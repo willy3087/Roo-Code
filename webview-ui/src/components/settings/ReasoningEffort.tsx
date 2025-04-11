@@ -1,6 +1,6 @@
 import { useAppTranslation } from "@/i18n/TranslationContext"
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui"
 
 import { ApiConfiguration } from "../../../../src/shared/api"
 import { reasoningEfforts } from "../../../../src/schemas"
@@ -27,8 +27,6 @@ export const ReasoningEffort = ({ apiConfiguration, setApiConfigurationField }: 
 					<SelectValue placeholder={t("settings:common.select")} />
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="openrouter">OpenRouter</SelectItem>
-					<SelectSeparator />
 					{reasoningEfforts.map((value) => (
 						<SelectItem key={value} value={value}>
 							{value}
