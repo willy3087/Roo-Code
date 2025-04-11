@@ -2,15 +2,15 @@ import { useAppTranslation } from "@/i18n/TranslationContext"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui"
 
-import { ApiConfiguration, ModelInfo } from "../../../../src/shared/api"
+import { ApiConfiguration } from "../../../../src/shared/api"
 import { reasoningEfforts } from "../../../../src/schemas"
 
 interface ReasoningEffortProps {
+	apiConfiguration: ApiConfiguration
 	setApiConfigurationField: <K extends keyof ApiConfiguration>(field: K, value: ApiConfiguration[K]) => void
-	modelInfo: ModelInfo
 }
 
-export const ReasoningEffort = ({ setApiConfigurationField, modelInfo }: ReasoningEffortProps) => {
+export const ReasoningEffort = ({ apiConfiguration, setApiConfigurationField }: ReasoningEffortProps) => {
 	const { t } = useAppTranslation()
 
 	return (
@@ -19,7 +19,7 @@ export const ReasoningEffort = ({ setApiConfigurationField, modelInfo }: Reasoni
 				<label className="block font-medium mb-1">Model Reasoning Effort</label>
 			</div>
 			<Select
-				value={modelInfo.reasoningEffort}
+				value={apiConfiguration.reasoningEffort}
 				onValueChange={(value) =>
 					setApiConfigurationField("reasoningEffort", value as "high" | "medium" | "low")
 				}>

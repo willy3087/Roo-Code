@@ -1521,7 +1521,10 @@ const ApiOptions = ({
 				)}
 
 			{selectedProvider === "openrouter" && REASONING_MODELS.has(selectedModelId) && (
-				<ReasoningEffort setApiConfigurationField={setApiConfigurationField} modelInfo={selectedModelInfo} />
+				<ReasoningEffort
+					apiConfiguration={apiConfiguration}
+					setApiConfigurationField={setApiConfigurationField}
+				/>
 			)}
 
 			{selectedProvider === "glama" && (
