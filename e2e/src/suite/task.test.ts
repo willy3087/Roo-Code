@@ -4,7 +4,7 @@ import type { ClineMessage } from "../../../src/exports/roo-code"
 
 import { waitUntilCompleted } from "./utils"
 
-suite("Roo Code Task", () => {
+suite("eLai Code Task", () => {
 	test("Should handle prompt and response correctly", async () => {
 		const api = globalThis.api
 

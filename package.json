@@ -1,6 +1,6 @@
 {
 	"name": "roo-cline",
-	"displayName": "Roo Code",
+	"displayName": "eLai Code",
 	"description": "A whole dev team of AI agents in your editor. Previously Roo Cline.",
 	"publisher": "RooVeterinaryInc",
 	"version": "3.11.14",
@@ -14,7 +14,7 @@
 		"node": "20.18.1"
 	},
 	"author": {
-		"name": "Roo Code"
+		"name": "eLai Code"
 	},
 	"repository": {
 		"type": "git",
@@ -42,7 +42,7 @@
 		"sonnet",
 		"ai",
 		"llama",
-		"roo code",
+		"eLai Code",
 		"roocode"
 	],
 	"activationEvents": [
@@ -54,18 +54,18 @@
 		"submenus": [
 			{
 				"id": "roo-code.contextMenu",
-				"label": "Roo Code"
+				"label": "eLai Code"
 			},
 			{
 				"id": "roo-code.terminalMenu",
-				"label": "Roo Code"
+				"label": "eLai Code"
 			}
 		],
 		"viewsContainers": {
 			"activitybar": [
 				{
 					"id": "roo-cline-ActivityBar",
-					"title": "Roo Code",
+					"title": "eLai Code",
 					"icon": "assets/icons/icon.svg"
 				}
 			]
@@ -118,32 +118,32 @@
 			{
 				"command": "roo-cline.openInNewTab",
 				"title": "Open In New Tab",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.explainCode",
 				"title": "Explain Code",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.fixCode",
 				"title": "Fix Code",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.improveCode",
 				"title": "Improve Code",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.addToContext",
 				"title": "Add To Context",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.newTask",
 				"title": "New Task",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.terminalAddToContext",
@@ -173,12 +173,12 @@
 			{
 				"command": "roo-cline.setCustomStoragePath",
 				"title": "Set Custom Storage Path",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			},
 			{
 				"command": "roo-cline.focusInput",
 				"title": "Focus Input Field",
-				"category": "Roo Code"
+				"category": "eLai Code"
 			}
 		],
 		"menus": {
@@ -310,7 +310,7 @@
 			]
 		},
 		"configuration": {
-			"title": "Roo Code",
+			"title": "eLai Code",
 			"properties": {
 				"roo-cline.allowedCommands": {
 					"type": "array",
