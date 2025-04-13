@@ -41,10 +41,10 @@ export const rooCodeDefaults: RooCodeSettings = {
 	alwaysAllowExecute: true,
 	allowedCommands: ["*"],
 
-	browserToolEnabled: false,
+	browserToolEnabled: true,
 	browserViewportSize: "900x600",
 	screenshotQuality: 75,
-	remoteBrowserEnabled: false,
+	remoteBrowserEnabled: true,
 
 	enableCheckpoints: false,
 	checkpointStorage: "task",

@@ -96,7 +96,7 @@ async function executeRipgrepForFiles(
 export async function searchWorkspaceFiles(
 	query: string,
 	workspacePath: string,
-	limit: number = 20,
+	limit: number = 2000,
 ): Promise<{ path: string; type: "file" | "folder"; label?: string }[]> {
 	try {
 		const vscodeAppRoot = vscode.env.appRoot
