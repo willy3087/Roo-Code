@@ -23,15 +23,15 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 ├── read.ts
 └── serper-search.ts
 
-<file_content path="src/core/tools/toolsReseache/brave-search.ts">
+<file*content path="src/core/tools/toolsReseache/brave-search.ts">
 1 | import axios from "axios";
 2 | import { BRAVE_API_KEY } from "../config";
 3 | import { BraveSearchResponse } from "../types/globalTypes";
 4 |
-5 | /\*_
+5 | /\**
 6 | _ Realiza uma busca no Brave Search.
 7 | _ @param query A query de busca.
-8 | _ @returns Uma promise que resolve para a resposta da busca.
+8 | \_ @returns Uma promise que resolve para a resposta da busca.
 9 | \*/
 10 | export async function braveSearch(
 11 | query: string
@@ -431,11 +431,11 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/error-analyzer.ts">
+<file*content path="src/core/tools/toolsReseache/error-analyzer.ts">
 1 | import { modelConfigs, LOCAL_MODEL_ENDPOINT } from "../config";
 2 | import { LocalModelClient } from "./local-model-client";
-3 | /**
-4 | _ Importa o TokenTracker do arquivo ../utils/token-tracker.ts
+3 | /\*\*
+4 | * Importa o TokenTracker do arquivo ../utils/token-tracker.ts
 5 | _/
 6 | import { TokenTracker } from "../utils/token-tracker";
 7 | import Ajv from "ajv";
@@ -501,7 +501,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 67 | const ajv = new Ajv();
 68 | const validate = ajv.compile(responseSchema);
 69 |
-70 | /**
+70 | /\*\*
 71 | _ Retorna um texto que serve como prompt para o modelo do Google Generative AI.
 72 | _
 73 | _ O texto descreve o que o modelo deve fazer e inclui um exemplo de como ele deve ser feito.
@@ -609,7 +609,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 175 | _
 176 | _ @param {string[]} diaryContext - Um array de strings que representam os passos da busca e raciocínio.
 177 | _ @param {TokenTracker} [tracker] - Um rastreador de tokens opcional para rastrear o uso de tokens.
-178 | _ @returns {Promise<{ response: ErrorAnalysisResponse, tokens: number }>} - Uma promessa que retorna um objeto contendo a resposta de análise de erro e o número de tokens utilizados.
+178 | \_ @returns {Promise<{ response: ErrorAnalysisResponse, tokens: number }>} - Uma promessa que retorna um objeto contendo a resposta de análise de erro e o número de tokens utilizados.
 179 | \*/
 180 | export async function analyzeSteps(
 181 | steps: any[],
@@ -1525,7 +1525,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/jina-dedup.ts">
+<file*content path="src/core/tools/toolsReseache/jina-dedup.ts">
 1 | import axios, { AxiosError } from "axios";
 2 | import { TokenTracker } from "../utils/token-tracker";
 3 | import { JINA_API_KEY } from "../config";
@@ -1567,10 +1567,10 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 39 |
 40 | // Compute cosine similarity between two vectors
 41 | function cosineSimilarity(vecA: number[], vecB: number[]): number {
-42 | const dotProduct = vecA.reduce((sum, a, i) => sum + a _ vecB[i], 0);
+42 | const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
 43 | const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a _ a, 0));
 44 | const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b _ b, 0));
-45 | return dotProduct / (normA _ normB);
+45 | return dotProduct / (normA \_ normB);
 46 | }
 47 |
 48 | // Get embeddings for all queries in one batch
@@ -1720,7 +1720,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/jina-latechunk.ts">
+<file*content path="src/core/tools/toolsReseache/jina-latechunk.ts">
 1 | import { TrackerContext } from "../types";
 2 | import axios from "axios";
 3 | import { JINA_API_KEY } from "../config";
@@ -1748,7 +1748,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 25 | // Rough estimate of tokens per character (can be adjusted based on your text)
 26 | const tokensPerCharacter = 0.4;
 27 |
-28 | if (longContext.length < snippetLength _ 2) {
+28 | if (longContext.length < snippetLength * 2) {
 29 | // If the context is shorter than the snippet length, return the whole context
 30 | console.log("content is too short, dont bother");
 31 | return longContext;
@@ -1982,12 +1982,12 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 259 | return 0;
 260 | }
 261 |
-262 | return dotProduct / (magnitudeA _ magnitudeB);
+262 | return dotProduct / (magnitudeA \_ magnitudeB);
 263 | }
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/jina-rerank.ts">
+<file*content path="src/core/tools/toolsReseache/jina-rerank.ts">
 1 | import axios from "axios";
 2 | import { TokenTracker } from "../utils/token-tracker";
 3 | import { JINA_API_KEY } from "../config";
@@ -2016,14 +2016,14 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 26 | };
 27 | }
 28 |
-29 | /\*_
+29 | /\**
 30 | _ Reranks a list of documents based on relevance to a query
 31 | _ @param query The query to rank documents against
 32 | _ @param documents Array of documents to be ranked
 33 | _ @param topN Number of top results to return
 34 | _ @param tracker Optional token tracker for usage monitoring
 35 | _ @returns Array of reranked documents with their scores
-36 | _/
+36 | \_/
 37 | export async function rerankDocuments(
 38 | query: string,
 39 | documents: string[],
@@ -2187,14 +2187,14 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/jinaSearch.ts">
+<file*content path="src/core/tools/toolsReseache/jinaSearch.ts">
 1 | import https from "https";
 2 | import { TokenTracker } from "../utils/token-tracker";
 3 | import { SearchResponse } from "../types/globalTypes";
 4 | import { JINA_API_KEY } from "../config";
 5 |
-6 | /**
-7 | _ Faz uma busca com a API do Jina Search.
+6 | /\*\*
+7 | * Faz uma busca com a API do Jina Search.
 8 | _ @param query String da busca.
 9 | _ @param tracker Tracker de tokens, opcional.
 10 | _ @returns Promise que resolve com o objeto de resposta da API do Jina
@@ -2212,30 +2212,30 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 22 |
 23 | // Configurações da requisição para a API do Jina
 24 | const options = {
-25 | /**
+25 | /\*\*
 26 | _ Hostname da API do Jina.
 27 | _/
 28 | hostname: "s.jina.ai",
-29 | /**
+29 | /\*\*
 30 | _ Porta da API do Jina.
 31 | _/
 32 | port: 443,
-33 | /**
+33 | /\*\*
 34 | _ Caminho da API do Jina.
 35 | _/
 36 | path: `/${encodeURIComponent(query)}?count=0`,
 37 | method: "GET",
 38 | headers: {
-39 | /**
+39 | /\*\*
 40 | _ Aceitação de JSON.
 41 | _/
 42 | Accept: "application/json",
-43 | /**
+43 | /\*\*
 44 | _ Autorização com a chave da API do Jina.
 45 | _/
 46 | Authorization: `Bearer ${JINA_API_KEY}`,
 47 | /\*_
-48 | _ Não retém imagens.
+48 | \_ Não retém imagens.
 49 | \*/
 50 | "X-Retain-Images": "none",
 51 | },
@@ -2325,49 +2325,49 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 1 | import { fetch } from "undici";
 2 | import { sanitizeForJSON } from "../utils/sanitize-json";
 3 |
-4 | /**
+4 | /\*\*
 5 | * Interface para a resposta do modelo.
-6 | */
+6 | _/
 7 | interface ModelResponse {
-8 | /**
-9 | * Array de escolhas.
-10 | */
+8 | /\*\*
+9 | _ Array de escolhas.
+10 | _/
 11 | choices?: Array<{
-12 | /**
-13 | * Mensagem.
-14 | */
+12 | /\*\*
+13 | _ Mensagem.
+14 | _/
 15 | message?: {
-16 | /**
-17 | * Conteúdo.
-18 | */
+16 | /\*\*
+17 | _ Conteúdo.
+18 | _/
 19 | content?: string;
 20 | };
 21 | }>;
-22 | /**
-23 | * Erro.
-24 | */
+22 | /\*\*
+23 | _ Erro.
+24 | _/
 25 | error?: string;
-26 | /**
-27 | * Uso.
-28 | */
+26 | /\*\*
+27 | _ Uso.
+28 | _/
 29 | usage?: {
-30 | /**
-31 | * Total de tokens.
-32 | */
+30 | /\*\*
+31 | _ Total de tokens.
+32 | _/
 33 | totalTokenCount: number;
 34 | };
 35 | }
 36 |
-37 | /**
-38 | * Normaliza a ação.
-39 | * @param action Ação a ser normalizada.
-40 | * @returns A ação normalizada.
-41 | */
+37 | /\*\*
+38 | _ Normaliza a ação.
+39 | _ @param action Ação a ser normalizada.
+40 | _ @returns A ação normalizada.
+41 | _/
 42 | function normalizeAction(action: string): string {
 43 | // Remove prefixos/sufixos comuns e normaliza a ação
 44 | const normalized = action
 45 | .toLowerCase()
-46 | .replace(/^action[-*]?/, "") // remove 'action-' ou 'action*' do início
+46 | .replace(/^action[-_]?/, "") // remove 'action-' ou 'action*' do início
 47 | .replace(/[-*]?action$/, "") // remove '-action' ou '_action' do fim
  48 |     .replace(/^query[-_]?/, "") // remove 'query-' ou 'query_' do início
  49 |     .replace(/[-_]?query$/, ""); // remove '-query' ou '\_query' do fim
@@ -3004,22 +3004,22 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/query-rewriter.ts">
+<file*content path="src/core/tools/toolsReseache/query-rewriter.ts">
 1 | import { modelConfigs, LOCAL_MODEL_ENDPOINT } from "../config";
 2 | import { TokenTracker } from "../utils/token-tracker";
 3 | import { SearchAction } from "../types/globalTypes";
 4 | import { LocalModelClient } from "./local-model-client";
 5 | import { z } from "zod";
 6 |
-7 | /**
-8 | _ Esquema de resposta para a query rewriter.
+7 | /\*\*
+8 | * Esquema de resposta para a query rewriter.
 9 | _/
 10 | const responseSchema = z.object({
 11 | think: z.string(),
 12 | queries: z.array(z.string()).min(1).max(3),
 13 | });
 14 |
-15 | /**
+15 | /\*\*
 16 | _ Obtém o prompt para a query rewriter.
 17 | _ @param action Ação de busca.
 18 | _ @returns O prompt para a query rewriter.
@@ -3100,7 +3100,7 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
  93 | `;
 94 | }
 95 |
-96 | /**
+96 | /\*\*
 97 | _ Sanitiza um texto retirando blocos de código markdown, espaços em branco,
 98 | _ caracteres de controle e tentando encontrar o último JSON válido.
 99 | _
@@ -3154,11 +3154,11 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 147 | }
 148 | }
 149 |
-150 | /**
+150 | /\*\*
 151 | _ Reescreve uma query.
 152 | _ @param action Ação de busca.
 153 | _ @param tracker Rastreador de tokens.
-154 | _ @returns As queries geradas e o número de tokens usados.
+154 | \_ @returns As queries geradas e o número de tokens usados.
 155 | \*/
 156 | export async function rewriteQuery(
 157 | action: SearchAction,
@@ -3207,20 +3207,20 @@ verifique a pasta 'src/core/tools/toolsReseache' (see below for file content) e 
 
 </file_content>
 
-<file_content path="src/core/tools/toolsReseache/read.ts">
+<file*content path="src/core/tools/toolsReseache/read.ts">
 1 | import { ReadResponse } from "../types/globalTypes";
 2 | import { TokenTracker } from "../utils/token-tracker";
 3 | import https from "https";
 4 | import { URL } from "url";
 5 |
-6 | /\*_
+6 | /\**
 7 | _ Lê o conteúdo de uma URL.
 8 | _
 9 | _ @param url URL para ler o conteúdo
 10 | _ @param includeLinks Indica se deve incluir links encontrados na página
 11 | _ @param tokenTracker Rastreador de tokens opcional para contabilizar uso
 12 | _ @returns Promise com objeto contendo os dados lidos e tokens utilizados
-13 | _/
+13 | \_/
 14 | export async function readUrl(
 15 | url: string,
 16 | includeLinks: boolean = false,
@@ -6368,8 +6368,8 @@ Found 86 results.
 16 | it("should calculate basic input/output costs correctly", () => {
 17 | const cost = calculateApiCostAnthropic(mockModelInfo, 1000, 500)
 18 |
-19 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-20 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+19 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+20 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 21 | // Total: 0.003 + 0.0075 = 0.0105
 22 | expect(cost).toBe(0.0105)
 23 | })
@@ -6377,9 +6377,9 @@ Found 86 results.
 25 | it("should handle cache writes cost", () => {
 26 | const cost = calculateApiCostAnthropic(mockModelInfo, 1000, 500, 2000)
 27 |
-28 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-29 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
-30 | // Cache writes: (3.75 / 1_000_000) _ 2000 = 0.0075
+28 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+29 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
+30 | // Cache writes: (3.75 / 1*000_000) * 2000 = 0.0075
 31 | // Total: 0.003 + 0.0075 + 0.0075 = 0.018
 32 | expect(cost).toBeCloseTo(0.018, 6)
 33 | })
@@ -6387,9 +6387,9 @@ Found 86 results.
 35 | it("should handle cache reads cost", () => {
 36 | const cost = calculateApiCostAnthropic(mockModelInfo, 1000, 500, undefined, 3000)
 37 |
-38 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-39 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
-40 | // Cache reads: (0.3 / 1_000_000) _ 3000 = 0.0009
+38 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+39 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
+40 | // Cache reads: (0.3 / 1*000_000) * 3000 = 0.0009
 41 | // Total: 0.003 + 0.0075 + 0.0009 = 0.0114
 42 | expect(cost).toBe(0.0114)
 43 | })
@@ -6397,8 +6397,8 @@ Found 86 results.
 45 | it("should handle all cost components together", () => {
 46 | const cost = calculateApiCostAnthropic(mockModelInfo, 1000, 500, 2000, 3000)
 47 |
-48 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-49 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+48 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+49 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 50 | // Cache writes: (3.75 / 1_000_000) \* 2000 = 0.0075
 
 ---
@@ -6424,8 +6424,8 @@ Found 86 results.
 72 | it("should handle undefined cache values", () => {
 73 | const cost = calculateApiCostAnthropic(mockModelInfo, 1000, 500)
 74 |
-75 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-76 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+75 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+76 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 77 | // Total: 0.003 + 0.0075 = 0.0105
 78 | expect(cost).toBe(0.0105)
 79 | })
@@ -6436,8 +6436,8 @@ Found 86 results.
 88 | const cost = calculateApiCostAnthropic(modelWithoutCachePrices, 1000, 500, 2000, 3000)
 89 |
 90 | // Should only include input and output costs
-91 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-92 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+91 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+92 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 93 | // Total: 0.003 + 0.0075 = 0.0105
 94 | expect(cost).toBe(0.0105)
 95 | })
@@ -6454,8 +6454,8 @@ Found 86 results.
 109 | it("should calculate basic input/output costs correctly", () => {
 110 | const cost = calculateApiCostOpenAI(mockModelInfo, 1000, 500)
 111 |
-112 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-113 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+112 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+113 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 114 | // Total: 0.003 + 0.0075 = 0.0105
 115 | expect(cost).toBe(0.0105)
 116 | })
@@ -6463,9 +6463,9 @@ Found 86 results.
 118 | it("should handle cache writes cost", () => {
 119 | const cost = calculateApiCostOpenAI(mockModelInfo, 3000, 500, 2000)
 120 |
-121 | // Input cost: (3.0 / 1_000_000) _ (3000 - 2000) = 0.003
-122 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
-123 | // Cache writes: (3.75 / 1_000_000) _ 2000 = 0.0075
+121 | // Input cost: (3.0 / 1*000_000) * (3000 - 2000) = 0.003
+122 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
+123 | // Cache writes: (3.75 / 1*000_000) * 2000 = 0.0075
 124 | // Total: 0.003 + 0.0075 + 0.0075 = 0.018
 125 | expect(cost).toBeCloseTo(0.018, 6)
 126 | })
@@ -6473,9 +6473,9 @@ Found 86 results.
 128 | it("should handle cache reads cost", () => {
 129 | const cost = calculateApiCostOpenAI(mockModelInfo, 4000, 500, undefined, 3000)
 130 |
-131 | // Input cost: (3.0 / 1_000_000) _ (4000 - 3000) = 0.003
-132 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
-133 | // Cache reads: (0.3 / 1_000_000) _ 3000 = 0.0009
+131 | // Input cost: (3.0 / 1*000_000) * (4000 - 3000) = 0.003
+132 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
+133 | // Cache reads: (0.3 / 1*000_000) * 3000 = 0.0009
 134 | // Total: 0.003 + 0.0075 + 0.0009 = 0.0114
 135 | expect(cost).toBe(0.0114)
 136 | })
@@ -6483,8 +6483,8 @@ Found 86 results.
 138 | it("should handle all cost components together", () => {
 139 | const cost = calculateApiCostOpenAI(mockModelInfo, 6000, 500, 2000, 3000)
 140 |
-141 | // Input cost: (3.0 / 1_000_000) _ (6000 - 2000 - 3000) = 0.003
-142 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+141 | // Input cost: (3.0 / 1*000_000) * (6000 - 2000 - 3000) = 0.003
+142 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 143 | // Cache writes: (3.75 / 1_000_000) \* 2000 = 0.0075
 
 ---
@@ -6510,8 +6510,8 @@ Found 86 results.
 165 | it("should handle undefined cache values", () => {
 166 | const cost = calculateApiCostOpenAI(mockModelInfo, 1000, 500)
 167 |
-168 | // Input cost: (3.0 / 1_000_000) _ 1000 = 0.003
-169 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+168 | // Input cost: (3.0 / 1*000_000) * 1000 = 0.003
+169 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 170 | // Total: 0.003 + 0.0075 = 0.0105
 171 | expect(cost).toBe(0.0105)
 172 | })
@@ -6522,8 +6522,8 @@ Found 86 results.
 181 | const cost = calculateApiCostOpenAI(modelWithoutCachePrices, 6000, 500, 2000, 3000)
 182 |
 183 | // Should only include input and output costs
-184 | // Input cost: (3.0 / 1_000_000) _ (6000 - 2000 - 3000) = 0.003
-185 | // Output cost: (15.0 / 1_000_000) _ 500 = 0.0075
+184 | // Input cost: (3.0 / 1*000_000) * (6000 - 2000 - 3000) = 0.003
+185 | // Output cost: (15.0 / 1*000_000) * 500 = 0.0075
 186 | // Total: 0.003 + 0.0075 = 0.0105
 187 | expect(cost).toBe(0.0105)
 188 | })

@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { logger } from "../../../utils/logging"
+import { logger } from "../../utils/logging"
 
 // Schema Roo para resposta
 export const dedupOutputSchema = z.object({
@@ -21,17 +21,17 @@ function getPrompt(newQueries: string[], existingQueries: string[]): string {
 <rules>
 Function FilterSetA(setA, setB, threshold):
     filteredA = empty set
-    
+
     for each candidateQuery in setA:
         isValid = true
-        
+
         // Check similarity with already accepted queries in filteredA
         for each acceptedQuery in filteredA:
             similarity = calculateSimilarity(candidateQuery, acceptedQuery)
             if similarity >= threshold:
                 isValid = false
                 break
-        
+
         // If passed first check, compare with set B
         if isValid:
             for each queryB in setB:
@@ -39,13 +39,13 @@ Function FilterSetA(setA, setB, threshold):
                 if similarity >= threshold:
                     isValid = false
                     break
-        
+
         // If passed all checks, add to filtered set
         if isValid:
             add candidateQuery to filteredA
-    
+
     return filteredA
-</rules>    
+</rules>
 
 <similarity-definition>
 1. Consider semantic meaning and query intent, not just lexical similarity

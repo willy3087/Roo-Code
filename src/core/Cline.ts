@@ -1,40 +1,40 @@
-import fs from "fs/promises"
-import * as path from "path"
-import os from "os"
-import crypto from "crypto"
-import EventEmitter from "events"
+import fs from "fs/promises" // Módulo para operações assíncronas de sistema de arquivos
+import * as path from "path" // Utilitário para manipulação de caminhos de arquivos
+import os from "os" // Utilitários relacionados ao sistema operacional
+import crypto from "crypto" // Funcionalidades criptográficas para geração de IDs
+import EventEmitter from "events" // Sistema de eventos para comunicação entre componentes
 
-import { Anthropic } from "@anthropic-ai/sdk"
-import cloneDeep from "clone-deep"
-import delay from "delay"
-import pWaitFor from "p-wait-for"
-import getFolderSize from "get-folder-size"
-import { serializeError } from "serialize-error"
-import * as vscode from "vscode"
+import { Anthropic } from "@anthropic-ai/sdk" // SDK oficial da Anthropic para interação com modelos Claude
+import cloneDeep from "clone-deep" // Utilitário para clonar objetos profundamente
+import delay from "delay" // Função para criar atrasos controlados
+import pWaitFor from "p-wait-for" // Utilitário para esperar por condições assíncronas
+import getFolderSize from "get-folder-size" // Ferramenta para calcular tamanho de diretórios
+import { serializeError } from "serialize-error" // Converte objetos de erro em formato serializável
+import * as vscode from "vscode" // API do VS Code para integração com o editor
 
-import { TokenUsage } from "../schemas"
-import { ApiHandler, buildApiHandler } from "../api"
-import { ApiStream } from "../api/transform/stream"
-import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider"
+import { TokenUsage } from "../schemas" // Esquema para rastreamento de uso de tokens
+import { ApiHandler, buildApiHandler } from "../api" // Gerenciador de comunicação com APIs de IA
+import { ApiStream } from "../api/transform/stream" // Processamento de streams de resposta da API
+import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider" // Visualização de diferenças de código
 import {
 	CheckpointServiceOptions,
 	RepoPerTaskCheckpointService,
 	RepoPerWorkspaceCheckpointService,
-} from "../services/checkpoints"
-import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown"
-import { fetchInstructionsTool } from "./tools/fetchInstructionsTool"
-import { listFilesTool } from "./tools/listFilesTool"
-import { readFileTool } from "./tools/readFileTool"
-import { ExitCodeDetails } from "../integrations/terminal/TerminalProcess"
-import { Terminal } from "../integrations/terminal/Terminal"
-import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry"
-import { UrlContentFetcher } from "../services/browser/UrlContentFetcher"
-import { listFiles } from "../services/glob/list-files"
-import { CheckpointStorage } from "../shared/checkpoints"
-import { ApiConfiguration } from "../shared/api"
-import { findLastIndex } from "../shared/array"
-import { combineApiRequests } from "../shared/combineApiRequests"
-import { combineCommandSequences } from "../shared/combineCommandSequences"
+} from "../services/checkpoints" // Serviços para gerenciamento de checkpoints de código
+import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown" // Utilitários para exportação de conteúdo
+import { fetchInstructionsTool } from "./tools/fetchInstructionsTool" // Ferramenta para buscar instruções personalizadas
+import { listFilesTool } from "./tools/listFilesTool" // Ferramenta para listar arquivos no workspace
+import { readFileTool } from "./tools/readFileTool" // Ferramenta para ler conteúdo de arquivos
+import { ExitCodeDetails } from "../integrations/terminal/TerminalProcess" // Detalhes de códigos de saída do terminal
+import { Terminal } from "../integrations/terminal/Terminal" // Abstração para interação com terminal
+import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry" // Registro de terminais disponíveis
+import { UrlContentFetcher } from "../services/browser/UrlContentFetcher" // Serviço para buscar conteúdo de URLs
+import { listFiles } from "../services/glob/list-files" // Utilitário para listar arquivos com padrões glob
+import { CheckpointStorage } from "../shared/checkpoints" // Armazenamento de checkpoints de código
+import { ApiConfiguration } from "../shared/api" // Configurações para comunicação com APIs
+import { findLastIndex } from "../shared/array" // Utilitário para arrays
+import { combineApiRequests } from "../shared/combineApiRequests" // Combinação de requisições de API para métricas
+import { combineCommandSequences } from "../shared/combineCommandSequences" // Combinação de sequências de comandos
 import {
 	ClineApiReqCancelReason,
 	ClineApiReqInfo,
@@ -42,86 +42,143 @@ import {
 	ClineMessage,
 	ClineSay,
 	ToolProgressStatus,
-} from "../shared/ExtensionMessage"
-import { getApiMetrics } from "../shared/getApiMetrics"
-import { HistoryItem } from "../shared/HistoryItem"
-import { ClineAskResponse } from "../shared/WebviewMessage"
-import { GlobalFileNames } from "../shared/globalFileNames"
-import { defaultModeSlug, getModeBySlug, getFullModeDetails } from "../shared/modes"
-import { EXPERIMENT_IDS, experiments as Experiments, ExperimentId } from "../shared/experiments"
-import { calculateApiCostAnthropic } from "../utils/cost"
-import { fileExistsAtPath } from "../utils/fs"
-import { arePathsEqual } from "../utils/path"
-import { parseMentions } from "./mentions"
-import { FileContextTracker } from "./context-tracking/FileContextTracker"
-import { RooIgnoreController } from "./ignore/RooIgnoreController"
-import { AssistantMessageContent, parseAssistantMessage, ToolParamName, ToolUseName } from "./assistant-message"
-import { formatResponse } from "./prompts/responses"
-import { SYSTEM_PROMPT } from "./prompts/system"
-import { truncateConversationIfNeeded } from "./sliding-window"
-import { ClineProvider } from "./webview/ClineProvider"
-import { BrowserSession } from "../services/browser/BrowserSession"
-import { formatLanguage } from "../shared/language"
-import { McpHub } from "../services/mcp/McpHub"
-import { DiffStrategy, getDiffStrategy } from "./diff/DiffStrategy"
-import { telemetryService } from "../services/telemetry/TelemetryService"
-import { validateToolUse, isToolAllowedForMode, ToolName } from "./mode-validator"
-import { getWorkspacePath } from "../utils/path"
-import { writeToFileTool } from "./tools/writeToFileTool"
-import { applyDiffTool } from "./tools/applyDiffTool"
-import { insertContentTool } from "./tools/insertContentTool"
-import { searchAndReplaceTool } from "./tools/searchAndReplaceTool"
-import { listCodeDefinitionNamesTool } from "./tools/listCodeDefinitionNamesTool"
-import { searchFilesTool } from "./tools/searchFilesTool"
-import { browserActionTool } from "./tools/browserActionTool"
-import { executeCommandTool } from "./tools/executeCommandTool"
-import { useMcpToolTool } from "./tools/useMcpToolTool"
-import { accessMcpResourceTool } from "./tools/accessMcpResourceTool"
-import { askFollowupQuestionTool } from "./tools/askFollowupQuestionTool"
-import { switchModeTool } from "./tools/switchModeTool"
-import { attemptCompletionTool } from "./tools/attemptCompletionTool"
-import { newTaskTool } from "./tools/newTaskTool"
+} from "../shared/ExtensionMessage" // Tipos de mensagens trocadas na extensão
+import { getApiMetrics } from "../shared/getApiMetrics" // Cálculo de métricas de uso da API
+import { HistoryItem } from "../shared/HistoryItem" // Representação de itens do histórico de conversas
+import { ClineAskResponse } from "../shared/WebviewMessage" // Tipos de mensagens da webview
+import { GlobalFileNames } from "../shared/globalFileNames" // Nomes de arquivos globais usados pela extensão
+import { defaultModeSlug, getModeBySlug, getFullModeDetails } from "../shared/modes" // Gerenciamento de modos de operação
+import { EXPERIMENT_IDS, experiments as Experiments, ExperimentId } from "../shared/experiments" // Sistema de experimentos
+import { calculateApiCostAnthropic } from "../utils/cost" // Cálculo de custos de API
+import { fileExistsAtPath } from "../utils/fs" // Verificação de existência de arquivos
+import { arePathsEqual } from "../utils/path" // Comparação de caminhos de arquivos
+import { parseMentions } from "./mentions" // Processamento de menções em mensagens
+import { FileContextTracker } from "./context-tracking/FileContextTracker" // Rastreamento de contexto de arquivos
+import { RooIgnoreController } from "./ignore/RooIgnoreController" // Controle de arquivos ignorados
+import { AssistantMessageContent, parseAssistantMessage, ToolParamName, ToolUseName } from "./assistant-message" // Processamento de mensagens do assistente
+import { formatResponse } from "./prompts/responses" // Formatação de respostas
+import { SYSTEM_PROMPT } from "./prompts/system" // Prompt de sistema para o modelo
+import { truncateConversationIfNeeded } from "./sliding-window" // Gerenciamento de janela deslizante para conversas longas
+import { ClineProvider } from "./webview/ClineProvider" // Provedor da interface webview
+import { BrowserSession } from "../services/browser/BrowserSession" // Sessão de navegador para acesso web
+import { formatLanguage } from "../shared/language" // Formatação de linguagem para exibição
+import { McpHub } from "../services/mcp/McpHub" // Hub para Model Control Protocol
+import { DiffStrategy, getDiffStrategy } from "./diff/DiffStrategy" // Estratégias para cálculo de diferenças
+import { telemetryService } from "../services/telemetry/TelemetryService" // Serviço de telemetria
+import { validateToolUse, isToolAllowedForMode, ToolName } from "./mode-validator" // Validação de ferramentas por modo
+import { getWorkspacePath } from "../utils/path" // Obtenção do caminho do workspace
+import { writeToFileTool } from "./tools/writeToFileTool" // Ferramenta para escrever em arquivos
+import { applyDiffTool } from "./tools/applyDiffTool" // Ferramenta para aplicar diferenças de código
+import { insertContentTool } from "./tools/insertContentTool" // Ferramenta para inserir conteúdo em arquivos
+import { searchAndReplaceTool } from "./tools/searchAndReplaceTool" // Ferramenta para busca e substituição
+import { listCodeDefinitionNamesTool } from "./tools/listCodeDefinitionNamesTool" // Ferramenta para listar definições de código
+import { searchFilesTool } from "./tools/searchFilesTool" // Ferramenta para buscar em arquivos
+import { browserActionTool } from "./tools/browserActionTool" // Ferramenta para ações de navegador
+import { executeCommandTool } from "./tools/executeCommandTool" // Ferramenta para executar comandos
+import { useMcpToolTool } from "./tools/useMcpToolTool" // Ferramenta para usar ferramentas MCP
+import { accessMcpResourceTool } from "./tools/accessMcpResourceTool" // Ferramenta para acessar recursos MCP
+import { askFollowupQuestionTool } from "./tools/askFollowupQuestionTool" // Ferramenta para perguntas de acompanhamento
+import { switchModeTool } from "./tools/switchModeTool" // Ferramenta para alternar entre modos
+import { attemptCompletionTool } from "./tools/attemptCompletionTool" // Ferramenta para tentativas de completar código
+import { newTaskTool } from "./tools/newTaskTool" // Ferramenta para criar novas tarefas
 
+/**
+ * Tipo que representa a resposta de uma ferramenta, podendo ser uma string simples
+ * ou um array de blocos de texto/imagem compatíveis com a API Anthropic.
+ */
 export type ToolResponse = string | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>
+
+/**
+ * Tipo que representa o conteúdo enviado pelo usuário, consistindo em um array
+ * de blocos de conteúdo (texto, imagens, etc.) compatíveis com a API Anthropic.
+ */
 type UserContent = Array<Anthropic.Messages.ContentBlockParam>
 
+/**
+ * Eventos emitidos pela classe Cline durante seu ciclo de vida.
+ * Cada evento pode ter parâmetros associados que são passados aos ouvintes.
+ */
 export type ClineEvents = {
+	/** Emitido quando uma mensagem é criada ou atualizada */
 	message: [{ action: "created" | "updated"; message: ClineMessage }]
+	/** Emitido quando uma tarefa é iniciada */
 	taskStarted: []
+	/** Emitido quando o modo da tarefa é alterado */
 	taskModeSwitched: [taskId: string, mode: string]
+	/** Emitido quando uma tarefa é pausada */
 	taskPaused: []
+	/** Emitido quando uma tarefa é retomada após pausa */
 	taskUnpaused: []
+	/** Emitido quando uma pergunta recebe resposta */
 	taskAskResponded: []
+	/** Emitido quando uma tarefa é abortada */
 	taskAborted: []
+	/** Emitido quando uma nova tarefa é criada a partir desta */
 	taskSpawned: [taskId: string]
+	/** Emitido quando uma tarefa é concluída, incluindo estatísticas de uso de tokens */
 	taskCompleted: [taskId: string, usage: TokenUsage]
+	/** Emitido quando o uso de tokens de uma tarefa é atualizado */
 	taskTokenUsageUpdated: [taskId: string, usage: TokenUsage]
 }
 
+/**
+ * Opções de configuração para criar uma nova instância de Cline.
+ * Define o comportamento e estado inicial da instância.
+ */
 export type ClineOptions = {
+	/** Provedor que gerencia a interface do webview */
 	provider: ClineProvider
+	/** Configuração da API para comunicação com o modelo de IA */
 	apiConfiguration: ApiConfiguration
+	/** Instruções personalizadas para o modelo de IA */
 	customInstructions?: string
+	/** Habilita o cálculo de diferenças entre versões de código */
 	enableDiff?: boolean
+	/** Habilita o sistema de checkpoints para salvar estados da tarefa */
 	enableCheckpoints?: boolean
+	/** Armazenamento para os checkpoints */
 	checkpointStorage?: CheckpointStorage
+	/** Limiar para correspondência aproximada em comparações de texto */
 	fuzzyMatchThreshold?: number
+	/** Limite de erros consecutivos antes de abortar a tarefa */
 	consecutiveMistakeLimit?: number
+	/** Descrição da tarefa a ser executada */
 	task?: string
+	/** Imagens a serem incluídas na tarefa inicial */
 	images?: string[]
+	/** Item de histórico para restaurar uma conversa anterior */
 	historyItem?: HistoryItem
+	/** Configuração de experimentos ativos */
 	experiments?: Record<string, boolean>
+	/** Indica se a tarefa deve ser iniciada automaticamente */
 	startTask?: boolean
+	/** Referência para a tarefa raiz (em caso de subtarefas) */
 	rootTask?: Cline
+	/** Referência para a tarefa pai (em caso de subtarefas) */
 	parentTask?: Cline
+	/** Número da tarefa na sequência */
 	taskNumber?: number
+	/** Callback executado quando a instância é criada */
 	onCreated?: (cline: Cline) => void
 }
 
+/**
+ * Classe principal que gerencia a execução de tarefas e interação com o modelo de IA.
+ * Esta classe é responsável por:
+ * - Gerenciar o ciclo de vida das tarefas
+ * - Controlar a comunicação com o modelo de IA
+ * - Gerenciar o histórico de conversas
+ * - Controlar o estado das ferramentas e checkpoints
+ * - Interagir com o ambiente VSCode
+ *
+ * A classe é instanciada pelo ClineProvider e pode ter tarefas pai/filho para suportar subtarefas.
+ */
 export class Cline extends EventEmitter<ClineEvents> {
+	// Identificadores únicos da tarefa
 	readonly taskId: string
 	readonly instanceId: string
 
+	// Referências para tarefas relacionadas (para suporte a subtarefas)
 	readonly rootTask: Cline | undefined = undefined
 	readonly parentTask: Cline | undefined = undefined
 	readonly taskNumber: number
@@ -129,6 +186,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 	pausedModeSlug: string = defaultModeSlug
 	private pauseInterval: NodeJS.Timeout | undefined
 
+	// Configuração e gerenciamento da API
 	readonly apiConfiguration: ApiConfiguration
 	api: ApiHandler
 	private fileContextTracker: FileContextTracker
@@ -140,6 +198,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 	diffEnabled: boolean = false
 	fuzzyMatchThreshold: number
 
+	// Histórico de mensagens e estado da conversa
 	apiConversationHistory: (Anthropic.MessageParam & { ts?: number })[] = []
 	clineMessages: ClineMessage[] = []
 	rooIgnoreController?: RooIgnoreController
@@ -147,11 +206,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 	private askResponseText?: string
 	private askResponseImages?: string[]
 	private lastMessageTs?: number
-	// Not private since it needs to be accessible by tools.
+	// Não é privado pois precisa ser acessível pelas ferramentas
 	consecutiveMistakeCount: number = 0
 	consecutiveMistakeLimit: number
 	consecutiveMistakeCountForApplyDiff: Map<string, number> = new Map()
-	// Not private since it needs to be accessible by tools.
+	// Não é privado pois precisa ser acessível pelas ferramentas
 	providerRef: WeakRef<ClineProvider>
 	private abort: boolean = false
 	didFinishAbortingStream = false
@@ -160,12 +219,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 	private lastApiRequestTime?: number
 	isInitialized = false
 
-	// checkpoints
+	// Sistema de checkpoints para salvar o estado da tarefa
 	private enableCheckpoints: boolean
 	private checkpointStorage: CheckpointStorage
 	private checkpointService?: RepoPerTaskCheckpointService | RepoPerWorkspaceCheckpointService
 
-	// streaming
+	// Controle de streaming de mensagens
 	isWaitingForFirstChunk = false
 	isStreaming = false
 	private currentStreamingContentIndex = 0
@@ -178,6 +237,26 @@ export class Cline extends EventEmitter<ClineEvents> {
 	private didAlreadyUseTool = false
 	private didCompleteReadingStream = false
 
+	/**
+	 * Construtor da classe Cline
+	 * @param provider - Referência para o ClineProvider que gerencia esta instância
+	 * @param apiConfiguration - Configurações da API de IA
+	 * @param customInstructions - Instruções personalizadas para o modelo
+	 * @param enableDiff - Habilita o sistema de diff para edições de arquivos
+	 * @param enableCheckpoints - Habilita o sistema de checkpoints
+	 * @param checkpointStorage - Tipo de armazenamento de checkpoints
+	 * @param fuzzyMatchThreshold - Limiar para correspondência difusa
+	 * @param consecutiveMistakeLimit - Limite de erros consecutivos
+	 * @param task - Descrição da tarefa inicial
+	 * @param images - Imagens associadas à tarefa
+	 * @param historyItem - Item de histórico para retomar uma tarefa
+	 * @param experiments - Configurações de experimentos
+	 * @param startTask - Se deve iniciar a tarefa automaticamente
+	 * @param rootTask - Tarefa raiz (para subtarefas)
+	 * @param parentTask - Tarefa pai (para subtarefas)
+	 * @param taskNumber - Número da tarefa na sequência
+	 * @param onCreated - Callback chamado após a criação
+	 */
 	constructor({
 		provider,
 		apiConfiguration,
@@ -199,58 +278,74 @@ export class Cline extends EventEmitter<ClineEvents> {
 	}: ClineOptions) {
 		super()
 
+		// Verifica se os parâmetros necessários foram fornecidos para iniciar a tarefa
 		if (startTask && !task && !images && !historyItem) {
 			throw new Error("Either historyItem or task/images must be provided")
 		}
 
-		this.taskId = historyItem ? historyItem.id : crypto.randomUUID()
-		this.instanceId = crypto.randomUUID().slice(0, 8)
-		this.taskNumber = -1
+		// Inicializa identificadores únicos para a tarefa
+		this.taskId = historyItem ? historyItem.id : crypto.randomUUID() // Usa o ID existente ou cria um novo
+		this.instanceId = crypto.randomUUID().slice(0, 8) // Cria um ID de instância curto
+		this.taskNumber = -1 // Inicializa o número da tarefa como inválido
 
-		this.rooIgnoreController = new RooIgnoreController(this.cwd)
-		this.fileContextTracker = new FileContextTracker(provider, this.taskId)
+		// Inicializa controladores e rastreadores
+		this.rooIgnoreController = new RooIgnoreController(this.cwd) // Gerencia arquivos a serem ignorados
+		this.fileContextTracker = new FileContextTracker(provider, this.taskId) // Rastreia contexto de arquivos
 		this.rooIgnoreController.initialize().catch((error) => {
 			console.error("Failed to initialize RooIgnoreController:", error)
 		})
-		this.apiConfiguration = apiConfiguration
-		this.api = buildApiHandler(apiConfiguration)
-		this.urlContentFetcher = new UrlContentFetcher(provider.context)
-		this.browserSession = new BrowserSession(provider.context)
-		this.customInstructions = customInstructions
-		this.diffEnabled = enableDiff
-		this.fuzzyMatchThreshold = fuzzyMatchThreshold
-		this.consecutiveMistakeLimit = consecutiveMistakeLimit
-		this.providerRef = new WeakRef(provider)
-		this.diffViewProvider = new DiffViewProvider(this.cwd)
-		this.enableCheckpoints = enableCheckpoints
-		this.checkpointStorage = checkpointStorage
 
-		this.rootTask = rootTask
-		this.parentTask = parentTask
-		this.taskNumber = taskNumber
+		// Configura a API e ferramentas auxiliares
+		this.apiConfiguration = apiConfiguration // Armazena configuração da API
+		this.api = buildApiHandler(apiConfiguration) // Constrói o manipulador da API
+		this.urlContentFetcher = new UrlContentFetcher(provider.context) // Ferramenta para buscar conteúdo de URLs
+		this.browserSession = new BrowserSession(provider.context) // Gerencia sessão do navegador
+		this.customInstructions = customInstructions // Armazena instruções personalizadas
 
+		// Configura parâmetros de comportamento
+		this.diffEnabled = enableDiff // Habilita ou desabilita o sistema de diff
+		this.fuzzyMatchThreshold = fuzzyMatchThreshold // Define o limiar para correspondência difusa
+		this.consecutiveMistakeLimit = consecutiveMistakeLimit // Define o limite de erros consecutivos
+		this.providerRef = new WeakRef(provider) // Referência fraca ao provedor para evitar vazamentos de memória
+		this.diffViewProvider = new DiffViewProvider(this.cwd) // Provedor de visualização de diferenças
+		this.enableCheckpoints = enableCheckpoints // Habilita ou desabilita checkpoints
+		this.checkpointStorage = checkpointStorage // Define o tipo de armazenamento de checkpoints
+
+		// Configura relacionamentos de tarefas
+		this.rootTask = rootTask // Tarefa raiz (para hierarquia de tarefas)
+		this.parentTask = parentTask // Tarefa pai (para subtarefas)
+		this.taskNumber = taskNumber // Número da tarefa na sequência
+
+		// Registra telemetria sobre a criação/reinício da tarefa
 		if (historyItem) {
-			telemetryService.captureTaskRestarted(this.taskId)
+			telemetryService.captureTaskRestarted(this.taskId) // Registra reinício de tarefa existente
 		} else {
-			telemetryService.captureTaskCreated(this.taskId)
+			telemetryService.captureTaskCreated(this.taskId) // Registra criação de nova tarefa
 		}
 
-		// Initialize diffStrategy based on current state.
+		// Inicializa a estratégia de diff com base no estado atual
 		this.updateDiffStrategy(experiments ?? {})
 
+		// Executa callback após a criação, se fornecido
 		onCreated?.(this)
 
+		// Inicia a tarefa se solicitado
 		if (startTask) {
 			if (task || images) {
-				this.startTask(task, images)
+				this.startTask(task, images) // Inicia nova tarefa com descrição e/ou imagens
 			} else if (historyItem) {
-				this.resumeTaskFromHistory()
+				this.resumeTaskFromHistory() // Retoma tarefa a partir do histórico
 			} else {
 				throw new Error("Either historyItem or task/images must be provided")
 			}
 		}
 	}
 
+	/**
+	 * Método estático para criar uma nova instância de Cline
+	 * @param options - Opções de configuração
+	 * @returns [instância de Cline, Promise que resolve quando a tarefa é iniciada]
+	 */
 	static create(options: ClineOptions): [Cline, Promise<void>] {
 		const instance = new Cline({ ...options, startTask: false })
 		const { images, task, historyItem } = options
@@ -267,6 +362,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 		return [instance, promise]
 	}
 
+	/**
+	 * Obtém o diretório de trabalho atual
+	 * @returns Caminho absoluto para o diretório de trabalho
+	 */
 	get cwd() {
 		return getWorkspacePath(path.join(os.homedir(), "Desktop"))
 	}
@@ -282,17 +381,25 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 	// Storing task to disk for history
 
+	/**
+	 * Garante que o diretório da tarefa exista no armazenamento global
+	 * @returns Caminho absoluto para o diretório da tarefa
+	 */
 	private async ensureTaskDirectoryExists(): Promise<string> {
 		const globalStoragePath = this.providerRef.deref()?.context.globalStorageUri.fsPath
 		if (!globalStoragePath) {
 			throw new Error("Global storage uri is invalid")
 		}
 
-		// Use storagePathManager to retrieve the task storage directory
+		// Use storagePathManager para recuperar o diretório de armazenamento da tarefa
 		const { getTaskDirectoryPath } = await import("../shared/storagePathManager")
 		return getTaskDirectoryPath(globalStoragePath, this.taskId)
 	}
 
+	/**
+	 * Obtém o histórico de conversação da API salvo no diretório da tarefa
+	 * @returns Histórico de mensagens da API
+	 */
 	private async getSavedApiConversationHistory(): Promise<Anthropic.MessageParam[]> {
 		const filePath = path.join(await this.ensureTaskDirectoryExists(), GlobalFileNames.apiConversationHistory)
 		const fileExists = await fileExistsAtPath(filePath)
@@ -302,17 +409,28 @@ export class Cline extends EventEmitter<ClineEvents> {
 		return []
 	}
 
+	/**
+	 * Adiciona uma mensagem ao histórico de conversação da API
+	 * @param message - Mensagem a ser adicionada
+	 */
 	private async addToApiConversationHistory(message: Anthropic.MessageParam) {
 		const messageWithTs = { ...message, ts: Date.now() }
 		this.apiConversationHistory.push(messageWithTs)
 		await this.saveApiConversationHistory()
 	}
 
+	/**
+	 * Substitui todo o histórico de conversação da API
+	 * @param newHistory - Novo histórico de mensagens
+	 */
 	async overwriteApiConversationHistory(newHistory: Anthropic.MessageParam[]) {
 		this.apiConversationHistory = newHistory
 		await this.saveApiConversationHistory()
 	}
 
+	/**
+	 * Salva o histórico de conversação da API no diretório da tarefa
+	 */
 	private async saveApiConversationHistory() {
 		try {
 			const filePath = path.join(await this.ensureTaskDirectoryExists(), GlobalFileNames.apiConversationHistory)
@@ -340,6 +458,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 		return []
 	}
 
+	/**
+	 * Adiciona uma mensagem ao histórico de mensagens do Cline
+	 * @param message - Mensagem a ser adicionada
+	 */
 	private async addToClineMessages(message: ClineMessage) {
 		this.clineMessages.push(message)
 		await this.providerRef.deref()?.postStateToWebview()
@@ -347,6 +469,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 		await this.saveClineMessages()
 	}
 
+	/**
+	 * Substitui todas as mensagens do Cline por um novo conjunto
+	 * @param newMessages - Novas mensagens
+	 */
 	public async overwriteClineMessages(newMessages: ClineMessage[]) {
 		this.clineMessages = newMessages
 		await this.saveClineMessages()
@@ -357,12 +483,19 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.emit("message", { action: "updated", message: partialMessage })
 	}
 
+	/**
+	 * Calcula e retorna o uso de tokens da API
+	 * @returns Métricas de uso de tokens
+	 */
 	getTokenUsage() {
 		const usage = getApiMetrics(combineApiRequests(combineCommandSequences(this.clineMessages.slice(1))))
 		this.emit("taskTokenUsageUpdated", this.taskId, usage)
 		return usage
 	}
 
+	/**
+	 * Salva as mensagens do Cline no armazenamento persistente
+	 */
 	private async saveClineMessages() {
 		try {
 			const taskDir = await this.ensureTaskDirectoryExists()
@@ -416,14 +549,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 		partial?: boolean,
 		progressStatus?: ToolProgressStatus,
 	): Promise<{ response: ClineAskResponse; text?: string; images?: string[] }> {
-		// If this Cline instance was aborted by the provider, then the only
-		// thing keeping us alive is a promise still running in the background,
-		// in which case we don't want to send its result to the webview as it
-		// is attached to a new instance of Cline now. So we can safely ignore
-		// the result of any active promises, and this class will be
-		// deallocated. (Although we set Cline = undefined in provider, that
-		// simply removes the reference to this instance, but the instance is
-		// still alive until this promise resolves or rejects.)
+		// Se esta instância Cline foi abortada pelo provedor, então o único
+		// motivo de estar viva é uma promise ainda em execução em segundo plano,
+		// caso em que não queremos enviar seu resultado para o webview como está
+		// anexado a uma nova instância de Cline agora. Então podemos ignorar
+		// o resultado de qualquer promise ativa, e esta classe será
+		// deallocated. (Embora definamos Cline = undefined no provedor, isso
+		// simplesmente remove a referência a esta instância, mas a instância
+		// ainda está viva até que esta promise seja resolvida ou rejeitada.)
 		if (this.abort) {
 			throw new Error(`[Cline#ask] task ${this.taskId}.${this.instanceId} aborted`)
 		}
@@ -436,19 +569,18 @@ export class Cline extends EventEmitter<ClineEvents> {
 				lastMessage && lastMessage.partial && lastMessage.type === "ask" && lastMessage.ask === type
 			if (partial) {
 				if (isUpdatingPreviousPartial) {
-					// Existing partial message, so update it.
+					// Mensagem parcial existente, então atualize-a.
 					lastMessage.text = text
 					lastMessage.partial = partial
 					lastMessage.progressStatus = progressStatus
-					// TODO: Be more efficient about saving and posting only new
-					// data or one whole message at a time so ignore partial for
-					// saves, and only post parts of partial message instead of
-					// whole array in new listener.
+					// TODO: Seja mais eficiente sobre o salvamento e o post de
+					// apenas novos dados ou uma mensagem inteira de cada vez para
+					// ignorar parcial para salvamentos, e apenas postar partes de
+					// uma mensagem parcial em vez de todo o array em um novo ouvinte.
 					this.updateClineMessage(lastMessage)
 					throw new Error("Current ask promise was ignored (#1)")
 				} else {
-					// This is a new partial message, so add it with partial
-					// state.
+					// Esta é uma nova mensagem parcial, então adicione-a com o estado parcial.
 					askTs = Date.now()
 					this.lastMessageTs = askTs
 					await this.addToClineMessages({ ts: askTs, type: "ask", ask: type, text, partial })
@@ -456,17 +588,23 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 			} else {
 				if (isUpdatingPreviousPartial) {
-					// This is the complete version of a previously partial
-					// message, so replace the partial with the complete version.
+					// Esta é a versão completa de uma mensagem parcial anterior,
+					// então substitua a parcial pela versão completa.
 					this.askResponse = undefined
 					this.askResponseText = undefined
 					this.askResponseImages = undefined
 
 					/*
 					Bug for the history books:
-					In the webview we use the ts as the chatrow key for the virtuoso list. Since we would update this ts right at the end of streaming, it would cause the view to flicker. The key prop has to be stable otherwise react has trouble reconciling items between renders, causing unmounting and remounting of components (flickering).
-					The lesson here is if you see flickering when rendering lists, it's likely because the key prop is not stable.
-					So in this case we must make sure that the message ts is never altered after first setting it.
+					No webview usamos o ts como a chave do chatrow para a lista virtuosa.
+					Desde que atualizamos este ts logo no final do streaming, causaria uma
+					flutuação na visualização. A propriedade key tem que ser estável,
+					caso contrário o react tem dificuldade em reconciliar itens entre
+					renders, causando desmontagem e montagem de componentes (flickering).
+					O lição aqui é se você ver flutuação quando está renderizando listas,
+					provavelmente porque a propriedade key não é estável.
+					Então, neste caso, temos que garantir que o ts da mensagem nunca
+					seja alterado após o primeiro ajuste.
 					*/
 					askTs = lastMessage.ts
 					this.lastMessageTs = askTs
@@ -477,7 +615,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 					await this.saveClineMessages()
 					this.updateClineMessage(lastMessage)
 				} else {
-					// This is a new and complete message, so add it like normal.
+					// Esta é uma nova e completa mensagem, então adicione-a como normal.
 					this.askResponse = undefined
 					this.askResponseText = undefined
 					this.askResponseImages = undefined
@@ -487,7 +625,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 			}
 		} else {
-			// This is a new non-partial message, so add it like normal.
+			// Esta é uma nova mensagem não parcial, então adicione-a como normal.
 			this.askResponse = undefined
 			this.askResponseText = undefined
 			this.askResponseImages = undefined
@@ -499,9 +637,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 		await pWaitFor(() => this.askResponse !== undefined || this.lastMessageTs !== askTs, { interval: 100 })
 
 		if (this.lastMessageTs !== askTs) {
-			// Could happen if we send multiple asks in a row i.e. with
-			// command_output. It's important that when we know an ask could
-			// fail, it is handled gracefully.
+			// Pode acontecer se enviamos várias perguntas em sequência, por exemplo, com
+			// command_output. É importante que, quando sabemos que uma pergunta pode falhar,
+			// ela seja tratada de formagraceful.
 			throw new Error("Current ask promise was ignored")
 		}
 
@@ -537,43 +675,43 @@ export class Cline extends EventEmitter<ClineEvents> {
 				lastMessage && lastMessage.partial && lastMessage.type === "say" && lastMessage.say === type
 			if (partial) {
 				if (isUpdatingPreviousPartial) {
-					// existing partial message, so update it
+					// Mensagem parcial existente, então atualize-a
 					lastMessage.text = text
 					lastMessage.images = images
 					lastMessage.partial = partial
 					lastMessage.progressStatus = progressStatus
 					this.updateClineMessage(lastMessage)
 				} else {
-					// this is a new partial message, so add it with partial state
+					// Esta é uma nova mensagem parcial, então adicione-a com o estado parcial
 					const sayTs = Date.now()
 					this.lastMessageTs = sayTs
 					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, partial })
 				}
 			} else {
-				// New now have a complete version of a previously partial message.
+				// Nova mensagem agora tem uma versão completa de uma mensagem parcial anterior.
 				if (isUpdatingPreviousPartial) {
-					// This is the complete version of a previously partial
-					// message, so replace the partial with the complete version.
+					// Esta é a versão completa de uma mensagem parcial anterior,
+					// então substitua a parcial pela versão completa.
 					this.lastMessageTs = lastMessage.ts
 					// lastMessage.ts = sayTs
 					lastMessage.text = text
 					lastMessage.images = images
 					lastMessage.partial = false
 					lastMessage.progressStatus = progressStatus
-					// Instead of streaming partialMessage events, we do a save
-					// and post like normal to persist to disk.
+					// Em vez de transmitir eventos partialMessage, fazemos um save
+					// e post como normal para persistir no disco.
 					await this.saveClineMessages()
-					// More performant than an entire postStateToWebview.
+					// Mais performante que um postStateToWebview inteiro.
 					this.updateClineMessage(lastMessage)
 				} else {
-					// This is a new and complete message, so add it like normal.
+					// Esta é uma nova e completa mensagem, então adicione-a como normal.
 					const sayTs = Date.now()
 					this.lastMessageTs = sayTs
 					await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images })
 				}
 			}
 		} else {
-			// this is a new non-partial message, so add it like normal
+			// Esta é uma nova mensagem não parcial, então adicione-a como normal.
 			const sayTs = Date.now()
 			this.lastMessageTs = sayTs
 			await this.addToClineMessages({ ts: sayTs, type: "say", say: type, text, images, checkpoint })
@@ -590,11 +728,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 		return formatResponse.toolError(formatResponse.missingToolParameterError(paramName))
 	}
 
-	// Task lifecycle
+	// Ciclo de vida da tarefa
 
 	private async startTask(task?: string, images?: string[]): Promise<void> {
-		// conversationHistory (for API) and clineMessages (for webview) need to be in sync
-		// if the extension process were killed, then on restart the clineMessages might not be empty, so we need to set it to [] when we create a new Cline client (otherwise webview would show stale messages from previous session)
+		// conversationHistory (para API) e clineMessages (para webview) precisam estar em sincronia
+		// se o processo da extensão fosse morto, então no reinício o clineMessages não estaria vazio,
+		// então precisamos defini-lo como [] quando criamos uma nova instância de Cline (caso contrário,
+		// o webview mostraria mensagens envelhecidas da sessão anterior)
 		this.clineMessages = []
 		this.apiConversationHistory = []
 		await this.providerRef.deref()?.postStateToWebview()
@@ -616,12 +756,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 	}
 
 	async resumePausedTask(lastMessage: string) {
-		// release this Cline instance from paused state
+		// libera esta instância Cline do estado de pausa
 		this.isPaused = false
 		this.emit("taskUnpaused")
 
-		// fake an answer from the subtask that it has completed running and this is the result of what it has done
-		// add the message to the chat history and to the webview ui
+		// finge uma resposta da subtarefa que ela terminou de executar e esta é a resposta do que ela fez
+		// adiciona a mensagem ao histórico de chat e ao webview ui
 		try {
 			await this.say("subtask_result", lastMessage)
 
@@ -642,10 +782,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 		}
 	}
 
+	/**
+	 * Retoma uma tarefa a partir do histórico
+	 */
 	private async resumeTaskFromHistory() {
 		const modifiedClineMessages = await this.getSavedClineMessages()
 
-		// Remove any resume messages that may have been added before
+		// Remove quaisquer mensagens de retomada que possam ter sido adicionadas anteriormente
 		const lastRelevantMessageIndex = findLastIndex(
 			modifiedClineMessages,
 			(m) => !(m.ask === "resume_task" || m.ask === "resume_completed_task"),
@@ -654,7 +797,8 @@ export class Cline extends EventEmitter<ClineEvents> {
 			modifiedClineMessages.splice(lastRelevantMessageIndex + 1)
 		}
 
-		// since we don't use api_req_finished anymore, we need to check if the last api_req_started has a cost value, if it doesn't and no cancellation reason to present, then we remove it since it indicates an api request without any partial content streamed
+		// como não usamos mais api_req_finished, precisamos verificar se o último api_req_started tem um valor de custo,
+		// se não tiver e não houver uma razão de cancelamento para apresentar, então removemos, pois indica uma solicitação de API sem nenhum conteúdo parcial transmitido
 		const lastApiReqStartedIndex = findLastIndex(
 			modifiedClineMessages,
 			(m) => m.type === "say" && m.say === "api_req_started",
@@ -670,12 +814,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 		await this.overwriteClineMessages(modifiedClineMessages)
 		this.clineMessages = await this.getSavedClineMessages()
 
-		// Now present the cline messages to the user and ask if they want to
-		// resume (NOTE: we ran into a bug before where the
-		// apiConversationHistory wouldn't be initialized when opening a old
-		// task, and it was because we were waiting for resume).
-		// This is important in case the user deletes messages without resuming
-		// the task first.
+		// Agora apresenta as mensagens de cline ao usuário e pergunta se ele quer
+		// retomar (NOTE: corrigimos um bug antes onde o
+		// apiConversationHistory não seria inicializado ao abrir uma tarefa antiga,
+		// e isso foi porque estávamos esperando a retomada).
+		// Isso é importante caso o usuário exclua mensagens sem retomar
+		// a tarefa primeiro.
 		this.apiConversationHistory = await this.getSavedApiConversationHistory()
 
 		const lastClineMessage = this.clineMessages
@@ -701,17 +845,18 @@ export class Cline extends EventEmitter<ClineEvents> {
 			responseImages = images
 		}
 
-		// Make sure that the api conversation history can be resumed by the API,
-		// even if it goes out of sync with cline messages.
+		// Garanta que o histórico de conversação da API possa ser retomado pela API,
+		// mesmo que esteja fora de sincronia com as mensagens do cline.
 		let existingApiConversationHistory: Anthropic.Messages.MessageParam[] =
 			await this.getSavedApiConversationHistory()
 
-		// v2.0 xml tags refactor caveat: since we don't use tools anymore, we need to replace all tool use blocks with a text block since the API disallows conversations with tool uses and no tool schema
+		// v2.0 xml tags refactor caveat: como não usamos mais ferramentas, precisamos substituir todas as bloco de ferramentas com um bloco de texto,
+		// pois a API não permite conversas com ferramentas e sem esquema de ferramentas
 		const conversationWithoutToolBlocks = existingApiConversationHistory.map((message) => {
 			if (Array.isArray(message.content)) {
 				const newContent = message.content.map((block) => {
 					if (block.type === "tool_use") {
-						// it's important we convert to the new tool schema format so the model doesn't get confused about how to invoke tools
+						// é importante convertemos para o novo formato de esquema de ferramentas para que o modelo não se confunda sobre como invocar ferramentas
 						const inputAsXml = Object.entries(block.input as Record<string, string>)
 							.map(([key, value]) => `<${key}>\n${value}\n</${key}>`)
 							.join("\n")
@@ -720,7 +865,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 							text: `<${block.name}>\n${inputAsXml}\n</${block.name}>`,
 						} as Anthropic.Messages.TextBlockParam
 					} else if (block.type === "tool_result") {
-						// Convert block.content to text block array, removing images
+						// Converte o bloco.content em um array de bloco de texto, removendo imagens
 						const contentAsTextBlocks = Array.isArray(block.content)
 							? block.content.filter((item) => item.type === "text")
 							: [{ type: "text", text: block.content }]
@@ -739,16 +884,16 @@ export class Cline extends EventEmitter<ClineEvents> {
 		})
 		existingApiConversationHistory = conversationWithoutToolBlocks
 
-		// FIXME: remove tool use blocks altogether
+		// FIXME: remover completamente os blocos de uso de ferramentas
 
-		// if the last message is an assistant message, we need to check if there's tool use since every tool use has to have a tool response
-		// if there's no tool use and only a text block, then we can just add a user message
-		// (note this isn't relevant anymore since we use custom tool prompts instead of tool use blocks, but this is here for legacy purposes in case users resume old tasks)
+		// se a última mensagem é uma mensagem de assistente, precisamos verificar se há ferramentas, pois cada ferramenta tem que ter uma resposta da ferramenta
+		// se não houver ferramentas e apenas um bloco de texto, então podemos apenas adicionar uma mensagem do usuário
+		// (observe que isso não é mais relevante já que usamos prompts de ferramentas personalizados em vez de blocos de uso de ferramentas, mas está aqui para fins de compatibilidade caso os usuários retomem tarefas antigas)
 
-		// if the last message is a user message, we can need to get the assistant message before it to see if it made tool calls, and if so, fill in the remaining tool responses with 'interrupted'
+		// se a última mensagem for uma mensagem do usuário, precisamos obter a mensagem do assistente anterior para ver se ela fez chamadas de ferramentas e, em caso afirmativo, preencher as respostas de ferramentas restantes com 'interrompido'
 
-		let modifiedOldUserContent: UserContent // either the last message if its user message, or the user message before the last (assistant) message
-		let modifiedApiConversationHistory: Anthropic.Messages.MessageParam[] // need to remove the last user message to replace with new modified user message
+		let modifiedOldUserContent: UserContent // ou a última mensagem se for uma mensagem do usuário, ou a mensagem do usuário antes da última (assistente)
+		let modifiedApiConversationHistory: Anthropic.Messages.MessageParam[] // precisa remover a última mensagem do usuário para substituir com a nova mensagem do usuário modificada
 		if (existingApiConversationHistory.length > 0) {
 			const lastMessage = existingApiConversationHistory[existingApiConversationHistory.length - 1]
 
@@ -880,22 +1025,21 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		while (!this.abort) {
 			const didEndLoop = await this.recursivelyMakeClineRequests(nextUserContent, includeFileDetails)
-			includeFileDetails = false // we only need file details the first time
+			includeFileDetails = false // precisamos apenas dos detalhes do arquivo a primeira vez
 
-			// The way this agentic loop works is that cline will be given a
-			// task that he then calls tools to complete. Unless there's an
-			// attempt_completion call, we keep responding back to him with his
-			// tool's responses until he either attempt_completion or does not
-			// use anymore tools. If he does not use anymore tools, we ask him
-			// to consider if he's completed the task and then call
-			// attempt_completion, otherwise proceed with completing the task.
-			// There is a MAX_REQUESTS_PER_TASK limit to prevent infinite
-			// requests, but Cline is prompted to finish the task as efficiently
-			// as he can.
+			// O modo como este loop de agente funciona é que o cline receberá uma
+			// tarefa que ele então chamará ferramentas para completá-la. A menos que haja um
+			// attempt_completion chamada, continuamos respondendo a ele com as respostas de suas
+			// ferramentas até que ele tente complete_task ou não use mais ferramentas. Se ele não usar mais ferramentas,
+			// perguntamos se ele considerou se completou a tarefa e então chamamos
+			// attempt_completion, caso contrário, prosseguimos com a tarefa.
+			// Há um limite de MAX_REQUESTS_PER_TASK para evitar solicitações infinitas,
+			// mas o cline é instruído a finalizar a tarefa o mais eficientemente possível
+			// como ele pode.
 
 			if (didEndLoop) {
-				// For now a task never 'completes'. This will only happen if
-				// the user hits max requests and denies resetting the count.
+				// Até agora, uma tarefa nunca 'completa'. Isso só acontecerá se
+				// o usuário atingir o máximo de solicitações e negar o redefinição do contador.
 				break
 			} else {
 				nextUserContent = [{ type: "text", text: formatResponse.noToolsUsed() }]
@@ -912,7 +1056,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		console.log(`[subtasks] aborting task ${this.taskId}.${this.instanceId}`)
 
-		// Will stop any autonomously running promises.
+		// Irá parar qualquer promessa autônoma em execução.
 		if (isAbandoned) {
 			this.abandoned = true
 		}
@@ -920,13 +1064,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.abort = true
 		this.emit("taskAborted")
 
-		// Stop waiting for child task completion.
+		// Irá parar qualquer promessa autônoma em execução.
 		if (this.pauseInterval) {
 			clearInterval(this.pauseInterval)
 			this.pauseInterval = undefined
 		}
 
-		// Release any terminals associated with this task.
+		// Libera qualquer terminal associado a esta tarefa.
 		TerminalRegistry.releaseTerminalsForTask(this.taskId)
 
 		this.urlContentFetcher.closeBrowser()
@@ -934,8 +1078,8 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.rooIgnoreController?.dispose()
 		this.fileContextTracker.dispose()
 
-		// If we're not streaming then `abortStream` (which reverts the diff
-		// view changes) won't be called, so we need to revert the changes here.
+		// Se não estivermos transmitindo, `abortStream` (que reverte as alterações da exibição de diferenças)
+		// não será chamado, então precisamos reverter as alterações aqui.
 		if (this.isStreaming && this.diffViewProvider.isEditing) {
 			await this.diffViewProvider.revertChanges()
 		}
@@ -953,7 +1097,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			workingDir = path.resolve(this.cwd, customCwd)
 		}
 
-		// Check if directory exists
+		// Verifica se o diretório existe
 		try {
 			await fs.access(workingDir)
 		} catch (error) {
@@ -962,13 +1106,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		const terminalInfo = await TerminalRegistry.getOrCreateTerminal(workingDir, !!customCwd, this.taskId)
 
-		// Update the working directory in case the terminal we asked for has
-		// a different working directory so that the model will know where the
-		// command actually executed:
+		// Atualiza o diretório de trabalho caso o terminal que pedimos tenha
+		// um diretório de trabalho diferente, para que o modelo saiba onde o
+		// comando foi executado:
 		workingDir = terminalInfo.getCurrentWorkingDirectory()
 
 		const workingDirInfo = workingDir ? ` from '${workingDir.toPosix()}'` : ""
-		terminalInfo.terminal.show() // weird visual bug when creating new terminals (even manually) where there's an empty space at the top.
+		terminalInfo.terminal.show() // um bug visual estranho quando criamos novos terminais (mesmo manualmente) onde há um espaço em branco no topo.
 		const process = terminalInfo.runCommand(command)
 
 		let userFeedback: { text?: string; images?: string[] } | undefined
@@ -977,14 +1121,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 			try {
 				const { response, text, images } = await this.ask("command_output", line)
 				if (response === "yesButtonClicked") {
-					// proceed while running
+					// prosseguir enquanto estiver em execução
 				} else {
 					userFeedback = { text, images }
 				}
 				didContinue = true
 				process.continue() // continue past the await
 			} catch {
-				// This can only happen if this ask promise was ignored, so ignore this error
+				// Isso só pode acontecer se esta promessa ask foi ignorada, então ignore este erro
 			}
 		}
 
@@ -1002,7 +1146,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		let result: string = ""
 		let exitDetails: ExitCodeDetails | undefined
 		process.once("completed", (output?: string) => {
-			// Use provided output if available, otherwise keep existing result.
+			// Use a saída fornecida se disponível, caso contrário, mantenha o resultado existente.
 			result = output ?? ""
 			completed = true
 		})
@@ -1017,11 +1161,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		await process
 
-		// Wait for a short delay to ensure all messages are sent to the webview
-		// This delay allows time for non-awaited promises to be created and
-		// for their associated messages to be sent to the webview, maintaining
-		// the correct order of messages (although the webview is smart about
-		// grouping command_output messages despite any gaps anyways)
+		// Aguarda um pequeno atraso para garantir que todas as mensagens sejam enviadas para o webview
+		// Este atraso permite que promessas não aguardadas sejam criadas e
+		// para suas mensagens associadas serem enviadas para o webview, mantendo
+		// a ordem correta das mensagens (embora o webview seja inteligente sobre
+		// agrupar mensagens command_output mesmo com qualquer gap)
 		await delay(50)
 
 		result = Terminal.compressTerminalOutput(result, terminalOutputLineLimit)
@@ -1089,7 +1233,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		let rateLimitDelay = 0
 
-		// Only apply rate limiting if this isn't the first request
+		// Aplica a limitação de taxa somente se esta não for a primeira solicitação
 		if (this.lastApiRequestTime) {
 			const now = Date.now()
 			const timeSinceLastRequest = now - this.lastApiRequestTime
@@ -1097,9 +1241,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 			rateLimitDelay = Math.ceil(Math.max(0, rateLimit * 1000 - timeSinceLastRequest) / 1000)
 		}
 
-		// Only show rate limiting message if we're not retrying. If retrying, we'll include the delay there.
+		// Exibe a mensagem de limitação de taxa somente se não estiver tentando novamente. Se estiver tentando novamente, incluiremos o atraso lá.
 		if (rateLimitDelay > 0 && retryAttempt === 0) {
-			// Show countdown timer
+			// Exibe o temporizador de contagem regressiva
 			for (let i = rateLimitDelay; i > 0; i--) {
 				const delayMessage = `Rate limiting for ${i} seconds...`
 				await this.say("api_req_retry_delayed", delayMessage, undefined, true)
@@ -1107,7 +1251,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			}
 		}
 
-		// Update last request time before making the request
+		// Atualiza o tempo da última solicitação antes de fazer a solicitação
 		this.lastApiRequestTime = Date.now()
 
 		if (mcpEnabled ?? true) {
@@ -1115,7 +1259,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			if (!mcpHub) {
 				throw new Error("MCP hub not available")
 			}
-			// Wait for MCP servers to be connected before generating system prompt
+			// Aguarda os servidores MCP para se conectar antes de gerar o prompt do sistema
 			await pWaitFor(() => mcpHub!.isConnecting !== true, { timeout: 10_000 }).catch(() => {
 				console.error("MCP servers failed to connect in time")
 			})
@@ -1157,7 +1301,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			)
 		})()
 
-		// If the previous API request's total token usage is close to the context window, truncate the conversation history to free up space for the new request
+		// Se o uso total de tokens da solicitação API anterior estiver próximo da janela de contexto, trunque o histórico de conversação para liberar espaço para a nova solicitação
 		if (previousApiReqIndex >= 0) {
 			const previousRequest = this.clineMessages[previousApiReqIndex]?.text
 			if (!previousRequest) return
@@ -1171,7 +1315,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 			const totalTokens = tokensIn + tokensOut + cacheWrites + cacheReads
 
-			// Default max tokens value for thinking models when no specific value is set
+			// Valor máximo padrão de tokens para modelos de pensamento quando nenhum valor específico é definido
 			const DEFAULT_THINKING_MODEL_MAX_TOKENS = 16_384
 
 			const modelInfo = this.api.getModel().info
@@ -1192,22 +1336,22 @@ export class Cline extends EventEmitter<ClineEvents> {
 			}
 		}
 
-		// Clean conversation history by:
-		// 1. Converting to Anthropic.MessageParam by spreading only the API-required properties
-		// 2. Converting image blocks to text descriptions if model doesn't support images
+		// Limpa o histórico de conversação:
+		// 1. Convertendo para Anthropic.MessageParam por espalhamento apenas das propriedades necessárias para a API
+		// 2. Convertendo blocos de imagem para descrições de texto se o modelo não suportar imagens
 		const cleanConversationHistory = this.apiConversationHistory.map(({ role, content }) => {
-			// Handle array content (could contain image blocks)
+			// Manipula o conteúdo de array (pode conter blocos de imagem)
 			if (Array.isArray(content)) {
 				if (!this.api.getModel().info.supportsImages) {
-					// Convert image blocks to text descriptions
+					// Converte blocos de imagem para descrições de texto
 					content = content.map((block) => {
 						if (block.type === "image") {
-							// Convert image blocks to text descriptions
-							// Note: We can't access the actual image content/url due to API limitations,
-							// but we can indicate that an image was present in the conversation
+							// Converte blocos de imagem para descrições de texto
+							// Nota: Não podemos acessar o conteúdo/URL da imagem real devido a limitações da API,
+							// mas podemos indicar que uma imagem foi mencionada na conversa
 							return {
 								type: "text",
-								text: "[Referenced image in conversation]",
+								text: "[Imagem mencionada na conversa]",
 							}
 						}
 						return block
@@ -1221,13 +1365,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 		const iterator = stream[Symbol.asyncIterator]()
 
 		try {
-			// Awaiting first chunk to see if it will throw an error.
+			// Aguardando o primeiro chunk para ver se lançará um erro.
 			this.isWaitingForFirstChunk = true
 			const firstChunk = await iterator.next()
 			yield firstChunk.value
 			this.isWaitingForFirstChunk = false
 		} catch (error) {
-			// note that this api_req_failed ask is unique in that we only present this option if the api hasn't streamed any content yet (ie it fails on the first chunk due), as it would allow them to hit a retry button. However if the api failed mid-stream, it could be in any arbitrary state where some tools may have executed, so that error is handled differently and requires cancelling the task entirely.
+			// observe que este erro api_req_failed é único, pois só apresentamos esta opção se a API ainda não transmitiu nenhum conteúdo (ou seja, falha no primeiro chunk), permitindo que eles pressionem um botão de repetição. No entanto, se a API falhar no meio da transmissão, ela pode estar em qualquer estado arbitrário onde algumas ferramentas podem ter sido executadas, então esse erro é tratado de forma diferente e requer o cancelamento completo da tarefa.
 			if (alwaysApproveResubmit) {
 				let errorMsg
 
@@ -1242,7 +1386,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				const baseDelay = requestDelaySeconds || 5
 				let exponentialDelay = Math.ceil(baseDelay * Math.pow(2, retryAttempt))
 
-				// If the error is a 429, and the error details contain a retry delay, use that delay instead of exponential backoff
+				// Se o erro for um 429 e os detalhes do erro contiverem um atraso de repetição, use esse atraso em vez de backoff exponencial
 				if (error.status === 429) {
 					const geminiRetryDetails = error.errorDetails?.find(
 						(detail: any) => detail["@type"] === "type.googleapis.com/google.rpc.RetryInfo",
@@ -1255,10 +1399,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 					}
 				}
 
-				// Wait for the greater of the exponential delay or the rate limit delay
+				// Aguarda o maior dos atrasos exponenciais ou o atraso da limitação de taxa
 				const finalDelay = Math.max(exponentialDelay, rateLimitDelay)
 
-				// Show countdown timer with exponential backoff
+				// Exibe o temporizador de contagem regressiva com backoff exponencial
 				for (let i = finalDelay; i > 0; i--) {
 					await this.say(
 						"api_req_retry_delayed",
@@ -1276,7 +1420,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 					false,
 				)
 
-				// delegate generator output from the recursive call with incremented retry count
+				// Delega a saída do gerador da chamada recursiva com o contador de repetição incrementado
 				yield* this.attemptApiRequest(previousApiReqIndex, retryAttempt + 1)
 				return
 			} else {
@@ -1285,19 +1429,19 @@ export class Cline extends EventEmitter<ClineEvents> {
 					error.message ?? JSON.stringify(serializeError(error), null, 2),
 				)
 				if (response !== "yesButtonClicked") {
-					// this will never happen since if noButtonClicked, we will clear current task, aborting this instance
+					// isso nunca acontecerá, pois se noButtonClicked, limparemos a tarefa atual, abortando esta instância
 					throw new Error("API request failed")
 				}
 				await this.say("api_req_retried")
-				// delegate generator output from the recursive call
+				// Delega a saída do gerador da chamada recursiva
 				yield* this.attemptApiRequest(previousApiReqIndex)
 				return
 			}
 		}
 
-		// no error, so we can continue to yield all remaining chunks
-		// (needs to be placed outside of try/catch since it we want caller to handle errors not with api_req_failed as that is reserved for first chunk failures only)
-		// this delegates to another generator or iterable object. In this case, it's saying "yield all remaining values from this iterator". This effectively passes along all subsequent chunks from the original stream.
+		// não há erro, então podemos continuar a produzir todos os chunks restantes
+		// (precisa ser colocado fora do try/catch, pois queremos que o chamador manipule os erros e não com api_req_failed, pois isso é reservado para falhas no primeiro chunk apenas)
+		// isso delega para outro gerador ou objeto iterável. Neste caso, está dizendo "yield all remaining values from this iterator". Isso passa por todos os chunks subsequentes do original stream.
 		yield* iterator
 	}
 
@@ -1314,7 +1458,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.presentAssistantMessageHasPendingUpdates = false
 
 		if (this.currentStreamingContentIndex >= this.assistantMessageContent.length) {
-			// this may happen if the last content block was completed before streaming could finish. if streaming is finished, and we're out of bounds then this means we already presented/executed the last content block and are ready to continue to next request
+			// isso pode acontecer se o último bloco de conteúdo foi concluído antes de a transmissão terminar. se a transmissão estiver terminada e estivermos fora dos limites, isso significa que já apresentamos/executamos o último bloco de conteúdo e estamos prontos para continuar para a próxima solicitação
 			if (this.didCompleteReadingStream) {
 				this.userMessageContentReady = true
 			}
@@ -1333,36 +1477,36 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 				let content = block.content
 				if (content) {
-					// (have to do this for partial and complete since sending content in thinking tags to markdown renderer will automatically be removed)
-					// Remove end substrings of <thinking or </thinking (below xml parsing is only for opening tags)
-					// (this is done with the xml parsing below now, but keeping here for reference)
+					// (precisamos fazer isso para conteúdo parcial e completo, pois enviar conteúdo em tags thinking para o renderizador markdown será automaticamente removido)
+					// Remove substrings finais de <thinking ou </thinking (a análise xml abaixo é apenas para tags de abertura)
+					// (isso é feito com a análise xml abaixo agora, mas mantendo aqui para referência)
 					// content = content.replace(/<\/?t(?:h(?:i(?:n(?:k(?:i(?:n(?:g)?)?)?$/, "")
-					// Remove all instances of <thinking> (with optional line break after) and </thinking> (with optional line break before)
-					// - Needs to be separate since we dont want to remove the line break before the first tag
-					// - Needs to happen before the xml parsing below
+					// Remove todas as instâncias de <thinking> (com quebra de linha opcional depois) e </thinking> (com quebra de linha opcional antes)
+					// - Precisa ser separado pois não queremos remover a quebra de linha antes da primeira tag
+					// - Precisa acontecer antes da análise xml abaixo
 					content = content.replace(/<thinking>\s?/g, "")
 					content = content.replace(/\s?<\/thinking>/g, "")
 
-					// Remove partial XML tag at the very end of the content (for tool use and thinking tags)
-					// (prevents scrollview from jumping when tags are automatically removed)
+					// Remove a tag XML parcial no final do conteúdo (para tags de ferramenta e pensamento)
+					// (previne que o scrollview pule quando as tags são removidas automaticamente)
 					const lastOpenBracketIndex = content.lastIndexOf("<")
 					if (lastOpenBracketIndex !== -1) {
 						const possibleTag = content.slice(lastOpenBracketIndex)
-						// Check if there's a '>' after the last '<' (i.e., if the tag is complete) (complete thinking and tool tags will have been removed by now)
+						// Verifica se há um '>' após o último '<' (ou seja, se a tag está completa) (tags de pensamento e ferramenta completas já foram removidas por agora)
 						const hasCloseBracket = possibleTag.includes(">")
 						if (!hasCloseBracket) {
-							// Extract the potential tag name
+							// Extrai o nome potencial da tag
 							let tagContent: string
 							if (possibleTag.startsWith("</")) {
 								tagContent = possibleTag.slice(2).trim()
 							} else {
 								tagContent = possibleTag.slice(1).trim()
 							}
-							// Check if tagContent is likely an incomplete tag name (letters and underscores only)
+							// Verifica se tagContent é provavelmente um nome de tag incompleto (letras e sublinhados apenas)
 							const isLikelyTagName = /^[a-zA-Z_]+$/.test(tagContent)
-							// Preemptively remove < or </ to keep from these artifacts showing up in chat (also handles closing thinking tags)
+							// Remove < ou </ para evitar que esses artefatos apareçam na conversa (também lida com tags de pensamento fechando)
 							const isOpeningOrClosing = possibleTag === "<" || possibleTag === "</"
-							// If the tag is incomplete and at the end, remove it from the content
+							// Se a tag estiver incompleta e no final, remova-a do conteúdo
 							if (isOpeningOrClosing || isLikelyTagName) {
 								content = content.slice(0, lastOpenBracketIndex).trim()
 							}
@@ -1419,14 +1563,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 
 				if (this.didRejectTool) {
-					// ignore any tool content after user has rejected tool once
+					// ignorar qualquer conteúdo de ferramenta após o usuário ter rejeitado uma ferramenta uma vez
 					if (!block.partial) {
 						this.userMessageContent.push({
 							type: "text",
 							text: `Skipping tool ${toolDescription()} due to user rejecting a previous tool.`,
 						})
 					} else {
-						// partial tool after user rejected a previous tool
+						// ferramenta parcial após o usuário rejeitar uma ferramenta anterior
 						this.userMessageContent.push({
 							type: "text",
 							text: `Tool ${toolDescription()} was interrupted and not executed due to user rejecting a previous tool.`,
@@ -1436,7 +1580,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 
 				if (this.didAlreadyUseTool) {
-					// ignore any content after a tool has already been used
+					// ignorar qualquer conteúdo após uma ferramenta ter sido usada
 					this.userMessageContent.push({
 						type: "text",
 						text: `Tool [${block.name}] was not executed because a tool has already been used in this message. Only one tool may be used per message. You must assess the first tool's result before proceeding to use the next tool.`,
@@ -1457,11 +1601,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 					} else {
 						this.userMessageContent.push(...content)
 					}
-					// once a tool result has been collected, ignore all other tool uses since we should only ever present one tool result per message
+					// uma vez que um resultado de ferramenta foi coletado, ignore todas as outras ferramentas, pois devemos apresentar apenas um resultado de ferramenta por mensagem
 					this.didAlreadyUseTool = true
 
-					// Flag a checkpoint as possible since we've used a tool
-					// which may have changed the file system.
+					// Marcar um checkpoint como possível, pois usamos uma ferramenta
+					// que pode ter alterado o sistema de arquivos.
 				}
 
 				const askApproval = async (
@@ -1471,7 +1615,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				) => {
 					const { response, text, images } = await this.ask(type, partialMessage, false, progressStatus)
 					if (response !== "yesButtonClicked") {
-						// Handle both messageResponse and noButtonClicked with text
+						// Lidar com ambos messageResponse e noButtonClicked com texto
 						if (text) {
 							await this.say("user_feedback", text, images)
 							pushToolResult(
@@ -1483,7 +1627,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 						this.didRejectTool = true
 						return false
 					}
-					// Handle yesButtonClicked with text
+					// Lidar com yesButtonClicked com texto
 					if (text) {
 						await this.say("user_feedback", text, images)
 						pushToolResult(formatResponse.toolResult(formatResponse.toolApprovedWithFeedback(text), images))
@@ -1492,8 +1636,8 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 
 				const askFinishSubTaskApproval = async () => {
-					// ask the user to approve this task has completed, and he has reviewd it, and we can declare task is finished
-					// and return control to the parent task to continue running the rest of the sub-tasks
+					// perguntar ao usuário para aprovar que esta tarefa foi concluída, e ele revisou, e podemos declarar que a tarefa está concluída
+					// e retornar o controle para a tarefa pai para continuar executando o restante das sub-tarefas
 					const toolMessage = JSON.stringify({
 						tool: "finishTask",
 					})
@@ -1515,7 +1659,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 					pushToolResult(formatResponse.toolError(errorString))
 				}
 
-				// If block is partial, remove partial closing tag so its not presented to user
+				// Se o bloco for parcial, remova a tag de fechamento parcial para que não seja apresentada ao usuário
 				const removeClosingTag = (tag: ToolParamName, text?: string): string => {
 					if (!block.partial) {
 						return text || ""
@@ -1523,9 +1667,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 					if (!text) {
 						return ""
 					}
-					// This regex dynamically constructs a pattern to match the closing tag:
-					// - Optionally matches whitespace before the tag
-					// - Matches '<' or '</' optionally followed by any subset of characters from the tag name
+					// Esta expressão regular constrói dinamicamente um padrão para corresponder à tag de fechamento:
+					// - Opcionalmente corresponde a espaço em branco antes da tag
+					// - Corresponde a '<' ou '</' opcionalmente seguido por qualquer subconjunto de caracteres do nome da tag
 					const tagRegex = new RegExp(
 						`\\s?<\/?${tag
 							.split("")
@@ -1544,7 +1688,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 					telemetryService.captureToolUsage(this.taskId, block.name)
 				}
 
-				// Validate tool use before execution
+				// Validar o uso da ferramenta antes da execução
 				const { mode, customModes } = (await this.providerRef.deref()?.getState()) ?? {}
 				try {
 					validateToolUse(
@@ -1666,45 +1810,44 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		const recentlyModifiedFiles = this.fileContextTracker.getAndClearCheckpointPossibleFile()
 		if (recentlyModifiedFiles.length > 0) {
-			// TODO: we can track what file changes were made and only checkpoint those files, this will be save storage
+			// TODO: podemos rastrear quais arquivos foram alterados e checkpoint apenas esses arquivos, isso salvará armazenamento
 			this.checkpointSave()
 		}
 
 		/*
-		Seeing out of bounds is fine, it means that the next too call is being built up and ready to add to assistantMessageContent to present.
-		When you see the UI inactive during this, it means that a tool is breaking without presenting any UI. For example the write_to_file tool was breaking when relpath was undefined, and for invalid relpath it never presented UI.
+		Verificar fora dos limites é normal, significa que a próxima chamada de ferramenta está sendo construída e pronta para ser adicionada ao assistantMessageContent para apresentar.
+		Quando você ver a UI inativa durante isso, significa que uma ferramenta está quebrando sem apresentar qualquer UI. Por exemplo, a ferramenta write_to_file estava quebrando quando relpath era indefinido e para relpath inválido, ela nunca apresentava UI.
 		*/
-		this.presentAssistantMessageLocked = false // this needs to be placed here, if not then calling this.presentAssistantMessage below would fail (sometimes) since it's locked
-		// NOTE: when tool is rejected, iterator stream is interrupted and it waits for userMessageContentReady to be true. Future calls to present will skip execution since didRejectTool and iterate until contentIndex is set to message length and it sets userMessageContentReady to true itself (instead of preemptively doing it in iterator)
+		this.presentAssistantMessageLocked = false // isso precisa ser colocado aqui, se não, chamar this.presentAssistantMessage abaixo falharia (às vezes) já que está travado
+		// NOTE: quando a ferramenta é rejeitada, o stream iterador é interrompido e espera por userMessageContentReady para ser true. Futuras chamadas para apresentar saltarão a execução já que didRejectTool e didAlreadyUseTool estão definidos. Quando o conteúdo atingir o comprimento da mensagem, userMessageContentReady será definido como true (em vez de preemptivamente fazer isso no iterador)
 		if (!block.partial || this.didRejectTool || this.didAlreadyUseTool) {
-			// block is finished streaming and executing
+			// o bloco terminou de transmitir e executar
 			if (this.currentStreamingContentIndex === this.assistantMessageContent.length - 1) {
-				// its okay that we increment if !didCompleteReadingStream, it'll just return bc out of bounds and as streaming continues it will call presentAssitantMessage if a new block is ready. if streaming is finished then we set userMessageContentReady to true when out of bounds. This gracefully allows the stream to continue on and all potential content blocks be presented.
-				// last block is complete and it is finished executing
+				// é ok que incrementamos se !didCompleteReadingStream, ele apenas retornará porque está fora dos limites e, à medida que a transmissão continua, chamará presentAssitantMessage se um novo bloco estiver pronto. se a transmissão estiver terminada, então definimos userMessageContentReady como true quando estiver fora dos limites. Isso permite que a transmissão continue e todos os blocos de conteúdo potenciais sejam apresentados.
+				// o último bloco está completo e terminou de executar
 				this.userMessageContentReady = true // will allow pwaitfor to continue
 			}
 
-			// call next block if it exists (if not then read stream will call it when its ready)
-			this.currentStreamingContentIndex++ // need to increment regardless, so when read stream calls this function again it will be streaming the next block
+			// chamar o próximo bloco se existir (se não, o stream lerá chamará quando estiver pronto)
+			this.currentStreamingContentIndex++ // precisamos incrementar independentemente, então quando o stream chamar esta função novamente, ele transmitirá o próximo bloco
 
 			if (this.currentStreamingContentIndex < this.assistantMessageContent.length) {
-				// there are already more content blocks to stream, so we'll call this function ourselves
+				// já há mais blocos de conteúdo para transmitir, então chamaremos esta função por nós mesmos
 				// await this.presentAssistantContent()
 
 				this.presentAssistantMessage()
 				return
 			}
 		}
-		// block is partial, but the read stream may have finished
+		// o bloco é parcial, mas o stream de leitura pode ter terminado
 		if (this.presentAssistantMessageHasPendingUpdates) {
 			this.presentAssistantMessage()
 		}
 	}
 
-	// Used when a sub-task is launched and the parent task is waiting for it to
-	// finish.
-	// TBD: The 1s should be added to the settings, also should add a timeout to
-	// prevent infinite waiting.
+	// Usado quando uma sub-tarefa é lançada e a tarefa pai está esperando que ela termine.
+	// TBD: Os 1s devem ser adicionados às configurações, também devemos adicionar um timeout para
+	// evitar espera infinita.
 	async waitForResume() {
 		await new Promise<void>((resolve) => {
 			this.pauseInterval = setInterval(() => {
@@ -1747,12 +1890,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 			this.consecutiveMistakeCount = 0
 		}
 
-		// Get previous api req's index to check token usage and determine if we
-		// need to truncate conversation history.
+		// Obter o índice da solicitação API anterior para verificar o uso de tokens e determinar se precisamos truncar o histórico de conversação.
 		const previousApiReqIndex = findLastIndex(this.clineMessages, (m) => m.say === "api_req_started")
 
-		// In this Cline request loop, we need to check if this task instance
-		// has been asked to wait for a subtask to finish before continuing.
+		// Neste loop de solicitação Cline, precisamos verificar se esta instância de tarefa
+		// foi solicitada a aguardar a conclusão de uma sub-tarefa antes de continuar.
 		const provider = this.providerRef.deref()
 
 		if (this.isPaused && provider) {
@@ -1762,10 +1904,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 			const currentMode = (await provider.getState())?.mode ?? defaultModeSlug
 
 			if (currentMode !== this.pausedModeSlug) {
-				// The mode has changed, we need to switch back to the paused mode.
+				// O modo foi alterado, precisamos voltar para o modo pausado.
 				await provider.handleModeSwitch(this.pausedModeSlug)
 
-				// Delay to allow mode change to take effect before next tool is executed.
+				// Atraso para permitir que o modo seja alterado antes de executar a próxima ferramenta.
 				await delay(500)
 
 				provider.log(
@@ -1774,10 +1916,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 			}
 		}
 
-		// Getting verbose details is an expensive operation, it uses globby to
-		// top-down build file structure of project which for large projects can
-		// take a few seconds. For the best UX we show a placeholder api_req_started
-		// message with a loading spinner as this happens.
+		// Obter detalhes detalhados é uma operação cara, usa globby para
+		// construir a estrutura de arquivos do projeto de cima para baixo, o que para projetos grandes pode
+		// levar alguns segundos. Para a melhor experiência do usuário, mostramos uma mensagem api_req_started
+		// com um spinner de carregamento enquanto isso acontece.
 		await this.say(
 			"api_req_started",
 			JSON.stringify({
@@ -1787,13 +1929,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 		)
 
 		const [parsedUserContent, environmentDetails] = await this.loadContext(userContent, includeFileDetails)
-		// add environment details as its own text block, separate from tool results
+		// adicionar detalhes do ambiente como seu próprio bloco de texto, separado dos resultados da ferramenta
 		const finalUserContent = [...parsedUserContent, { type: "text", text: environmentDetails }] as UserContent
 
 		await this.addToApiConversationHistory({ role: "user", content: finalUserContent })
 		telemetryService.captureConversationMessage(this.taskId, "user")
 
-		// since we sent off a placeholder api_req_started message to update the webview while waiting to actually start the API request (to load potential details for example), we need to update the text of that message
+		// desde que enviamos uma mensagem api_req_started de espaço reservado para atualizar a UI enquanto aguardávamos para realmente iniciar a solicitação API (para carregar detalhes potenciais, por exemplo), precisamos atualizar o texto dessa mensagem
 		const lastApiReqIndex = findLastIndex(this.clineMessages, (m) => m.say === "api_req_started")
 
 		this.clineMessages[lastApiReqIndex].text = JSON.stringify({
@@ -1810,9 +1952,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 			let outputTokens = 0
 			let totalCost: number | undefined
 
-			// update api_req_started. we can't use api_req_finished anymore since it's a unique case where it could come after a streaming message (ie in the middle of being updated or executed)
-			// fortunately api_req_finished was always parsed out for the gui anyways, so it remains solely for legacy purposes to keep track of prices in tasks from history
-			// (it's worth removing a few months from now)
+			// atualizar api_req_started. não podemos usar api_req_finished mais, pois é um caso único onde pode vir após uma mensagem de streaming (ou seja, no meio de ser atualizado ou executado)
+			// felizmente api_req_finished foi sempre removido para o gui, então permanece apenas para fins de compatibilidade para manter o rastreio de preços em tarefas da história
+			// (vale a pena remover alguns meses a partir de agora)
 			const updateApiReqMsg = (cancelReason?: ClineApiReqCancelReason, streamingFailedMessage?: string) => {
 				this.clineMessages[lastApiReqIndex].text = JSON.stringify({
 					...JSON.parse(this.clineMessages[lastApiReqIndex].text || "{}"),
@@ -1836,21 +1978,21 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 			const abortStream = async (cancelReason: ClineApiReqCancelReason, streamingFailedMessage?: string) => {
 				if (this.diffViewProvider.isEditing) {
-					await this.diffViewProvider.revertChanges() // closes diff view
+					await this.diffViewProvider.revertChanges() // fecha a diferença visual
 				}
 
-				// if last message is a partial we need to update and save it
+				// se o último mensagem é parcial, precisamos atualizar e salvar
 				const lastMessage = this.clineMessages.at(-1)
 
 				if (lastMessage && lastMessage.partial) {
-					// lastMessage.ts = Date.now() DO NOT update ts since it is used as a key for virtuoso list
+					// lastMessage.ts = Date.now() NÃO atualize ts, pois é usado como uma chave para a lista virtuosa
 					lastMessage.partial = false
-					// instead of streaming partialMessage events, we do a save and post like normal to persist to disk
+					// em vez de transmitir eventos partialMessage, fazemos um save e post como normal para persistir no disco
 					console.log("updating partial message", lastMessage)
 					// await this.saveClineMessages()
 				}
 
-				// Let assistant know their response was interrupted for when task is resumed
+				// Informar ao assistente que sua resposta foi interrompida para quando a tarefa for retomada
 				await this.addToApiConversationHistory({
 					role: "assistant",
 					content: [
@@ -1867,15 +2009,15 @@ export class Cline extends EventEmitter<ClineEvents> {
 					],
 				})
 
-				// update api_req_started to have cancelled and cost, so that we can display the cost of the partial stream
+				// atualizar api_req_started para ter cancelado e custo, para que possamos exibir o custo do stream parcial
 				updateApiReqMsg(cancelReason, streamingFailedMessage)
 				await this.saveClineMessages()
 
-				// signals to provider that it can retrieve the saved messages from disk, as abortTask can not be awaited on in nature
+				// sinaliza para o provedor que pode recuperar as mensagens salvas do disco, pois abortTask não pode ser aguardado em natureza
 				this.didFinishAbortingStream = true
 			}
 
-			// reset streaming state
+			// reiniciar o estado de streaming
 			this.currentStreamingContentIndex = 0
 			this.assistantMessageContent = []
 			this.didCompleteReadingStream = false
@@ -1887,9 +2029,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			this.presentAssistantMessageHasPendingUpdates = false
 			await this.diffViewProvider.reset()
 
-			// Yields only if the first chunk is successful, otherwise will
-			// allow the user to retry the request (most likely due to rate
-			// limit error, which gets thrown on the first chunk).
+			// Só produz se o primeiro chunk for bem-sucedido, caso contrário, permitirá que o usuário tente novamente a solicitação (provavelmente devido a um erro de limitação de taxa, que é lançado no primeiro chunk).
 			const stream = this.attemptApiRequest(previousApiReqIndex)
 			let assistantMessage = ""
 			let reasoningMessage = ""
@@ -1898,7 +2038,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			try {
 				for await (const chunk of stream) {
 					if (!chunk) {
-						// Sometimes chunk is undefined, no idea that can cause it, but this workaround seems to fix it.
+						// Às vezes, chunk é indefinido, não sei que pode causar isso, mas este workaround parece corrigir isso.
 						continue
 					}
 
@@ -1916,13 +2056,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 							break
 						case "text":
 							assistantMessage += chunk.text
-							// parse raw assistant message into content blocks
+							// analisar a mensagem de assistente bruta em blocos de conteúdo
 							const prevLength = this.assistantMessageContent.length
 							this.assistantMessageContent = parseAssistantMessage(assistantMessage)
 							if (this.assistantMessageContent.length > prevLength) {
 								this.userMessageContentReady = false // new content we need to present, reset to false in case previous content set this to true
 							}
-							// present content to user
+							// apresentar conteúdo ao usuário
 							this.presentAssistantMessage()
 							break
 					}
@@ -1931,7 +2071,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 						console.log(`aborting stream, this.abandoned = ${this.abandoned}`)
 
 						if (!this.abandoned) {
-							// only need to gracefully abort if this instance isn't abandoned (sometimes openrouter stream hangs, in which case this would affect future instances of cline)
+							// apenas precisa abortar de formagraceful se esta instância não estiver abandonada (às vezes o stream openrouter fica preso, o que afetaria instâncias futuras de cline)
 							await abortStream("user_cancelled")
 						}
 
@@ -1939,14 +2079,14 @@ export class Cline extends EventEmitter<ClineEvents> {
 					}
 
 					if (this.didRejectTool) {
-						// userContent has a tool rejection, so interrupt the assistant's response to present the user's feedback
+						// userContent tem uma rejeição de ferramenta, então interrompa a resposta do assistente para apresentar o feedback do usuário
 						assistantMessage += "\n\n[Response interrupted by user feedback]"
 						// this.userMessageContentReady = true // instead of setting this premptively, we allow the present iterator to finish and set userMessageContentReady when its ready
 						break
 					}
 
-					// PREV: we need to let the request finish for openrouter to get generation details
-					// UPDATE: it's better UX to interrupt the request at the cost of the api cost not being retrieved
+					// PREV: precisávamos deixar a solicitação terminar para o openrouter obter detalhes de geração
+					// UPDATE: é uma melhor experiência do usuário interromper a solicitação no custo da API não sendo recuperado
 					if (this.didAlreadyUseTool) {
 						assistantMessage +=
 							"\n\n[Response interrupted by a tool use result. Only one tool may be used at a time and should be placed at the end of the message.]"
@@ -1954,9 +2094,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 					}
 				}
 			} catch (error) {
-				// abandoned happens when extension is no longer waiting for the cline instance to finish aborting (error is thrown here when any function in the for loop throws due to this.abort)
+				// abandoned acontece quando a extensão não está mais esperando que a instância de cline termine de abortar (o erro é lançado aqui quando qualquer função no loop lança devido a this.abort)
 				if (!this.abandoned) {
-					this.abortTask() // if the stream failed, there's various states the task could be in (i.e. could have streamed some tools the user may have executed), so we just resort to replicating a cancel task
+					this.abortTask() // se a transmissão falhou, há vários estados em que a tarefa poderia estar (ou seja, pode ter transmitido algumas ferramentas que o usuário pode ter executado), então simplesmente voltamos a cancelar a tarefa
 
 					await abortStream(
 						"streaming_failed",
@@ -1974,30 +2114,30 @@ export class Cline extends EventEmitter<ClineEvents> {
 				this.isStreaming = false
 			}
 
-			// need to call here in case the stream was aborted
+			// precisa chamar aqui caso a transmissão foi abortada
 			if (this.abort || this.abandoned) {
 				throw new Error(`[Cline#recursivelyMakeClineRequests] task ${this.taskId}.${this.instanceId} aborted`)
 			}
 
 			this.didCompleteReadingStream = true
 
-			// set any blocks to be complete to allow presentAssistantMessage to finish and set userMessageContentReady to true
-			// (could be a text block that had no subsequent tool uses, or a text block at the very end, or an invalid tool use, etc. whatever the case, presentAssistantMessage relies on these blocks either to be completed or the user to reject a block in order to proceed and eventually set userMessageContentReady to true)
+			// definir qualquer bloco para ser completo para permitir que presentAssistantMessage termine e defina userMessageContentReady como true
+			// (poderia ser um bloco de texto que não tinha ferramentas subsequentes, ou um bloco de texto no final, ou uma ferramenta inválida, etc. o que for o caso, presentAssistantMessage depende desses blocos para serem completos ou o usuário para rejeitar um bloco para poder continuar e, eventualmente, definir userMessageContentReady como true)
 			const partialBlocks = this.assistantMessageContent.filter((block) => block.partial)
 			partialBlocks.forEach((block) => {
 				block.partial = false
 			})
-			// this.assistantMessageContent.forEach((e) => (e.partial = false)) // cant just do this bc a tool could be in the middle of executing ()
+			// this.assistantMessageContent.forEach((e) => (e.partial = false)) // não podemos fazer isso apenas porque uma ferramenta pode estar no meio de ser executada (
 			if (partialBlocks.length > 0) {
-				this.presentAssistantMessage() // if there is content to update then it will complete and update this.userMessageContentReady to true, which we pwaitfor before making the next request. all this is really doing is presenting the last partial message that we just set to complete
+				this.presentAssistantMessage() // se houver conteúdo para atualizar, ele completará e atualizará this.userMessageContentReady para true, o que estamos realmente fazendo é apresentar o último bloco parcial que acabamos de definir como completo
 			}
 
 			updateApiReqMsg()
 			await this.saveClineMessages()
 			await this.providerRef.deref()?.postStateToWebview()
 
-			// now add to apiconversationhistory
-			// need to save assistant responses to file before proceeding to tool use since user can exit at any moment and we wouldn't be able to save the assistant's response
+			// agora adicione ao apiconversationhistory
+			// precisa salvar as respostas do assistente para o arquivo antes de prosseguir para o uso da ferramenta, pois o usuário pode sair a qualquer momento e não poderemos salvar a resposta do assistente
 			let didEndLoop = false
 			if (assistantMessage.length > 0) {
 				await this.addToApiConversationHistory({
@@ -2006,17 +2146,17 @@ export class Cline extends EventEmitter<ClineEvents> {
 				})
 				telemetryService.captureConversationMessage(this.taskId, "assistant")
 
-				// NOTE: this comment is here for future reference - this was a workaround for userMessageContent not getting set to true. It was due to it not recursively calling for partial blocks when didRejectTool, so it would get stuck waiting for a partial block to complete before it could continue.
-				// in case the content blocks finished
-				// it may be the api stream finished after the last parsed content block was executed, so  we are able to detect out of bounds and set userMessageContentReady to true (note you should not call presentAssistantMessage since if the last block is completed it will be presented again)
-				// const completeBlocks = this.assistantMessageContent.filter((block) => !block.partial) // if there are any partial blocks after the stream ended we can consider them invalid
+				// NOTA: este comentário está aqui para futura referência - isso foi um workaround para userMessageContent não sendo definido como true. Era devido a ele não chamar recursivamente para blocos parciais quando didRejectTool, então ficava preso esperando um bloco parcial para ser concluído antes de poder continuar.
+				// no caso de os blocos de conteúdo terminarem
+				// pode ser que a stream da API tenha terminado após o último bloco de conteúdo analisado ter sido executado, então podemos detectar o limite e definir userMessageContentReady como true (note que você não deve chamar presentAssistantMessage desde que se o último bloco estiver completo, ele será apresentado novamente)
+				// const completeBlocks = this.assistantMessageContent.filter((block) => !block.partial) // se houver algum bloco parcial após a stream ter terminado, podemos considerá-lo inválido
 				// if (this.currentStreamingContentIndex >= completeBlocks.length) {
 				// 	this.userMessageContentReady = true
 				// }
 
 				await pWaitFor(() => this.userMessageContentReady)
 
-				// if the model did not tool use, then we need to tell it to either use a tool or attempt_completion
+				// se o modelo não usou ferramentas, então precisamos dizer para ele usar uma ferramenta ou attempt_completion
 				const didToolUse = this.assistantMessageContent.some((block) => block.type === "tool_use")
 				if (!didToolUse) {
 					this.userMessageContent.push({
@@ -2029,7 +2169,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				const recDidEndLoop = await this.recursivelyMakeClineRequests(this.userMessageContent)
 				didEndLoop = recDidEndLoop
 			} else {
-				// if there's no assistant_responses, that means we got no text or tool_use content blocks from API which we should assume is an error
+				// se não houver assistant_responses, isso significa que não obtivemos nenhum bloco de conteúdo de texto ou tool_use da API, o que assumimos ser um erro
 				await this.say(
 					"error",
 					"Unexpected API Response: The language model did not provide any assistant messages. This may indicate an issue with the API or the model's output.",
@@ -2042,16 +2182,16 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 			return didEndLoop // will always be false for now
 		} catch (error) {
-			// this should never happen since the only thing that can throw an error is the attemptApiRequest, which is wrapped in a try catch that sends an ask where if noButtonClicked, will clear current task and destroy this instance. However to avoid unhandled promise rejection, we will end this loop which will end execution of this instance (see startTask)
-			return true // needs to be true so parent loop knows to end task
+			// isso nunca deveria acontecer, pois o único que pode lançar um erro é o attemptApiRequest, que está em um try catch que envia uma pergunta onde, se noButtonClicked, limpará a tarefa atual e destruirá esta instância. No entanto, para evitar rejeição de promessa não tratada, terminaremos este loop, o que terminará a execução desta instância (veja startTask)
+			return true // precisa ser true para que o loop pai saiba que precisa terminar a tarefa
 		}
 	}
 
 	async loadContext(userContent: UserContent, includeFileDetails: boolean = false) {
-		// Process userContent array, which contains various block types:
+		// Processar o array userContent, que contém vários tipos de blocos:
 		// TextBlockParam, ImageBlockParam, ToolUseBlockParam, and ToolResultBlockParam.
-		// We need to apply parseMentions() to:
-		// 1. All TextBlockParam's text (first user message with task)
+		// Precisamos aplicar parseMentions() a:
+		// 1. Todos os TextBlockParam's text (primeira mensagem do usuário com task)
 		// 2. ToolResultBlockParam's content/context text arrays if it contains "<feedback>" (see formatToolDeniedFeedback, attemptCompletion, executeCommand, and consecutiveMistakeCount >= 3) or "<answer>" (see askFollowupQuestion), we place all user generated content in these tags so they can effectively be used as markers for when we should parse mentions)
 		const parsedUserContent = await Promise.all(
 			userContent.map(async (block) => {
@@ -2123,15 +2263,15 @@ export class Cline extends EventEmitter<ClineEvents> {
 		const { terminalOutputLineLimit = 500, maxWorkspaceFiles = 200 } =
 			(await this.providerRef.deref()?.getState()) ?? {}
 
-		// It could be useful for cline to know if the user went from one or no file to another between messages, so we always include this context
-		details += "\n\n# VSCode Visible Files"
+		// Pode ser útil para cline saber se o usuário passou de um ou nenhum arquivo para outro entre mensagens, então sempre incluímos este contexto
+		details += "\n\n# VSCode Visíveis Arquivos"
 		const visibleFilePaths = vscode.window.visibleTextEditors
 			?.map((editor) => editor.document?.uri?.fsPath)
 			.filter(Boolean)
 			.map((absolutePath) => path.relative(this.cwd, absolutePath))
 			.slice(0, maxWorkspaceFiles)
 
-		// Filter paths through rooIgnoreController
+		// Filtrar caminhos através do rooIgnoreController
 		const allowedVisibleFiles = this.rooIgnoreController
 			? this.rooIgnoreController.filterPaths(visibleFilePaths)
 			: visibleFilePaths.map((p) => p.toPosix()).join("\n")
@@ -2152,7 +2292,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			.map((absolutePath) => path.relative(this.cwd, absolutePath).toPosix())
 			.slice(0, maxTabs)
 
-		// Filter paths through rooIgnoreController
+		// Filtrar caminhos através do rooIgnoreController
 		const allowedOpenTabs = this.rooIgnoreController
 			? this.rooIgnoreController.filterPaths(openTabPaths)
 			: openTabPaths.map((p) => p.toPosix()).join("\n")
@@ -2163,7 +2303,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			details += "\n(No open tabs)"
 		}
 
-		// Get task-specific and background terminals
+		// Obter terminais específicos de tarefa e de fundo
 		const busyTerminals = [
 			...TerminalRegistry.getTerminals(true, this.taskId),
 			...TerminalRegistry.getBackgroundTerminals(true),
@@ -2178,17 +2318,17 @@ export class Cline extends EventEmitter<ClineEvents> {
 		}
 
 		if (busyTerminals.length > 0) {
-			// wait for terminals to cool down
+			// aguarde os terminais esfriarem
 			await pWaitFor(() => busyTerminals.every((t) => !TerminalRegistry.isProcessHot(t.id)), {
 				interval: 100,
 				timeout: 15_000,
 			}).catch(() => {})
 		}
 
-		// we want to get diagnostics AFTER terminal cools down for a few reasons: terminal could be scaffolding a project, dev servers (compilers like webpack) will first re-compile and then send diagnostics, etc
+		// queremos obter diagnósticos depois que os terminais esfriarem por vários motivos: o terminal pode estar criando um projeto, servidores de desenvolvimento (compiladores como webpack) recompile e depois enviem diagnósticos, etc
 		/*
 		let diagnosticsDetails = ""
-		const diagnostics = await this.diagnosticsMonitor.getCurrentDiagnostics(this.didEditFile || terminalWasBusy) // if cline ran a command (ie npm install) or edited the workspace then wait a bit for updated diagnostics
+		const diagnostics = await this.diagnosticsMonitor.getCurrentDiagnostics(this.didEditFile || terminalWasBusy) // se cline executou um comando (ie npm install) ou editou o workspace, aguarde um pouco para que os diagnósticos sejam atualizados
 		for (const [uri, fileDiagnostics] of diagnostics) {
 			const problems = fileDiagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error)
 			if (problems.length > 0) {
@@ -2204,7 +2344,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		*/
 		this.didEditFile = false // reset, this lets us know when to wait for saved files to update terminals
 
-		// waiting for updated diagnostics lets terminal output be the most up-to-date possible
+		// aguardar atualizações de diagnósticos permite que o output do terminal seja o mais atual possível
 		let terminalDetails = ""
 		if (busyTerminals.length > 0) {
 			// terminals are cool, let's retrieve their output
@@ -2216,12 +2356,12 @@ export class Cline extends EventEmitter<ClineEvents> {
 					newOutput = Terminal.compressTerminalOutput(newOutput, terminalOutputLineLimit)
 					terminalDetails += `\n### New Output\n${newOutput}`
 				} else {
-					// details += `\n(Still running, no new output)` // don't want to show this right after running the command
+					// details += `\n(Still running, no new output)` // não queremos mostrar isso logo após executar o comando
 				}
 			}
 		}
 
-		// First check if any inactive terminals in this task have completed processes with output
+		// Primeiro, verifique se qualquer terminal inativo nesta tarefa tem processos concluídos com output
 		const terminalsWithOutput = inactiveTerminals.filter((terminal) => {
 			const completedProcesses = terminal.getProcessesWithOutput()
 			return completedProcesses.length > 0
@@ -2235,7 +2375,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			for (const inactiveTerminal of terminalsWithOutput) {
 				let terminalOutputs: string[] = []
 
-				// Get output from completed processes queue
+				// Obter output dos processos concluídos na fila
 				const completedProcesses = inactiveTerminal.getProcessesWithOutput()
 				for (const process of completedProcesses) {
 					let output = process.getUnretrievedOutput()
@@ -2245,10 +2385,10 @@ export class Cline extends EventEmitter<ClineEvents> {
 					}
 				}
 
-				// Clean the queue after retrieving output
+				// Limpar a fila após recuperar o output
 				inactiveTerminal.cleanCompletedProcessQueue()
 
-				// Add this terminal's outputs to the details
+				// Adicionar o output deste terminal ao contexto
 				if (terminalOutputs.length > 0) {
 					terminalDetails += `\n## Terminal ${inactiveTerminal.id}`
 					terminalOutputs.forEach((output, index) => {
@@ -2265,7 +2405,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		// 	details += "\n(No errors detected)"
 		// }
 
-		// Add recently modified files section
+		// Adicionar a seção de arquivos recentemente modificados
 		const recentlyModifiedFiles = this.fileContextTracker.getAndClearRecentlyModifiedFiles()
 		if (recentlyModifiedFiles.length > 0) {
 			details +=
@@ -2279,7 +2419,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			details += terminalDetails
 		}
 
-		// Add current time information with timezone
+		// Adicionar informações de horário atual com fuso horário
 		const now = new Date()
 		const formatter = new Intl.DateTimeFormat(undefined, {
 			year: "numeric",
@@ -2291,13 +2431,13 @@ export class Cline extends EventEmitter<ClineEvents> {
 			hour12: true,
 		})
 		const timeZone = formatter.resolvedOptions().timeZone
-		const timeZoneOffset = -now.getTimezoneOffset() / 60 // Convert to hours and invert sign to match conventional notation
+		const timeZoneOffset = -now.getTimezoneOffset() / 60 // Converter para horas e inverter o sinal para corresponder à notação convencional
 		const timeZoneOffsetHours = Math.floor(Math.abs(timeZoneOffset))
 		const timeZoneOffsetMinutes = Math.abs(Math.round((Math.abs(timeZoneOffset) - timeZoneOffsetHours) * 60))
 		const timeZoneOffsetStr = `${timeZoneOffset >= 0 ? "+" : "-"}${timeZoneOffsetHours}:${timeZoneOffsetMinutes.toString().padStart(2, "0")}`
 		details += `\n\n# Current Time\n${formatter.format(now)} (${timeZone}, UTC${timeZoneOffsetStr})`
 
-		// Add context tokens information
+		// Adicionar informações de tokens de contexto
 		const { contextTokens, totalCost } = getApiMetrics(this.clineMessages)
 		const modelInfo = this.api.getModel().info
 		const contextWindow = modelInfo.contextWindow
@@ -2305,7 +2445,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			contextTokens && contextWindow ? Math.round((contextTokens / contextWindow) * 100) : undefined
 		details += `\n\n# Current Context Size (Tokens)\n${contextTokens ? `${contextTokens.toLocaleString()} (${contextPercentage}%)` : "(Not available)"}`
 		details += `\n\n# Current Cost\n${totalCost !== null ? `$${totalCost.toFixed(2)}` : "(Not available)"}`
-		// Add current mode and any mode-specific warnings
+		// Adicionar o modo atual e qualquer aviso específico do modo
 		const {
 			mode,
 			customModes,
@@ -2330,7 +2470,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			}
 		}
 
-		// Add warning if not in code mode
+		// Adicionar aviso se não estiver no modo de código
 		if (
 			!isToolAllowedForMode("write_to_file", currentMode, customModes ?? [], {
 				apply_diff: this.diffEnabled,
@@ -2346,7 +2486,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			details += `\n\n# Current Workspace Directory (${this.cwd.toPosix()}) Files\n`
 			const isDesktop = arePathsEqual(this.cwd, path.join(os.homedir(), "Desktop"))
 			if (isDesktop) {
-				// don't want to immediately access desktop since it would show permission popup
+				// não queremos acessar o desktop imediatamente, pois isso mostraria uma janela de permissão
 				details += "(Desktop files not shown automatically. Use list_files to explore if needed.)"
 			} else {
 				const maxFiles = maxWorkspaceFiles ?? 200
@@ -2411,8 +2551,8 @@ export class Cline extends EventEmitter<ClineEvents> {
 				log,
 			}
 
-			// Only `task` is supported at the moment until we figure out how
-			// to fully isolate the `workspace` variant.
+			// Apenas `task` é suportado no momento, até que possamos descobrir como
+			// isolar o `workspace` variante.
 			// const service =
 			// 	this.checkpointStorage === "task"
 			// 		? RepoPerTaskCheckpointService.create(options)
@@ -2566,9 +2706,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		telemetryService.captureCheckpointCreated(this.taskId)
 
-		// Start the checkpoint process in the background.
+		// Inicie o processo de checkpoint em segundo plano.
 		service.saveCheckpoint(`Task: ${this.taskId}, Time: ${Date.now()}`).catch((err) => {
-			console.error("[Cline#checkpointSave] caught unexpected error, disabling checkpoints", err)
+			console.error("[Cline#checkpointSave] capturou um erro inesperado, desabilitando checkpoints", err)
 			this.enableCheckpoints = false
 		})
 	}
@@ -2614,7 +2754,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 				await this.overwriteClineMessages(this.clineMessages.slice(0, index + 1))
 
-				// TODO: Verify that this is working as expected.
+				// TODO: Verifique se isso está funcionando conforme o esperado.
 				await this.say(
 					"api_req_deleted",
 					JSON.stringify({
@@ -2627,16 +2767,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 				)
 			}
 
-			// The task is already cancelled by the provider beforehand, but we
-			// need to re-init to get the updated messages.
+			// A tarefa já está cancelada pelo provedor antes, mas precisamos re-inicializar para obter as mensagens atualizadas.
 			//
-			// This was take from Cline's implementation of the checkpoints
-			// feature. The cline instance will hang if we don't cancel twice,
-			// so this is currently necessary, but it seems like a complicated
-			// and hacky solution to a problem that I don't fully understand.
-			// I'd like to revisit this in the future and try to improve the
-			// task flow and the communication between the webview and the
-			// Cline instance.
+			// Isso foi tomado da implementação de checkpoints de Cline. A instância de cline ficará pendência se não cancelarmos duas vezes,
+			// então isso é necessário no momento, mas parece uma solução complicada e hacky para um problema que não entendo completamente.
+			// Gostaria de revisar isso no futuro e tentar melhorar o fluxo de tarefas e a comunicação entre o webview e a instância de cline.
 			this.providerRef.deref()?.cancelTask()
 		} catch (err) {
 			this.providerRef.deref()?.log("[checkpointRestore] disabling checkpoints for this task")
@@ -2644,7 +2779,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		}
 	}
 
-	// Public accessor for fileContextTracker
+	// Acessador público para fileContextTracker
 	public getFileContextTracker(): FileContextTracker {
 		return this.fileContextTracker
 	}

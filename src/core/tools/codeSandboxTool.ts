@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { logger } from "../../../utils/logging"
+import { logger } from "../../utils/logging"
 
 // Schemas Roo para entrada e saída
 export const codeSandboxInputSchema = z.object({

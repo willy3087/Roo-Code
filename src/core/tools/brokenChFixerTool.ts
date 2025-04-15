@@ -1,6 +1,6 @@
 // Roo-first: Broken Character Fixer Tool
 import { z } from "zod"
-import { logger } from "../../../utils/logging"
+import { logger } from "../../utils/logging"
 
 // Schema de entrada
 export const brokenChFixerInputSchema = z.object({

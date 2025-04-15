@@ -1,4 +1,4 @@
-# Plano de Migração Roo-first — DeepResearch Tools
+# Estratégia de Migração e Reengenharia das Ferramentas DeepResearch para o Padrão Roo
 
 ## Contexto
 
@@ -40,7 +40,7 @@ src/
     - [x] code-sandbox
     - [x] dedup
     - [x] error-analyzer
-    - [ ] evaluator
+    - [x] evaluator
     - [ ] grounding
     - [ ] jina-classify-spam
     - [ ] jina-dedup

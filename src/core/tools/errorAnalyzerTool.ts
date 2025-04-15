@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { logger } from "../../../utils/logging"
+import { logger } from "../../utils/logging"
 
 // Schema Roo para resposta de análise de erro
 export const errorAnalysisOutputSchema = z.object({

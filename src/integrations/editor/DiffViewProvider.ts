@@ -160,21 +160,21 @@ export class DiffViewProvider {
 		await this.closeAllDiffViews()
 
 		/*
-		Getting diagnostics before and after the file edit is a better approach than
-		automatically tracking problems in real-time. This method ensures we only
-		report new problems that are a direct result of this specific edit.
-		Since these are new problems resulting from Roo's edit, we know they're
-		directly related to the work he's doing. This eliminates the risk of Roo
-		going off-task or getting distracted by unrelated issues, which was a problem
-		with the previous auto-debug approach. Some users' machines may be slow to
-		update diagnostics, so this approach provides a good balance between automation
-		and avoiding potential issues where Roo might get stuck in loops due to
-		outdated problem information. If no new problems show up by the time the user
-		accepts the changes, they can always debug later using the '@problems' mention.
-		This way, Roo only becomes aware of new problems resulting from his edits
-		and can address them accordingly. If problems don't change immediately after
-		applying a fix, won't be notified, which is generally fine since the
-		initial fix is usually correct and it may just take time for linters to catch up.
+		Obter diagnósticos antes e depois da edição do arquivo é uma abordagem melhor do que
+		rastrear problemas automaticamente em tempo real. Este método garante que apenas
+		relatamos novos problemas que são um resultado direto desta edição específica.
+		Como estes são novos problemas resultantes da edição do Roo, sabemos que estão
+		diretamente relacionados ao trabalho que ele está fazendo. Isso elimina o risco de o Roo
+		sair da tarefa ou se distrair com problemas não relacionados, o que era um problema
+		com a abordagem anterior de depuração automática. As máquinas de alguns usuários podem ser lentas para
+		atualizar diagnósticos, então esta abordagem fornece um bom equilíbrio entre automação
+		e evitar problemas potenciais onde o Roo pode ficar preso em loops devido a
+		informações de problemas desatualizadas. Se nenhum novo problema aparecer até o momento em que o usuário
+		aceitar as alterações, eles sempre podem depurar mais tarde usando a menção '@problems'.
+		Desta forma, o Roo só se torna ciente de novos problemas resultantes de suas edições
+		e pode resolvê-los de acordo. Se os problemas não mudarem imediatamente após
+		aplicar uma correção, não será notificado, o que geralmente é bom, pois a
+		correção inicial geralmente está correta e pode levar algum tempo para que os linters detectem.
 		*/
 		const postDiagnostics = vscode.languages.getDiagnostics()
 		const newProblems = await diagnosticsToProblemsString(
@@ -305,7 +305,7 @@ export class DiffViewProvider {
 			setTimeout(() => {
 				disposable.dispose()
 				reject(new Error("Failed to open diff editor, please try again..."))
-			}, 10_000)
+			}, 60_000)
 		})
 	}
 

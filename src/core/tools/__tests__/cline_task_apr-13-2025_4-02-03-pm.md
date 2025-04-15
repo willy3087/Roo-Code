@@ -489,7 +489,7 @@ Vou ler o arquivo cline_task_apr-13-2025_3-24-47-pm.md.
 **User:**
 
 [read_file for 'src/core/tools/cline_task_apr-13-2025_3-24-47-pm.md'] Result:
-<file><path>src/core/tools/cline_task_apr-13-2025_3-24-47-pm.md</path>
+<file><path>src/core/tools/cline*task_apr-13-2025_3-24-47-pm.md</path>
 <content lines="1-500">
 1 | **User:**
 2 |
@@ -521,8 +521,8 @@ Vou ler o arquivo cline_task_apr-13-2025_3-24-47-pm.md.
 28 | 2 | import { BRAVE_API_KEY } from "../config";
 29 | 3 | import { BraveSearchResponse } from "../types/globalTypes";
 30 | 4 |
-31 | 5 | /**
-32 | 6 | _ Realiza uma busca no Brave Search.
+31 | 5 | /\*\*
+32 | 6 | * Realiza uma busca no Brave Search.
 33 | 7 | _ @param query A query de busca.
 34 | 8 | _ @returns Uma promise que resolve para a resposta da busca.
 35 | 9 | _/
@@ -927,7 +927,7 @@ Vou ler o arquivo cline_task_apr-13-2025_3-24-47-pm.md.
 437 | <file_content path="src/core/tools/toolsReseache/error-analyzer.ts">
 438 | 1 | import { modelConfigs, LOCAL_MODEL_ENDPOINT } from "../config";
 439 | 2 | import { LocalModelClient } from "./local-model-client";
-440 | 3 | /**
+440 | 3 | /\*\*
 441 | 4 | _ Importa o TokenTracker do arquivo ../utils/token-tracker.ts
 442 | 5 | _/
 443 | 6 | import { TokenTracker } from "../utils/token-tracker";
@@ -1093,7 +1093,7 @@ Vou ler o arquivo cline_task_apr-13-2025_3-24-47-pm.md.
 5847--5879 | 69 | _/
 5880--5894 | # src/utils/logging/**tests**/CompactTransport.test.ts
 5898--5901 | 3 | _/
-5902--5965 | 10 | _ @implements {ILogger}
+5902--5965 | 10 | \_ @implements {ILogger}
 5969--5978 | 10 |
 5979--5984 | 27 |
 5985--5988 | 42 |
@@ -4874,10 +4874,9 @@ this.tokenTracker = tokenTracker || new TokenTracker();
   return this.stripZodDescriptions(schema);
   }
 
-
     // For AI SDK Schema objects
     if (typeof schema === "object" && schema !== null) {
-      return this.stripSchemaDescriptions(schema as Schema<T>);
+    return this.stripSchemaDescriptions(schema as Schema<T>);
     }
 
     // If we can't determine the schema type, return as is
@@ -4894,36 +4893,35 @@ this.tokenTracker = tokenTracker || new TokenTracker();
   const shape = zodSchema.\_def.shape();
   const newShape: Record<string, any> = {};
 
-        for (const key in shape) {
-          if (Object.prototype.hasOwnProperty.call(shape, key)) {
-            // Recursively strip descriptions from nested schemas
-            newShape[key] = this.stripZodDescriptions(shape[key]);
+          for (const key in shape) {
+            if (Object.prototype.hasOwnProperty.call(shape, key)) {
+              // Recursively strip descriptions from nested schemas
+              newShape[key] = this.stripZodDescriptions(shape[key]);
+            }
           }
-        }
 
-        return z.object(newShape) as unknown as z.ZodType<T>;
+          return z.object(newShape) as unknown as z.ZodType<T>;
 
     }
 
-
     if (zodSchema instanceof z.ZodArray) {
-      return z.array(
-        this.stripZodDescriptions(zodSchema._def.type)
-      ) as unknown as z.ZodType<T>;
+    return z.array(
+    this.stripZodDescriptions(zodSchema.\_def.type)
+    ) as unknown as z.ZodType<T>;
     }
 
     if (zodSchema instanceof z.ZodString) {
-      // Create a new string schema without any describe() metadata
-      return z.string() as unknown as z.ZodType<T>;
+    // Create a new string schema without any describe() metadata
+    return z.string() as unknown as z.ZodType<T>;
     }
 
     if (
-      zodSchema instanceof z.ZodUnion ||
-      zodSchema instanceof z.ZodIntersection
+    zodSchema instanceof z.ZodUnion ||
+    zodSchema instanceof z.ZodIntersection
     ) {
-      // These are more complex schemas that would need special handling
-      // This is a simplified implementation
-      return zodSchema;
+    // These are more complex schemas that would need special handling
+    // This is a simplified implementation
+    return zodSchema;
     }
 
     // For other primitive types or complex types we're not handling specifically,
@@ -4940,35 +4938,35 @@ this.tokenTracker = tokenTracker || new TokenTracker();
   // Deep clone the schema to avoid modifying the original
   const clonedSchema = JSON.parse(JSON.stringify(schema));
 
-
     // Recursively remove description properties
     const removeDescriptions = (obj: any) => {
-      if (typeof obj !== "object" || obj === null) return;
+    if (typeof obj !== "object" || obj === null) return;
 
-      if (obj.properties) {
-        for (const key in obj.properties) {
-          // Remove description property
-          if (obj.properties[key].description) {
-            delete obj.properties[key].description;
+        if (obj.properties) {
+          for (const key in obj.properties) {
+            // Remove description property
+            if (obj.properties[key].description) {
+              delete obj.properties[key].description;
+            }
+
+            // Recursively process nested properties
+            removeDescriptions(obj.properties[key]);
           }
-
-          // Recursively process nested properties
-          removeDescriptions(obj.properties[key]);
         }
-      }
 
-      // Handle arrays
-      if (obj.items) {
-        if (obj.items.description) {
-          delete obj.items.description;
+        // Handle arrays
+        if (obj.items) {
+          if (obj.items.description) {
+            delete obj.items.description;
+          }
+          removeDescriptions(obj.items);
         }
-        removeDescriptions(obj.items);
-      }
 
-      // Handle any other nested objects that might contain descriptions
-      if (obj.anyOf) obj.anyOf.forEach(removeDescriptions);
-      if (obj.allOf) obj.allOf.forEach(removeDescriptions);
-      if (obj.oneOf) obj.oneOf.forEach(removeDescriptions);
+        // Handle any other nested objects that might contain descriptions
+        if (obj.anyOf) obj.anyOf.forEach(removeDescriptions);
+        if (obj.allOf) obj.allOf.forEach(removeDescriptions);
+        if (obj.oneOf) obj.oneOf.forEach(removeDescriptions);
+
     };
 
     removeDescriptions(clonedSchema);
@@ -5657,45 +5655,45 @@ Ensure each reflection question:
 - Makes the unconscious conscious
 - NEVER pose general questions like: "How can I verify the accuracy of information before including it in my answer?", "What information was actually contained in the URLs I found?", "How can i tell if a source is reliable?".
   `)
-            )
-            .max(MAX_REFLECT_PER_STEP)
-            .describe(
-              `Required when action='reflect'. Reflection and planing, generate a list of most important questions to fill the knowledge gaps to <og-question> ${currentQuestion} </og-question>. Maximum provide ${MAX_REFLECT_PER_STEP} reflect questions.`
+          )
+          .max(MAX_REFLECT_PER_STEP)
+          .describe(
+            `Required when action='reflect'. Reflection and planing, generate a list of most important questions to fill the knowledge gaps to <og-question> ${currentQuestion} </og-question>. Maximum provide ${MAX_REFLECT_PER_STEP} reflect questions.`
   ),
   })
   .optional();
   }
 
-        if (allowRead) {
-          actionSchemas.visit = z
-            .object({
-              URLTargets: z
-                .array(z.number())
-                .max(MAX_URLS_PER_STEP)
-                .describe(
-                  `Required when action='visit'. Must be the index of the URL in from the original list of URLs. Maximum ${MAX_URLS_PER_STEP} URLs allowed.`
-                ),
-            })
-            .optional();
-        }
+          if (allowRead) {
+            actionSchemas.visit = z
+              .object({
+                URLTargets: z
+                  .array(z.number())
+                  .max(MAX_URLS_PER_STEP)
+                  .describe(
+                    `Required when action='visit'. Must be the index of the URL in from the original list of URLs. Maximum ${MAX_URLS_PER_STEP} URLs allowed.`
+                  ),
+              })
+              .optional();
+          }
 
-        // Create an object with action as a string literal and exactly one action property
-        return z.object({
-          think: z
-            .string()
-            .describe(
-              `Concisely explain your reasoning process in ${this.getLanguagePrompt()}.`
-            )
-            .max(500),
-          action: z
-            .enum(
-              Object.keys(actionSchemas).map((key) => key) as [string, ...string[]]
-            )
-            .describe(
-              "Choose exactly one best action from the available actions, fill in the corresponding action schema required. Keep the reasons in mind: (1) What specific information is still needed? (2) Why is this action most likely to provide that information? (3) What alternatives did you consider and why were they rejected? (4) How will this action advance toward the complete answer?"
-            ),
-          ...actionSchemas,
-        });
+          // Create an object with action as a string literal and exactly one action property
+          return z.object({
+            think: z
+              .string()
+              .describe(
+                `Concisely explain your reasoning process in ${this.getLanguagePrompt()}.`
+              )
+              .max(500),
+            action: z
+              .enum(
+                Object.keys(actionSchemas).map((key) => key) as [string, ...string[]]
+              )
+              .describe(
+                "Choose exactly one best action from the available actions, fill in the corresponding action schema required. Keep the reasons in mind: (1) What specific information is still needed? (2) Why is this action most likely to provide that information? (3) What alternatives did you consider and why were they rejected? (4) How will this action advance toward the complete answer?"
+              ),
+            ...actionSchemas,
+          });
 
     }
     }
@@ -9763,11 +9761,12 @@ Question-Answer Freshness Checker Guidelines
 6.  **Geographic Relevance**: Regional considerations may alter freshness requirements for local regulations or events.
     </rules>`,
 
-        user: `
+            user: `
 
-    Question: ${question}
-Answer: 
-${JSON.stringify(answer)}
+        Question: ${question}
+
+    Answer:
+    ${JSON.stringify(answer)}
 
 Please look at my answer and references and think.
 `
