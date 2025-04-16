@@ -4,7 +4,7 @@ import pWaitFor from "p-wait-for"
 import * as vscode from "vscode"
 
 import { ClineProvider } from "./ClineProvider"
-import { CheckpointStorage, Language, ApiConfigMeta } from "../../schemas"
+import { Language, ApiConfigMeta } from "../../schemas"
 import { changeLanguage, t } from "../../i18n"
 import { ApiConfiguration } from "../../shared/api"
 import { supportPrompt } from "../../shared/support-prompt"
@@ -645,15 +645,14 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 			await updateGlobalState("diffEnabled", diffEnabled)
 			await provider.postStateToWebview()
 			break
+		case "showGreeting":
+			const showGreeting = message.bool ?? true
+			await updateGlobalState("showGreeting", showGreeting)
+			await provider.postStateToWebview()
+			break
 		case "enableCheckpoints":
 			const enableCheckpoints = message.bool ?? true
 			await updateGlobalState("enableCheckpoints", enableCheckpoints)
-			await provider.postStateToWebview()
-			break
-		case "checkpointStorage":
-			console.log(`[ClineProvider] checkpointStorage: ${message.text}`)
-			const checkpointStorage = message.text ?? "task"
-			await updateGlobalState("checkpointStorage", checkpointStorage as CheckpointStorage)
 			await provider.postStateToWebview()
 			break
 		case "browserViewportSize":
@@ -1014,6 +1013,10 @@ export const webviewMessageHandler = async (provider: ClineProvider, message: We
 							customSupportPrompts,
 						),
 					)
+
+					// Capture telemetry for prompt enhancement
+					const currentCline = provider.getCurrentCline()
+					telemetryService.capturePromptEnhanced(currentCline?.taskId)
 
 					await provider.postMessageToWebview({
 						type: "enhancedPrompt",
