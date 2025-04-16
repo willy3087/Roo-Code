@@ -19,7 +19,7 @@ import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/D
 import {
 	CheckpointServiceOptions,
 	RepoPerTaskCheckpointService,
-	RepoPerWorkspaceCheckpointService,
+	// RepoPerWorkspaceCheckpointService,
 } from "../services/checkpoints" // Serviços para gerenciamento de checkpoints de código
 import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown" // Utilitários para exportação de conteúdo
 import { fetchInstructionsTool } from "./tools/fetchInstructionsTool" // Ferramenta para buscar instruções personalizadas
@@ -27,32 +27,15 @@ import { listFilesTool } from "./tools/listFilesTool" // Ferramenta para listar 
 import { readFileTool } from "./tools/readFileTool" // Ferramenta para ler conteúdo de arquivos
 import { ExitCodeDetails } from "../integrations/terminal/TerminalProcess" // Detalhes de códigos de saída do terminal
 import { Terminal } from "../integrations/terminal/Terminal" // Abstração para interação com terminal
+import { TerminalProcess } from "../integrations/terminal/TerminalProcess" // Tipo para processos do terminal
 import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry" // Registro de terminais disponíveis
 import { UrlContentFetcher } from "../services/browser/UrlContentFetcher" // Serviço para buscar conteúdo de URLs
 import { listFiles } from "../services/glob/list-files" // Utilitário para listar arquivos com padrões glob
-import { CheckpointStorage } from "../shared/checkpoints" // Armazenamento de checkpoints de código
+import { CheckpointStorage } from "../../evals/packages/types/src/roo-code" // Armazenamento de checkpoints
 import { ApiConfiguration } from "../shared/api" // Configurações para comunicação com APIs
 import { findLastIndex } from "../shared/array" // Utilitário para arrays
 import { combineApiRequests } from "../shared/combineApiRequests" // Combinação de requisições de API para métricas
 import { combineCommandSequences } from "../shared/combineCommandSequences" // Combinação de sequências de comandos
-import { TokenUsage } from "../schemas"
-import { ApiHandler, buildApiHandler } from "../api"
-import { ApiStream } from "../api/transform/stream"
-import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider"
-import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../services/checkpoints"
-import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown"
-import { fetchInstructionsTool } from "./tools/fetchInstructionsTool"
-import { listFilesTool } from "./tools/listFilesTool"
-import { readFileTool } from "./tools/readFileTool"
-import { ExitCodeDetails, TerminalProcess } from "../integrations/terminal/TerminalProcess"
-import { Terminal } from "../integrations/terminal/Terminal"
-import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry"
-import { UrlContentFetcher } from "../services/browser/UrlContentFetcher"
-import { listFiles } from "../services/glob/list-files"
-import { ApiConfiguration } from "../shared/api"
-import { findLastIndex } from "../shared/array"
-import { combineApiRequests } from "../shared/combineApiRequests"
-import { combineCommandSequences } from "../shared/combineCommandSequences"
 import {
 	ClineApiReqCancelReason,
 	ClineApiReqInfo,
@@ -326,7 +309,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.providerRef = new WeakRef(provider) // Referência fraca ao provedor para evitar vazamentos de memória
 		this.diffViewProvider = new DiffViewProvider(this.cwd) // Provedor de visualização de diferenças
 		this.enableCheckpoints = enableCheckpoints // Habilita ou desabilita checkpoints
-		this.checkpointStorage = checkpointStorage // Define o tipo de armazenamento de checkpoints
+		// this.checkpointStorage = checkpointStorage // Define o tipo de armazenamento de checkpoints
 
 		// Configura relacionamentos de tarefas
 		this.rootTask = rootTask // Tarefa raiz (para hierarquia de tarefas)
@@ -1192,7 +1175,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 
 		// Aguarda um pequeno atraso para garantir que todas as mensagens sejam enviadas para o webview
 		// Este atraso permite que promessas não aguardadas sejam criadas e
-		// para suas mensagens associadas serem enviadas para o webview, mantendo
+		// para suas mensagens associadas sejam enviadas para o webview, mantendo
 		// a ordem correta das mensagens (embora o webview seja inteligente sobre
 		// agrupar mensagens command_output mesmo com qualquer gap)
 		await delay(50)
