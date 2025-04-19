@@ -25,7 +25,7 @@ has_asdf_plugin() {
 }
 
 build_extension() {
-  echo "🔨 Building the Roo Code extension..."
+  echo "🔨 Building the eLai Code extension..."
   cd ..
   mkdir -p bin
   npm run install-extension -- --silent --no-audit || exit 1
@@ -326,7 +326,7 @@ fi
 if [[ ! -s "../bin/roo-code-latest.vsix" ]]; then
   build_extension
 else
-  read -p "💻 Do you want to build a new version of the Roo Code extension? (y/N): " build_extension
+  read -p "💻 Do you want to build a new version of the eLai Code extension? (y/N): " build_extension
 
   if [[ "$build_extension" =~ ^[Yy]$ ]]; then
     build_extension
