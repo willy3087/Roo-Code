@@ -1,5 +1,5 @@
 {
-	"greeting": "Cosa può fare Roo per te?",
+	"greeting": "Benvenuto a Roo Code",
 	"task": {
 		"title": "Attività",
 		"seeMore": "Vedi altro",
@@ -7,7 +7,7 @@
 		"tokens": "Tokens:",
 		"cache": "Cache:",
 		"apiCost": "Costo API:",
-		"contextWindow": "Finestra di contesto:",
+		"contextWindow": "Lunghezza del contesto:",
 		"closeAndStart": "Chiudi attività e iniziane una nuova",
 		"export": "Esporta cronologia attività",
 		"delete": "Elimina attività (Shift + Clic per saltare la conferma)"
@@ -65,7 +65,7 @@
 		"tooltip": "Annulla l'operazione corrente"
 	},
 	"scrollToBottom": "Scorri fino alla fine della chat",
-	"aboutMe": "Grazie alle più recenti innovazioni nelle capacità di codifica agentica, posso gestire complesse attività di sviluppo software passo dopo passo. Con strumenti che mi permettono di creare e modificare file, esplorare progetti complessi, utilizzare il browser ed eseguire comandi da terminale (dopo la tua autorizzazione), posso aiutarti in modi che vanno oltre il completamento del codice o il supporto tecnico. Posso persino usare MCP per creare nuovi strumenti ed estendere le mie capacità.",
+	"onboarding": "Grazie alle più recenti innovazioni nelle capacità di codifica agentica, posso gestire complesse attività di sviluppo software passo dopo passo. Con strumenti che mi permettono di creare e modificare file, esplorare progetti complessi, utilizzare il browser ed eseguire comandi da terminale (dopo la tua autorizzazione), posso aiutarti in modi che vanno oltre il completamento del codice o il supporto tecnico. Posso persino usare MCP per creare nuovi strumenti ed estendere le mie capacità.",
 	"selectMode": "Seleziona modalità di interazione",
 	"selectApiConfig": "Seleziona configurazione API",
 	"enhancePrompt": "Migliora prompt con contesto aggiuntivo",
@@ -181,12 +181,12 @@
 		"copyToInput": "Copia nell'input (o Shift + clic)"
 	},
 	"announcement": {
-		"title": "🎉 Rilasciato Roo Code 3.12",
-		"description": "Roo Code 3.12 porta nuove funzionalità e miglioramenti basati sui tuoi feedback.",
+		"title": "🎉 Rilasciato Roo Code 3.13",
+		"description": "Roo Code 3.13 porta nuove funzionalità e miglioramenti basati sui tuoi feedback.",
 		"whatsNew": "Novità",
-		"feature1": "<bold>Supporto Grok</bold>: Aggiunto il provider xAI e opzioni di impegno ragionato per Grok su OpenRouter",
-		"feature2": "<bold>Miglioramenti nell'editing delle differenze</bold>: Configurazione per profilo e migliore normalizzazione delle stringhe per meno errori",
-		"feature3": "<bold>Miglioramenti dei checkpoint</bold>: Checkpoint più veloci e affidabili",
+		"feature1": "<bold>Gemini 2.5 Flash Thinking</bold>: Ora puoi utilizzare la variante thinking di Gemini 2.5 Flash e specificare un budget di token per thinking",
+		"feature2": "<bold>Miglioramenti dell'interfaccia</bold>: L'intestazione delle attività, la vista chat, l'anteprima della cronologia e la vista di benvenuto sono stati migliorati visivamente",
+		"feature3": "<bold>Correzioni di bug</bold>: Editing delle differenze più affidabile e altro",
 		"hideButton": "Nascondi annuncio",
 		"detailsDiscussLinks": "Ottieni maggiori dettagli e partecipa alle discussioni su <discordLink>Discord</discordLink> e <redditLink>Reddit</redditLink> 🚀"
 	},

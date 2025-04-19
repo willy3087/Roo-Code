@@ -31,6 +31,7 @@ type ProviderSettings = {
 	glamaModelInfo?:
 		| ({
 				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
 				contextWindow: number
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
@@ -53,6 +54,7 @@ type ProviderSettings = {
 	openRouterModelInfo?:
 		| ({
 				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
 				contextWindow: number
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
@@ -95,6 +97,7 @@ type ProviderSettings = {
 	openAiCustomModelInfo?:
 		| ({
 				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
 				contextWindow: number
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
@@ -140,6 +143,7 @@ type ProviderSettings = {
 	unboundModelInfo?:
 		| ({
 				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
 				contextWindow: number
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
@@ -161,6 +165,7 @@ type ProviderSettings = {
 	requestyModelInfo?:
 		| ({
 				maxTokens?: (number | null) | undefined
+				maxThinkingTokens?: (number | null) | undefined
 				contextWindow: number
 				supportsImages?: boolean | undefined
 				supportsComputerUse?: boolean | undefined
@@ -262,7 +267,6 @@ type GlobalSettings = {
 	remoteBrowserHost?: string | undefined
 	cachedChromeHostUrl?: string | undefined
 	enableCheckpoints?: boolean | undefined
-	showGreeting?: boolean | undefined
 	ttsEnabled?: boolean | undefined
 	ttsSpeed?: number | undefined
 	soundEnabled?: boolean | undefined
@@ -520,6 +524,12 @@ type RooCodeEvents = {
 			totalCacheReads?: number | undefined
 			totalCost: number
 			contextTokens: number
+		},
+		{
+			[x: string]: {
+				attempts: number
+				failures: number
+			}
 		},
 	]
 	taskTokenUsageUpdated: [

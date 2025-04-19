@@ -78,7 +78,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 
 	public isViewLaunched = false
 	public settingsImportedAt?: number
-	public readonly latestAnnouncementId = "apr-16-2025-3-12" // update for v3.12.0 announcement
+	public readonly latestAnnouncementId = "apr-18-2025-3-13" // Update for v3.13.0 announcement
 	public readonly contextProxy: ContextProxy
 	public readonly providerSettingsManager: ProviderSettingsManager
 	public readonly customModesManager: CustomModesManager
@@ -655,7 +655,7 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 					<link rel="stylesheet" type="text/css" href="${stylesUri}">
 					<link href="${codiconsUri}" rel="stylesheet" />
 					<script nonce="${nonce}">
-						window.IMAGES_BASE_URI = "${imagesUri}"
+						window.IMAGES_BASE_URI = "${imagesUri}"					
 					</script>
 					<title>eLai Code</title>
 				</head>
@@ -1216,7 +1216,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			telemetrySetting,
 			showRooIgnoredFiles,
 			language,
-			showGreeting,
 			maxReadFileLine,
 		} = await this.getState()
 
@@ -1297,7 +1296,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			renderContext: this.renderContext,
 			maxReadFileLine: maxReadFileLine ?? 500,
 			settingsImportedAt: this.settingsImportedAt,
-			showGreeting: showGreeting ?? true, // Ensure showGreeting is included in the returned state
 		}
 	}
 
@@ -1385,7 +1383,6 @@ export class ClineProvider extends EventEmitter<ClineProviderEvents> implements 
 			telemetrySetting: stateValues.telemetrySetting || "unset",
 			showRooIgnoredFiles: stateValues.showRooIgnoredFiles ?? true,
 			maxReadFileLine: stateValues.maxReadFileLine ?? 500,
-			showGreeting: stateValues.showGreeting ?? true, // Ensure showGreeting is returned by getState
 		}
 	}
 

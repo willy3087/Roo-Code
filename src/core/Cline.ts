@@ -4,38 +4,26 @@ import os from "os" // Utilitários relacionados ao sistema operacional
 import crypto from "crypto" // Funcionalidades criptográficas para geração de IDs
 import EventEmitter from "events" // Sistema de eventos para comunicação entre componentes
 
-import { Anthropic } from "@anthropic-ai/sdk" // SDK oficial da Anthropic para interação com modelos Claude
-import cloneDeep from "clone-deep" // Utilitário para clonar objetos profundamente
-import delay from "delay" // Função para criar atrasos controlados
-import pWaitFor from "p-wait-for" // Utilitário para esperar por condições assíncronas
-import getFolderSize from "get-folder-size" // Ferramenta para calcular tamanho de diretórios
-import { serializeError } from "serialize-error" // Converte objetos de erro em formato serializável
-import * as vscode from "vscode" // API do VS Code para integração com o editor
+import { Anthropic } from "@anthropic-ai/sdk"
+import cloneDeep from "clone-deep"
+import delay from "delay"
+import pWaitFor from "p-wait-for"
+import getFolderSize from "get-folder-size"
+import { serializeError } from "serialize-error"
+import * as vscode from "vscode"
 
-import { TokenUsage } from "../schemas" // Esquema para rastreamento de uso de tokens
-import { ApiHandler, buildApiHandler } from "../api" // Gerenciador de comunicação com APIs de IA
-import { ApiStream } from "../api/transform/stream" // Processamento de streams de resposta da API
-import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider" // Visualização de diferenças de código
-import {
-	CheckpointServiceOptions,
-	RepoPerTaskCheckpointService,
-	// RepoPerWorkspaceCheckpointService,
-} from "../services/checkpoints" // Serviços para gerenciamento de checkpoints de código
-import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown" // Utilitários para exportação de conteúdo
-import { fetchInstructionsTool } from "./tools/fetchInstructionsTool" // Ferramenta para buscar instruções personalizadas
-import { listFilesTool } from "./tools/listFilesTool" // Ferramenta para listar arquivos no workspace
-import { readFileTool } from "./tools/readFileTool" // Ferramenta para ler conteúdo de arquivos
-import { ExitCodeDetails } from "../integrations/terminal/TerminalProcess" // Detalhes de códigos de saída do terminal
-import { Terminal } from "../integrations/terminal/Terminal" // Abstração para interação com terminal
-import { TerminalProcess } from "../integrations/terminal/TerminalProcess" // Tipo para processos do terminal
-import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry" // Registro de terminais disponíveis
-import { UrlContentFetcher } from "../services/browser/UrlContentFetcher" // Serviço para buscar conteúdo de URLs
-import { listFiles } from "../services/glob/list-files" // Utilitário para listar arquivos com padrões glob
-import { CheckpointStorage } from "../../evals/packages/types/src/roo-code" // Armazenamento de checkpoints
-import { ApiConfiguration } from "../shared/api" // Configurações para comunicação com APIs
-import { findLastIndex } from "../shared/array" // Utilitário para arrays
-import { combineApiRequests } from "../shared/combineApiRequests" // Combinação de requisições de API para métricas
-import { combineCommandSequences } from "../shared/combineCommandSequences" // Combinação de sequências de comandos
+// schemas
+import { TokenUsage, ToolUsage, ToolName } from "../schemas"
+
+// api
+import { ApiHandler, buildApiHandler } from "../api"
+import { ApiStream } from "../api/transform/stream"
+
+// shared
+import { ApiConfiguration } from "../shared/api"
+import { findLastIndex } from "../shared/array"
+import { combineApiRequests } from "../shared/combineApiRequests"
+import { combineCommandSequences } from "../shared/combineCommandSequences"
 import {
 	ClineApiReqCancelReason,
 	ClineApiReqInfo,
@@ -43,56 +31,69 @@ import {
 	ClineMessage,
 	ClineSay,
 	ToolProgressStatus,
-} from "../shared/ExtensionMessage" // Tipos de mensagens trocadas na extensão
-import { getApiMetrics } from "../shared/getApiMetrics" // Cálculo de métricas de uso da API
-import { HistoryItem } from "../shared/HistoryItem" // Representação de itens do histórico de conversas
-import { ClineAskResponse } from "../shared/WebviewMessage" // Tipos de mensagens da webview
-import { GlobalFileNames } from "../shared/globalFileNames" // Nomes de arquivos globais usados pela extensão
-import { defaultModeSlug, getModeBySlug, getFullModeDetails } from "../shared/modes" // Gerenciamento de modos de operação
-import { EXPERIMENT_IDS, experiments as Experiments, ExperimentId } from "../shared/experiments" // Sistema de experimentos
-import { calculateApiCostAnthropic } from "../utils/cost" // Cálculo de custos de API
-import { fileExistsAtPath } from "../utils/fs" // Verificação de existência de arquivos
-import { arePathsEqual } from "../utils/path" // Comparação de caminhos de arquivos
-import { parseMentions } from "./mentions" // Processamento de menções em mensagens
-import { FileContextTracker } from "./context-tracking/FileContextTracker" // Rastreamento de contexto de arquivos
-import { RooIgnoreController } from "./ignore/RooIgnoreController" // Controle de arquivos ignorados
-import { AssistantMessageContent, parseAssistantMessage, ToolParamName, ToolUseName } from "./assistant-message" // Processamento de mensagens do assistente
-import { formatResponse } from "./prompts/responses" // Formatação de respostas
-import { SYSTEM_PROMPT } from "./prompts/system" // Prompt de sistema para o modelo
-import { truncateConversationIfNeeded } from "./sliding-window" // Gerenciamento de janela deslizante para conversas longas
-import { ClineProvider } from "./webview/ClineProvider" // Provedor da interface webview
-import { BrowserSession } from "../services/browser/BrowserSession" // Sessão de navegador para acesso web
-import { formatLanguage } from "../shared/language" // Formatação de linguagem para exibição
-import { McpHub } from "../services/mcp/McpHub" // Hub para Model Control Protocol
-import { DiffStrategy, getDiffStrategy } from "./diff/DiffStrategy" // Estratégias para cálculo de diferenças
-import { telemetryService } from "../services/telemetry/TelemetryService" // Serviço de telemetria
-import { validateToolUse, isToolAllowedForMode, ToolName } from "./mode-validator" // Validação de ferramentas por modo
-import { getWorkspacePath } from "../utils/path" // Obtenção do caminho do workspace
-import { writeToFileTool } from "./tools/writeToFileTool" // Ferramenta para escrever em arquivos
-import { applyDiffTool } from "./tools/applyDiffTool" // Ferramenta para aplicar diferenças de código
-import { insertContentTool } from "./tools/insertContentTool" // Ferramenta para inserir conteúdo em arquivos
-import { searchAndReplaceTool } from "./tools/searchAndReplaceTool" // Ferramenta para busca e substituição
-import { listCodeDefinitionNamesTool } from "./tools/listCodeDefinitionNamesTool" // Ferramenta para listar definições de código
-import { searchFilesTool } from "./tools/searchFilesTool" // Ferramenta para buscar em arquivos
-import { browserActionTool } from "./tools/browserActionTool" // Ferramenta para ações de navegador
-import { executeCommandTool } from "./tools/executeCommandTool" // Ferramenta para executar comandos
-import { useMcpToolTool } from "./tools/useMcpToolTool" // Ferramenta para usar ferramentas MCP
-import { accessMcpResourceTool } from "./tools/accessMcpResourceTool" // Ferramenta para acessar recursos MCP
-import { askFollowupQuestionTool } from "./tools/askFollowupQuestionTool" // Ferramenta para perguntas de acompanhamento
-import { switchModeTool } from "./tools/switchModeTool" // Ferramenta para alternar entre modos
-import { attemptCompletionTool } from "./tools/attemptCompletionTool" // Ferramenta para tentativas de completar código
-import { newTaskTool } from "./tools/newTaskTool" // Ferramenta para criar novas tarefas
+} from "../shared/ExtensionMessage"
+import { getApiMetrics } from "../shared/getApiMetrics"
+import { HistoryItem } from "../shared/HistoryItem"
+import { ClineAskResponse } from "../shared/WebviewMessage"
+import { GlobalFileNames } from "../shared/globalFileNames"
+import { defaultModeSlug, getModeBySlug, getFullModeDetails, isToolAllowedForMode } from "../shared/modes"
+import { EXPERIMENT_IDS, experiments as Experiments, ExperimentId } from "../shared/experiments"
+import { formatLanguage } from "../shared/language"
+import { ToolParamName, ToolResponse, DiffStrategy } from "../shared/tools"
 
-/**
- * Tipo que representa a resposta de uma ferramenta, podendo ser uma string simples
- * ou um array de blocos de texto/imagem compatíveis com a API Anthropic.
- */
-export type ToolResponse = string | Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam>
+// services
+import { UrlContentFetcher } from "../services/browser/UrlContentFetcher"
+import { listFiles } from "../services/glob/list-files"
+import { BrowserSession } from "../services/browser/BrowserSession"
+import { McpHub } from "../services/mcp/McpHub"
+import { telemetryService } from "../services/telemetry/TelemetryService"
+import { CheckpointServiceOptions, RepoPerTaskCheckpointService } from "../services/checkpoints"
 
-/**
- * Tipo que representa o conteúdo enviado pelo usuário, consistindo em um array
- * de blocos de conteúdo (texto, imagens, etc.) compatíveis com a API Anthropic.
- */
+// integrations
+import { DIFF_VIEW_URI_SCHEME, DiffViewProvider } from "../integrations/editor/DiffViewProvider"
+import { findToolName, formatContentBlockToMarkdown } from "../integrations/misc/export-markdown"
+import { Terminal } from "../integrations/terminal/Terminal"
+import { TerminalRegistry } from "../integrations/terminal/TerminalRegistry"
+
+// utils
+import { calculateApiCostAnthropic } from "../utils/cost"
+import { fileExistsAtPath } from "../utils/fs"
+import { arePathsEqual, getWorkspacePath } from "../utils/path"
+
+// tools
+import { fetchInstructionsTool } from "./tools/fetchInstructionsTool"
+import { listFilesTool } from "./tools/listFilesTool"
+import { readFileTool } from "./tools/readFileTool"
+import { writeToFileTool } from "./tools/writeToFileTool"
+import { applyDiffTool } from "./tools/applyDiffTool"
+import { insertContentTool } from "./tools/insertContentTool"
+import { searchAndReplaceTool } from "./tools/searchAndReplaceTool"
+import { listCodeDefinitionNamesTool } from "./tools/listCodeDefinitionNamesTool"
+import { searchFilesTool } from "./tools/searchFilesTool"
+import { browserActionTool } from "./tools/browserActionTool"
+import { executeCommandTool } from "./tools/executeCommandTool"
+import { useMcpToolTool } from "./tools/useMcpToolTool"
+import { accessMcpResourceTool } from "./tools/accessMcpResourceTool"
+import { askFollowupQuestionTool } from "./tools/askFollowupQuestionTool"
+import { switchModeTool } from "./tools/switchModeTool"
+import { attemptCompletionTool } from "./tools/attemptCompletionTool"
+import { newTaskTool } from "./tools/newTaskTool"
+import { appendToFileTool } from "./tools/appendToFileTool"
+
+// prompts
+import { formatResponse } from "./prompts/responses"
+import { SYSTEM_PROMPT } from "./prompts/system"
+
+// ... everything else
+import { parseMentions } from "./mentions"
+import { FileContextTracker } from "./context-tracking/FileContextTracker"
+import { RooIgnoreController } from "./ignore/RooIgnoreController"
+import { type AssistantMessageContent, parseAssistantMessage } from "./assistant-message"
+import { truncateConversationIfNeeded } from "./sliding-window"
+import { ClineProvider } from "./webview/ClineProvider"
+import { validateToolUse } from "./mode-validator"
+import { MultiSearchReplaceDiffStrategy } from "./diff/strategies/multi-search-replace"
+
 type UserContent = Array<Anthropic.Messages.ContentBlockParam>
 
 /**
@@ -117,9 +118,9 @@ export type ClineEvents = {
 	/** Emitido quando uma nova tarefa é criada a partir desta */
 	taskSpawned: [taskId: string]
 	/** Emitido quando uma tarefa é concluída, incluindo estatísticas de uso de tokens */
-	taskCompleted: [taskId: string, usage: TokenUsage]
+	taskCompleted: [taskId: string, tokenUsage: TokenUsage, toolUsage: ToolUsage]
 	/** Emitido quando o uso de tokens de uma tarefa é atualizado */
-	taskTokenUsageUpdated: [taskId: string, usage: TokenUsage]
+	taskTokenUsageUpdated: [taskId: string, tokenUsage: TokenUsage]
 }
 
 /**
@@ -238,26 +239,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 	private didAlreadyUseTool = false
 	private didCompleteReadingStream = false
 
-	/**
-	 * Construtor da classe Cline
-	 * @param provider - Referência para o ClineProvider que gerencia esta instância
-	 * @param apiConfiguration - Configurações da API de IA
-	 * @param customInstructions - Instruções personalizadas para o modelo
-	 * @param enableDiff - Habilita o sistema de diff para edições de arquivos
-	 * @param enableCheckpoints - Habilita o sistema de checkpoints
-	 * @param checkpointStorage - Tipo de armazenamento de checkpoints
-	 * @param fuzzyMatchThreshold - Limiar para correspondência difusa
-	 * @param consecutiveMistakeLimit - Limite de erros consecutivos
-	 * @param task - Descrição da tarefa inicial
-	 * @param images - Imagens associadas à tarefa
-	 * @param historyItem - Item de histórico para retomar uma tarefa
-	 * @param experiments - Configurações de experimentos
-	 * @param startTask - Se deve iniciar a tarefa automaticamente
-	 * @param rootTask - Tarefa raiz (para subtarefas)
-	 * @param parentTask - Tarefa pai (para subtarefas)
-	 * @param taskNumber - Número da tarefa na sequência
-	 * @param onCreated - Callback chamado após a criação
-	 */
+	// metrics
+	private toolUsage: ToolUsage = {}
+
 	constructor({
 		provider,
 		apiConfiguration,
@@ -339,8 +323,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 			telemetryService.captureTaskCreated(this.taskId) // Registra criação de nova tarefa
 		}
 
-		// Inicializa a estratégia de diff com base no estado atual
-		this.updateDiffStrategy(experiments ?? {})
+		this.diffStrategy = new MultiSearchReplaceDiffStrategy(this.fuzzyMatchThreshold)
 
 		// Executa callback após a criação, se fornecido
 		onCreated?.(this)
@@ -386,15 +369,6 @@ export class Cline extends EventEmitter<ClineEvents> {
 		return getWorkspacePath(path.join(os.homedir(), "Desktop"))
 	}
 
-	// Add method to update diffStrategy.
-	async updateDiffStrategy(experiments: Partial<Record<ExperimentId, boolean>>) {
-		this.diffStrategy = getDiffStrategy({
-			model: this.api.getModel().id,
-			experiments,
-			fuzzyMatchThreshold: this.fuzzyMatchThreshold,
-		})
-	}
-
 	// Storing task to disk for history
 
 	/**
@@ -419,9 +393,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 	private async getSavedApiConversationHistory(): Promise<Anthropic.MessageParam[]> {
 		const filePath = path.join(await this.ensureTaskDirectoryExists(), GlobalFileNames.apiConversationHistory)
 		const fileExists = await fileExistsAtPath(filePath)
+
 		if (fileExists) {
 			return JSON.parse(await fs.readFile(filePath, "utf8"))
 		}
+
 		return []
 	}
 
@@ -499,27 +475,17 @@ export class Cline extends EventEmitter<ClineEvents> {
 		this.emit("message", { action: "updated", message: partialMessage })
 	}
 
-	/**
-	 * Calcula e retorna o uso de tokens da API
-	 * @returns Métricas de uso de tokens
-	 */
-	getTokenUsage() {
-		const usage = getApiMetrics(combineApiRequests(combineCommandSequences(this.clineMessages.slice(1))))
-		this.emit("taskTokenUsageUpdated", this.taskId, usage)
-		return usage
-	}
-
-	/**
-	 * Salva as mensagens do Cline no armazenamento persistente
-	 */
 	private async saveClineMessages() {
 		try {
 			const taskDir = await this.ensureTaskDirectoryExists()
 			const filePath = path.join(taskDir, GlobalFileNames.uiMessages)
 			await fs.writeFile(filePath, JSON.stringify(this.clineMessages))
-			// combined as they are in ChatView
-			const apiMetrics = this.getTokenUsage()
-			const taskMessage = this.clineMessages[0] // first message is always the task say
+
+			const tokenUsage = this.getTokenUsage()
+			this.emit("taskTokenUsageUpdated", this.taskId, tokenUsage)
+
+			const taskMessage = this.clineMessages[0] // First message is always the task say
+
 			const lastRelevantMessage =
 				this.clineMessages[
 					findLastIndex(
@@ -543,11 +509,11 @@ export class Cline extends EventEmitter<ClineEvents> {
 				number: this.taskNumber,
 				ts: lastRelevantMessage.ts,
 				task: taskMessage.text ?? "",
-				tokensIn: apiMetrics.totalTokensIn,
-				tokensOut: apiMetrics.totalTokensOut,
-				cacheWrites: apiMetrics.totalCacheWrites,
-				cacheReads: apiMetrics.totalCacheReads,
-				totalCost: apiMetrics.totalCost,
+				tokensIn: tokenUsage.totalTokensIn,
+				tokensOut: tokenUsage.totalTokensOut,
+				cacheWrites: tokenUsage.totalCacheWrites,
+				cacheReads: tokenUsage.totalCacheReads,
+				totalCost: tokenUsage.totalCost,
 				size: taskDirSize,
 				workspace: this.cwd,
 			})
@@ -734,7 +700,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 		}
 	}
 
-	async sayAndCreateMissingParamError(toolName: ToolUseName, paramName: string, relPath?: string) {
+	async sayAndCreateMissingParamError(toolName: ToolName, paramName: string, relPath?: string) {
 		await this.say(
 			"error",
 			`Roo tried to use ${toolName}${
@@ -1065,11 +1031,6 @@ export class Cline extends EventEmitter<ClineEvents> {
 	}
 
 	async abortTask(isAbandoned = false) {
-		// if (this.abort) {
-		// 	console.log(`[subtasks] already aborted task ${this.taskId}.${this.instanceId}`)
-		// 	return
-		// }
-
 		console.log(`[subtasks] aborting task ${this.taskId}.${this.instanceId}`)
 
 		// Irá parar qualquer promessa autônoma em execução.
@@ -1102,159 +1063,6 @@ export class Cline extends EventEmitter<ClineEvents> {
 	}
 
 	// Tools
-
-	async executeCommandTool(command: string, customCwd?: string): Promise<[boolean, ToolResponse]> {
-		let workingDir: string
-		if (!customCwd) {
-			workingDir = this.cwd
-		} else if (path.isAbsolute(customCwd)) {
-			workingDir = customCwd
-		} else {
-			workingDir = path.resolve(this.cwd, customCwd)
-		}
-
-		// Verifica se o diretório existe
-		try {
-			await fs.access(workingDir)
-		} catch (error) {
-			return [false, `Working directory '${workingDir}' does not exist.`]
-		}
-
-		const terminalInfo = await TerminalRegistry.getOrCreateTerminal(workingDir, !!customCwd, this.taskId)
-
-		// Atualiza o diretório de trabalho caso o terminal que pedimos tenha
-		// um diretório de trabalho diferente, para que o modelo saiba onde o
-		// comando foi executado:
-		workingDir = terminalInfo.getCurrentWorkingDirectory()
-
-		const workingDirInfo = workingDir ? ` from '${workingDir.toPosix()}'` : ""
-		terminalInfo.terminal.show() // um bug visual estranho quando criamos novos terminais (mesmo manualmente) onde há um espaço em branco no topo.
-		let userFeedback: { text?: string; images?: string[] } | undefined
-		let didContinue = false
-		let completed = false
-		let result: string = ""
-		let exitDetails: ExitCodeDetails | undefined
-		const { terminalOutputLineLimit = 500 } = (await this.providerRef.deref()?.getState()) ?? {}
-
-		const sendCommandOutput = async (line: string, terminalProcess: TerminalProcess): Promise<void> => {
-			try {
-				const { response, text, images } = await this.ask("command_output", line)
-				if (response === "yesButtonClicked") {
-					// prosseguir enquanto estiver em execução
-				} else {
-					userFeedback = { text, images }
-				}
-				didContinue = true
-				terminalProcess.continue() // continue past the await
-			} catch {
-				// Isso só pode acontecer se esta promessa ask foi ignorada, então ignore este erro
-			}
-		}
-
-		const process = terminalInfo.runCommand(command, {
-			onLine: (line, process) => {
-				if (!didContinue) {
-					sendCommandOutput(Terminal.compressTerminalOutput(line, terminalOutputLineLimit), process)
-				} else {
-					this.say("command_output", Terminal.compressTerminalOutput(line, terminalOutputLineLimit))
-				}
-			},
-			onCompleted: (output) => {
-				result = output ?? ""
-				completed = true
-			},
-			onShellExecutionComplete: (details) => {
-				exitDetails = details
-			},
-			onNoShellIntegration: async (message) => {
-				await this.say("shell_integration_warning", message)
-			},
-		})
-
-		await process
-
-		// Aguarda um pequeno atraso para garantir que todas as mensagens sejam enviadas para o webview
-		// Este atraso permite que promessas não aguardadas sejam criadas e
-		// para suas mensagens associadas sejam enviadas para o webview, mantendo
-		// a ordem correta das mensagens (embora o webview seja inteligente sobre
-		// agrupar mensagens command_output mesmo com qualquer gap)
-		await delay(50)
-
-		result = Terminal.compressTerminalOutput(result, terminalOutputLineLimit)
-
-		// keep in case we need it to troubleshoot user issues, but this should be removed in the future
-		// if everything looks good:
-		console.debug(
-			"[execute_command status]",
-			JSON.stringify(
-				{
-					completed,
-					userFeedback,
-					hasResult: result.length > 0,
-					exitDetails,
-					terminalId: terminalInfo.id,
-					workingDir: workingDirInfo,
-					isTerminalBusy: terminalInfo.busy,
-				},
-				null,
-				2,
-			),
-		)
-
-		if (userFeedback) {
-			await this.say("user_feedback", userFeedback.text, userFeedback.images)
-			return [
-				true,
-				formatResponse.toolResult(
-					`Command is still running in terminal ${terminalInfo.id}${workingDirInfo}.${
-						result.length > 0 ? `\nHere's the output so far:\n${result}` : ""
-					}\n\nThe user provided the following feedback:\n<feedback>\n${userFeedback.text}\n</feedback>`,
-					userFeedback.images,
-				),
-			]
-		} else if (completed) {
-			let exitStatus: string = ""
-			if (exitDetails !== undefined) {
-				if (exitDetails.signal) {
-					exitStatus = `Process terminated by signal ${exitDetails.signal} (${exitDetails.signalName})`
-					if (exitDetails.coreDumpPossible) {
-						exitStatus += " - core dump possible"
-					}
-				} else if (exitDetails.exitCode === undefined) {
-					result += "<VSCE exit code is undefined: terminal output and command execution status is unknown.>"
-					exitStatus = `Exit code: <undefined, notify user>`
-				} else {
-					if (exitDetails.exitCode !== 0) {
-						exitStatus += "Command execution was not successful, inspect the cause and adjust as needed.\n"
-					}
-					exitStatus += `Exit code: ${exitDetails.exitCode}`
-				}
-			} else {
-				result += "<VSCE exitDetails == undefined: terminal output and command execution status is unknown.>"
-				exitStatus = `Exit code: <undefined, notify user>`
-			}
-
-			let workingDirInfo: string = workingDir ? ` within working directory '${workingDir.toPosix()}'` : ""
-			const newWorkingDir = terminalInfo.getCurrentWorkingDirectory()
-
-			if (newWorkingDir !== workingDir) {
-				workingDirInfo += `\nNOTICE: Your command changed the working directory for this terminal to '${newWorkingDir.toPosix()}' so you MUST adjust future commands accordingly because they will be executed in this directory`
-			}
-
-			const outputInfo = `\nOutput:\n${result}`
-			return [
-				false,
-				`Command executed in terminal ${terminalInfo.id}${workingDirInfo}. ${exitStatus}${outputInfo}`,
-			]
-		} else {
-			return [
-				false,
-				`Command is still running in terminal ${terminalInfo.id}${workingDirInfo}.${
-					result.length > 0 ? `\nHere's the output so far:\n${result}` : ""
-				}\n\nYou will be updated on the terminal status and new output in the future.`,
-			]
-		}
-	}
 
 	async *attemptApiRequest(previousApiReqIndex: number, retryAttempt: number = 0): ApiStream {
 		let mcpHub: McpHub | undefined
@@ -1558,6 +1366,8 @@ export class Cline extends EventEmitter<ClineEvents> {
 							return `[${block.name} for '${block.params.task}']`
 						case "write_to_file":
 							return `[${block.name} for '${block.params.path}']`
+						case "append_to_file":
+							return `[${block.name} for '${block.params.path}']`
 						case "apply_diff":
 							return `[${block.name} for '${block.params.path}']`
 						case "search_files":
@@ -1716,6 +1526,7 @@ export class Cline extends EventEmitter<ClineEvents> {
 				}
 
 				if (!block.partial) {
+					this.recordToolUsage(block.name)
 					telemetryService.captureToolUsage(this.taskId, block.name)
 				}
 
@@ -1740,6 +1551,9 @@ export class Cline extends EventEmitter<ClineEvents> {
 				switch (block.name) {
 					case "write_to_file":
 						await writeToFileTool(this, block, askApproval, handleError, pushToolResult, removeClosingTag)
+						break
+					case "append_to_file":
+						await appendToFileTool(this, block, askApproval, handleError, pushToolResult, removeClosingTag)
 						break
 					case "apply_diff":
 						await applyDiffTool(this, block, askApproval, handleError, pushToolResult, removeClosingTag)
@@ -2838,5 +2652,30 @@ export class Cline extends EventEmitter<ClineEvents> {
 	// Acessador público para fileContextTracker
 	public getFileContextTracker(): FileContextTracker {
 		return this.fileContextTracker
+	}
+
+	// Metrics
+
+	public getTokenUsage() {
+		return getApiMetrics(combineApiRequests(combineCommandSequences(this.clineMessages.slice(1))))
+	}
+
+	public recordToolUsage(toolName: ToolName) {
+		if (!this.toolUsage[toolName]) {
+			this.toolUsage[toolName] = { attempts: 0, failures: 0 }
+		}
+
+		this.toolUsage[toolName].attempts++
+	}
+	public recordToolError(toolName: ToolName) {
+		if (!this.toolUsage[toolName]) {
+			this.toolUsage[toolName] = { attempts: 0, failures: 0 }
+		}
+
+		this.toolUsage[toolName].failures++
+	}
+
+	public getToolUsage() {
+		return this.toolUsage
 	}
 }
