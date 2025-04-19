@@ -138,8 +138,6 @@ export type ClineOptions = {
 	enableDiff?: boolean
 	/** Habilita o sistema de checkpoints para salvar estados da tarefa */
 	enableCheckpoints?: boolean
-	/** Armazenamento para os checkpoints */
-	checkpointStorage?: CheckpointStorage
 	/** Limiar para correspondência aproximada em comparações de texto */
 	fuzzyMatchThreshold?: number
 	/** Limite de erros consecutivos antes de abortar a tarefa */
