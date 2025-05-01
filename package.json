@@ -390,6 +390,7 @@
 		"@types/tmp": "^0.2.6",
 		"@types/turndown": "^5.0.5",
 		"@types/vscode": "^1.95.0",
+		"@types/workerpool": "^6.4.7",
 		"@vscode/codicons": "^0.0.36",
 		"axios": "^1.7.4",
 		"cheerio": "^1.0.0",
