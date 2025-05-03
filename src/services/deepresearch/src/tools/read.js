@@ -1,0 +1,95 @@
+import https from "https"
+import { TokenTracker } from "../utils/token-tracker"
+import { JINA_API_KEY } from "../config"
+export function readUrl(url, withAllLinks, tracker) {
+	return new Promise((resolve, reject) => {
+		if (!url.trim()) {
+			reject(new Error("URL cannot be empty"))
+			return
+		}
+		if (!url.startsWith("http://") && !url.startsWith("https://")) {
+			reject(new Error("Invalid URL, only http and https URLs are supported"))
+			return
+		}
+		const data = JSON.stringify({ url })
+		const headers = {
+			Accept: "application/json",
+			Authorization: `Bearer ${JINA_API_KEY}`,
+			"Content-Type": "application/json",
+			"X-Retain-Images": "none",
+			"X-Md-Link-Style": "discarded",
+		}
+		if (withAllLinks) {
+			headers["X-With-Links-Summary"] = "all"
+		}
+		const options = {
+			hostname: "r.jina.ai",
+			port: 443,
+			path: "/",
+			method: "POST",
+			headers,
+		}
+		const req = https.request(options, (res) => {
+			let responseData = ""
+			res.on("data", (chunk) => (responseData += chunk))
+			res.on("end", () => {
+				// Check HTTP status code first
+				if (res.statusCode && res.statusCode >= 400) {
+					try {
+						// Try to parse error message from response if available
+						const errorResponse = JSON.parse(responseData)
+						if (res.statusCode === 402) {
+							reject(new Error(errorResponse.readableMessage || "Insufficient balance"))
+							return
+						}
+						reject(new Error(errorResponse.readableMessage || `HTTP Error ${res.statusCode}`))
+					} catch (error) {
+						// If parsing fails, just return the status code
+						reject(new Error(`HTTP Error ${res.statusCode}`))
+					}
+					return
+				}
+				// Only parse JSON for successful responses
+				let response
+				try {
+					response = JSON.parse(responseData)
+				} catch (error) {
+					reject(
+						new Error(
+							`Failed to parse response: ${error instanceof Error ? error.message : "Unknown error"}`,
+						),
+					)
+					return
+				}
+				if (!response.data) {
+					reject(new Error("Invalid response data"))
+					return
+				}
+				console.log("Read:", {
+					title: response.data.title,
+					url: response.data.url,
+					tokens: response.data.usage?.tokens || 0,
+				})
+				const tokens = response.data.usage?.tokens || 0
+				const tokenTracker = tracker || new TokenTracker()
+				tokenTracker.trackUsage("read", {
+					totalTokens: tokens,
+					promptTokens: url.length,
+					completionTokens: tokens,
+				})
+				resolve({ response })
+			})
+		})
+		// Add timeout handling
+		req.setTimeout(60000, () => {
+			req.destroy()
+			reject(new Error("Request timed out"))
+		})
+		req.on("error", (error) => {
+			reject(new Error(`Request failed: ${error.message}`))
+		})
+		req.write(data)
+		req.end()
+	})
+}
+//# sourceMappingURL=read.js.map
