@@ -66,16 +66,16 @@ export const HumanRelayDialog: React.FC<HumanRelayDialogProps> = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
-			<DialogContent className="sm:max-w-[600px] overflow-y-auto max-h-[80vh]">
+			<DialogContent className="sm:max-w-[600px] overflow-y-auto max-h-[80vh] rounded-md">
 				<DialogHeader>
 					<DialogTitle>{t("humanRelay:dialogTitle")}</DialogTitle>
 					<DialogDescription>{t("humanRelay:dialogDescription")}</DialogDescription>
 				</DialogHeader>
 
-				<div className="grid gap-6 py-6">
+				<div className="grid gap-6 py-6 rounded-md">
 					<div className="relative">
 						<Textarea
-							className="min-h-[200px] font-mono text-sm p-4 pr-12 whitespace-pre-wrap"
+							className="min-h-[200px] font-mono text-sm p-4 pr-12 whitespace-pre-wrap rounded-md"
 							value={promptText}
 							readOnly
 						/>
@@ -94,7 +94,7 @@ export const HumanRelayDialog: React.FC<HumanRelayDialogProps> = ({
 							placeholder={t("humanRelay:aiResponse.placeholder")}
 							value={response}
 							onChange={(e) => setResponse(e.target.value)}
-							className="min-h-[150px]"
+							className="min-h-[150px] rounded-md"
 						/>
 					</div>
 				</div>

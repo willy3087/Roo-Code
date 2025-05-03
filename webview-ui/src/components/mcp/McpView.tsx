@@ -49,6 +49,7 @@ const McpView = ({ onDone }: McpViewProps) => {
 						fontSize: "13px",
 						marginBottom: "10px",
 						marginTop: "5px",
+						borderRadius: "16px",
 					}}>
 					<Trans i18nKey="mcp:description">
 						<VSCodeLink href="https://github.com/modelcontextprotocol" style={{ display: "inline" }}>
@@ -80,6 +81,7 @@ const McpView = ({ onDone }: McpViewProps) => {
 									fontSize: "12px",
 									marginTop: "5px",
 									color: "var(--vscode-descriptionForeground)",
+									borderRadius: "16px",
 								}}>
 								{t("mcp:enableServerCreation.description")}
 							</p>
@@ -218,7 +220,7 @@ const ServerRow = ({ server, alwaysAllowMcp }: { server: McpServer; alwaysAllowM
 								marginLeft: "8px",
 								padding: "1px 6px",
 								fontSize: "11px",
-								borderRadius: "4px",
+								borderRadius: "8px",
 								background: "var(--vscode-badge-background)",
 								color: "var(--vscode-badge-foreground)",
 							}}>
@@ -254,7 +256,7 @@ const ServerRow = ({ server, alwaysAllowMcp }: { server: McpServer; alwaysAllowM
 							backgroundColor: server.disabled
 								? "var(--vscode-titleBar-inactiveForeground)"
 								: "var(--vscode-button-background)",
-							borderRadius: "5px",
+							borderRadius: "16px",
 							position: "relative",
 							cursor: "pointer",
 							transition: "background-color 0.2s",
@@ -308,8 +310,8 @@ const ServerRow = ({ server, alwaysAllowMcp }: { server: McpServer; alwaysAllowM
 				<div
 					style={{
 						fontSize: "13px",
-						background: "var(--vscode-textCodeBlock-background)",
-						borderRadius: "0 0 4px 4px",
+						background: "var(--vscode-error-background)",
+						borderRadius: "0 0 16px 16px",
 						width: "100%",
 					}}>
 					<div
@@ -339,7 +341,7 @@ const ServerRow = ({ server, alwaysAllowMcp }: { server: McpServer; alwaysAllowM
 							background: "var(--vscode-textCodeBlock-background)",
 							padding: "0 10px 10px 10px",
 							fontSize: "13px",
-							borderRadius: "0 0 4px 4px",
+							borderRadius: "0 0 16px 16px",
 						}}>
 						<VSCodePanels style={{ marginBottom: "10px" }}>
 							<VSCodePanelTab id="tools">

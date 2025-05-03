@@ -1,0 +1,3 @@
+import{j as o}from"./index-D7DZurT-.js";import{useMDXComponents as r}from"./index-BKzGVkgU.js";import{M as i}from"./index-F2rAN-3B.js";import"./index-BLGE7pQz.js";import"./index-BtoKn2VS.js";import"./iframe-D4JqKgPN.js";import"./index-NOh9rqHv.js";import"./index-ogSvIofg.js";function n(e){const t={h1:"h1",p:"p",...r(),...e.components};return o.jsxs(o.Fragment,{children:[o.jsx(i,{title:"Welcome"}),`
+`,o.jsx(t.h1,{id:"welcome",children:"Welcome"}),`
+`,o.jsx(t.p,{children:"This Roo Code storybook is used to independently develop components for the Roo Code webview UI."})]})}function h(e={}){const{wrapper:t}={...r(),...e.components};return t?o.jsx(t,{...e,children:o.jsx(n,{...e})}):n(e)}export{h as default};

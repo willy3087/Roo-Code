@@ -72,7 +72,7 @@ function ChatInputField({ placeholder = "Chat" }: ChatInputFieldProps) {
 			value={input}
 			onChange={({ target: { value } }) => setInput(value)}
 			onKeyDown={handleKeyDown}
-			className="resize-none px-3 pt-3 pb-[50px]"
+			className="rounded-md resize-none px-3 pt-3 pb-[50px]"
 		/>
 	)
 }
