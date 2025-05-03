@@ -54,10 +54,10 @@ const TaskHeader = ({
 	const { width: windowWidth } = useWindowSize()
 
 	return (
-		<div className="py-2 px-3">
+		<div className="py-4 px-4">
 			<div
 				className={cn(
-					"rounded-xs p-2.5 flex flex-col gap-1.5 relative z-1 border",
+					"bg-vscode-notifications-background rounded-br-lg rounded-bl-lg rounded-tr-lg rounded-tl-lg p-4 flex flex-col gap-2 relative z-1 border",
 					!!isTaskExpanded
 						? "border-vscode-panel-border text-vscode-foreground"
 						: "border-vscode-panel-border/80 text-vscode-foreground/80",
