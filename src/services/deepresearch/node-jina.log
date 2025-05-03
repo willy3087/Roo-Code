@@ -1,0 +1,937 @@
+      "maxTokens": 8000
+    },
+    "agent": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "agentBeastMode": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "fallback": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    }
+  },
+  "defaults": {
+    "stepSleep": 100
+  }
+}
+Classe MCPConnector definida
+Server running at http://localhost:3002
+[chat/completions] Request: {
+  model: 'local',
+  stream: false,
+  messageCount: 1,
+  hasAuth: false,
+  requestId: '1745765327923'
+}
+messages [{"role":"user","content":"Qual é a resposta para a vida, o universo e tudo mais?"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745765327925'
+}
+[chat/completions] Request: {
+  model: 'qwen2.5-7b-instruct-1m',
+  stream: false,
+  messageCount: 1,
+  hasAuth: false,
+  requestId: '1745765338923'
+}
+messages [{"role":"user","content":"Qual é a resposta para a vida, o universo e tudo mais?"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745765338923'
+}
+[chat/completions] Request: {
+  model: 'qwen2.5-7b-instruct-1m',
+  stream: undefined,
+  messageCount: 1,
+  hasAuth: false,
+  requestId: '1745765350076'
+}
+messages [{"role":"user","content":"Qual é a resposta para a vida, o universo e tudo mais?"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745765350076'
+}
+^C
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % pnpm install
+Scope: all 2 workspace projects
+Done in 581ms using pnpm v10.8.0
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % npm install
+npm error Cannot read properties of null (reading 'matches')
+npm error A complete log of this run can be found in: /Users/williamduarte/.npm/_logs/2025-04-27T17_55_30_030Z-debug-0.log
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % '/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/start-dev-ser
+ver.sh'
+Porta 3002 está disponível.
+Iniciando servidor Node DeepResearch Nexcode...
+Porta: 3002
+NODE_ENV: development
+-------------------------------------------
+
+> node-deepresearch@1.0.0 start /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode
+> ts-node src/server.ts
+
+Configuration Summary: {
+  "provider": {
+    "name": "openai",
+    "model": "gpt-4o-mini",
+    "baseUrl": "http://localhost:1234/v1"
+  },
+  "search": {
+    "provider": "jina"
+  },
+  "tools": {
+    "coder": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "searchGrounding": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "dedup": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "evaluator": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "errorAnalyzer": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "queryRewriter": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "agent": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "agentBeastMode": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "fallback": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    }
+  },
+  "defaults": {
+    "stepSleep": 100
+  }
+}
+Server running at http://localhost:3002
+^C%
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % '/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/start-dev-server.sh'
+Porta 3002 está disponível.
+Iniciando servidor Node DeepResearch Nexcode...
+Porta: 3002
+NODE_ENV: development
+-------------------------------------------
+
+> node-deepresearch@1.0.0 start /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode
+> ts-node src/server.ts
+
+Configuration Summary: {
+  "provider": {
+    "name": "openai",
+    "model": "gpt-4o-mini",
+    "baseUrl": "http://localhost:1234/v1"
+  },
+  "search": {
+    "provider": "jina"
+  },
+  "tools": {
+    "coder": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "searchGrounding": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "dedup": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "evaluator": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "errorAnalyzer": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "queryRewriter": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "agent": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "agentBeastMode": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "fallback": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    }
+  },
+  "defaults": {
+    "stepSleep": 100
+  }
+}
+Server running at http://localhost:3002
+^C%
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % pnpm run build
+
+> node-deepresearch@1.0.0 build /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode
+> tsc
+
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % '/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/start-dev-server.sh'
+Porta 3002 está disponível.
+Iniciando servidor Node DeepResearch Nexcode...
+Porta: 3002
+NODE_ENV: development
+-------------------------------------------
+
+> node-deepresearch@1.0.0 start /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode
+> ts-node src/server.ts
+
+Configuration Summary: {
+  "provider": {
+    "name": "openai",
+    "model": "gpt-4o-mini",
+    "baseUrl": "http://localhost:1234/v1"
+  },
+  "search": {
+    "provider": "jina"
+  },
+  "tools": {
+    "coder": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "searchGrounding": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "dedup": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "evaluator": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "errorAnalyzer": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    },
+    "queryRewriter": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.1,
+      "maxTokens": 8000
+    },
+    "agent": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "agentBeastMode": {
+      "model": "gpt-4o-mini",
+      "temperature": 0.7,
+      "maxTokens": 8000
+    },
+    "fallback": {
+      "model": "gpt-4o-mini",
+      "temperature": 0,
+      "maxTokens": 8000
+    }
+  },
+  "defaults": {
+    "stepSleep": 100
+  }
+}
+Server running at http://localhost:3002
+[chat/completions] Request: {
+  model: undefined,
+  stream: true,
+  messageCount: 1,
+  hasAuth: true,
+  requestId: '1745777687859'
+}
+messages [{"role":"user","content":"olá"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745777687860'
+}
+[chat/completions] Request: {
+  model: undefined,
+  stream: true,
+  messageCount: 3,
+  hasAuth: true,
+  requestId: '1745777829945'
+}
+messages [{"role":"user","content":"olá"},{"role":"assistant","content":"Bad Request"},{"role":"user","content":"oi"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745777829946'
+}
+[chat/completions] Request: {
+  model: undefined,
+  stream: true,
+  messageCount: 1,
+  hasAuth: true,
+  requestId: '1745778086288'
+}
+messages [{"role":"user","content":"teste"}]
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+All recovery mechanisms failed
+[chat/completions] Error: {
+  message: 'Bad Request',
+  stack: 'AI_APICallError: Bad Request\n' +
+    '    at /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/response-handler.ts:73:16\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async postToApi (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+provider-utils@2.2.7_zod@3.24.2/node_modules/@ai-sdk/provider-utils/src/post-to-api.ts:111:28)\n' +
+    '    at async OpenAIChatLanguageModel.doGenerate (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/@ai-sdk+openai@1.3.15_zod@3.24.2/node_modules/@ai-sdk/openai/src/openai-chat-language-model.ts:379:9)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:653:32)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async _retryWithExponentialBackoff (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/util/retry-with-exponential-backoff.ts:36:12)\n' +
+    '    at async fn (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/generate-object/generate-object.ts:621:34)\n' +
+    '    at async /Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/ai@4.3.9_react@19.1.0_zod@3.24.2/node_modules/ai/core/telemetry/record-span.ts:18:22\n' +
+    '    at async ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:150:22)',
+  type: 'APICallError',
+  requestId: '1745778086288'
+}
+^C%
+(base) williamduarte@MacBook-Pro-de-William node-DeepResearch-nexcode % '/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/start-dev-server.sh'
+Porta 3002 está disponível.
+Iniciando servidor Node DeepResearch Nexcode...
+Porta: 3002
+NODE_ENV: development
+-------------------------------------------
+
+> node-deepresearch@1.0.0 start /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode
+> ts-node src/server.ts
+
+Configuration Summary: {
+  "provider": {
+    "name": "gemini",
+    "model": "gemini-2.0-flash"
+  },
+  "search": {
+    "provider": "jina"
+  },
+  "tools": {
+    "coder": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.7,
+      "maxTokens": 2000
+    },
+    "searchGrounding": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0,
+      "maxTokens": 2000
+    },
+    "dedup": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.1,
+      "maxTokens": 2000
+    },
+    "evaluator": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.6,
+      "maxTokens": 200
+    },
+    "errorAnalyzer": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0,
+      "maxTokens": 2000
+    },
+    "queryRewriter": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.1,
+      "maxTokens": 2000
+    },
+    "agent": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.7,
+      "maxTokens": 2000
+    },
+    "agentBeastMode": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0.7,
+      "maxTokens": 2000
+    },
+    "fallback": {
+      "model": "gemini-2.0-flash",
+      "temperature": 0,
+      "maxTokens": 8000
+    }
+  },
+  "defaults": {
+    "stepSleep": 100
+  }
+}
+Server running at http://localhost:3002
+[chat/completions] Request: {
+  model: undefined,
+  stream: true,
+  messageCount: 1,
+  hasAuth: true,
+  requestId: '1745779213359'
+}
+messages [{"role":"user","content":"olá"}]
+langauge { langCode: 'pt', langStyle: 'casual Portuguese' }
+Step 1 / Budget used 0.00%
+Gaps: [ 'olá' ]
+Question Evaluation: {
+  think: 'Não preciso de verificar nada para uma saudação simples.',
+  needsDefinitive: false,
+  needsFreshness: false,
+  needsPlurality: false,
+  needsCompleteness: false
+}
+Question Metrics: olá []
+olá: answer <- [search, answer, reflect]
+{
+  action: 'answer',
+  think: 'Como é uma saudação, posso responder diretamente.',
+  references: [],
+  answer: 'Olá! Tudo bem? Em que posso ajudar hoje?'
+}
+Updated references: []
+{
+  action: 'answer',
+  think: 'Como é uma saudação, posso responder diretamente.',
+  references: [],
+  answer: 'Olá! Tudo bem? Em que posso ajudar hoje?',
+  isFinal: true,
+  mdAnswer: 'Olá! Tudo bem? Em que posso ajudar hoje?'
+}
+[chat/completions] Request: {
+  model: undefined,
+  stream: true,
+  messageCount: 3,
+  hasAuth: true,
+  requestId: '1745779546221'
+}
+messages [{"role":"user","content":"olá"},{"role":"assistant","content":"Olá! Tudo bem? Em que posso ajudar hoje?"},{"role":"user","content":"por favor busque pra mim como achar o payload de uma requisição?"}]
+langauge { langCode: 'pt', langStyle: 'technical question in Portuguese' }
+Step 1 / Budget used 0.00%
+Gaps: [ 'por favor busque pra mim como achar o payload de uma requisição?' ]
+Question Evaluation: {
+  think: 'Esta é uma questão técnica em português sobre como encontrar o payload de uma requisição, o que pode ser avaliado de forma definitiva com os métodos corretos. A pergunta implica a busca por múltiplos métodos ou abordagens para encontrar o payload, indicando a necessidade de pluralidade. Não há menção de elementos específicos que precisem ser abordados para garantir a completude.',
+  needsDefinitive: true,
+  needsFreshness: false,
+  needsPlurality: true,
+  needsCompleteness: false
+}
+Question Metrics: por favor busque pra mim como achar o payload de uma requisição? [ 'definitive', 'plurality' ]
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+por favor busque pra mim como achar o payload de uma requisição?: search <- [search, answer, reflect]
+{
+  action: 'search',
+  think: 'A pergunta sobre como achar o payload de uma requisição é bastante ampla, pois a forma de acessar o payload depende do contexto em que a requisição está sendo feita (e.g., front-end, back-end, ferramenta de análise de rede). Para fornecer uma resposta completa, farei algumas buscas para cobrir os diferentes cenários e ferramentas que podem ser utilizadas para inspecionar o payload.',
+  searchRequests: [
+    'como inspecionar payload requisição navegador',
+    'como acessar payload requisição backend',
+    'ferramentas análise rede inspecionar payload'
+  ]
+}
+Dedup: [
+  'como inspecionar payload requisição navegador',
+  'como acessar payload requisição backend',
+  'ferramentas análise rede inspecionar payload'
+]
+Search query: { q: 'como acessar payload requisição backend' }
+Total URLs: 10
+Waiting 1s...
+Search query: { q: 'como inspecionar payload requisição navegador' }
+Total URLs: 10
+Waiting 1s...
+Search query: { q: 'ferramentas análise rede inspecionar payload' }
+Total URLs: 10
+Waiting 1s...
+Utility/Queries: 26/3
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+queryRewriter [
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'inspecionar payload backend ferramentas',
+    tbs: 'qdr:d'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'acessar payload requisição chrome',
+    tbs: 'qdr:w'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'payload requisição api rest',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'debug payload requisição backend',
+    tbs: 'qdr:m'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'wireshark inspecionar payload requisição',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'us',
+    hl: 'en',
+    q: 'backend request payload debugging',
+    tbs: 'qdr:w'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'erros comuns payload requisição',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'inspecionar payload navegador ferramentas',
+    tbs: 'qdr:d'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'payload requisição tipos formatos',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'interceptar requisição http API',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'analisador pacotes inspecionar payload',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'debug payload requisição navegador',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'ferramentas desenvolvedor rede payload',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'wireshark inspecionar tráfego payload',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'ferramentas análise payload http',
+    tbs: 'qdr:d'
+  },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'inspecionar payload requisição frontend',
+    tbs: 'qdr:w'
+  },
+  { gl: 'br', hl: 'pt', q: 'wireshark análise payload', tbs: 'qdr:m' },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'chrome devtools payload inspecionar',
+    tbs: 'qdr:y'
+  },
+  {
+    gl: 'us',
+    hl: 'en',
+    q: 'inspect network payload tools',
+    tbs: 'qdr:y'
+  },
+  { gl: 'br', hl: 'pt', q: 'API REST payload exemplos', tbs: 'qdr:y' },
+  {
+    gl: 'br',
+    hl: 'pt',
+    q: 'segurança payload vulnerabilidades',
+    tbs: 'qdr:y'
+  }
+]
+Dedup: [
+  'inspecionar payload backend ferramentas',
+  'acessar payload requisição chrome',
+  'payload requisição api rest',
+  'debug payload requisição backend',
+  'wireshark inspecionar payload requisição',
+  'erros comuns payload requisição',
+  'inspecionar payload navegador ferramentas',
+  'payload requisição tipos formatos',
+  'interceptar requisição http API',
+  'analisador pacotes inspecionar payload',
+  'debug payload requisição navegador',
+  'ferramentas desenvolvedor rede payload',
+  'ferramentas análise payload http',
+  'inspecionar payload requisição frontend',
+  'chrome devtools payload inspecionar',
+  'inspect network payload tools',
+  'API REST payload exemplos',
+  'segurança payload vulnerabilidades'
+]
+Search query: {
+  gl: 'br',
+  hl: 'pt',
+  q: 'chrome devtools payload inspecionar',
+  tbs: 'qdr:y'
+}
+Total URLs: 10
+Waiting 1s...
+Search query: {
+  gl: 'br',
+  hl: 'pt',
+  q: 'debug payload requisição navegador',
+  tbs: 'qdr:y'
+}
+Total URLs: 10
+Waiting 1s...
+Search query: {
+  gl: 'br',
+  hl: 'pt',
+  q: 'inspecionar payload backend ferramentas',
+  tbs: 'qdr:d'
+}
+Total URLs: 10
+Waiting 1s...
+Search query: {
+  gl: 'br',
+  hl: 'pt',
+  q: 'acessar payload requisição chrome',
+  tbs: 'qdr:w'
+}
+Total URLs: 10
+Waiting 1s...
+Search query: {
+  gl: 'br',
+  hl: 'pt',
+  q: 'analisador pacotes inspecionar payload',
+  tbs: 'qdr:y'
+}
+Total URLs: 10
+Waiting 1s...
+Utility/Queries: 39/5
+Waiting 1s...
+Step 2 / Budget used 19.83%
+Gaps: [ 'por favor busque pra mim como achar o payload de uma requisição?' ]
+rerank URLs: 65->65
+Weighted URLs: 53
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+por favor busque pra mim como achar o payload de uma requisição?: answer <- [read, answer, reflect]
+{
+  action: 'answer',
+  think: 'Com base nas minhas buscas anteriores, já tenho informações relevantes sobre como encontrar o payload de uma requisição. Vou consolidar essas informações e apresentar uma resposta abrangente.',
+  answer: 'Para encontrar o payload de uma requisição, você pode seguir estas abordagens, dependendo do contexto:\n' +
+    '\n' +
+    '**1. Usando o Chrome DevTools:**\n' +
+    '\n' +
+    '*   Abra o Chrome DevTools (clique com o botão direito na página, selecione "Inspecionar" ou use `Ctrl+Shift+I` / `Cmd+Opt+I`).\n' +
+    '*   Vá para a aba "Network" (Rede).\n' +
+    '*   Realize a ação que envia a requisição (por exemplo, enviar um formulário).\n' +
+    '*   Selecione a requisição na lista.\n' +
+    '*   Vá para a aba "Payload" para ver os dados da requisição (query string parameters e form data).\n' +
+    '\n' +
+    '**2. Para requisições com streaming (Apigee):**\n' +
+    '\n' +
+    '*   O acesso ao payload de solicitação/resposta com streaming ativado faz com que a Apigee retorne ao modo de buffer padrão.\n' +
+    '\n' +
+    '**3. Ferramentas de análise de rede:**\n' +
+    '\n' +
+    '*   Utilize analisadores de pacotes (packet analyzers) para interceptar e inspecionar o conteúdo dos pacotes de rede, incluindo o payload.\n' +
+    '\n' +
+    '**Exemplo prático:**\n' +
+    '\n' +
+    'Imagine que você está preenchendo um formulário de login em um site. Ao submeter o formulário, o Chrome DevTools permite que você inspecione a requisição POST enviada, revelando o payload com os campos de usuário e senha que você digitou.\n' +
+    '\n' +
+    '**Observação:**\n' +
+    '\n' +
+    'Em alguns casos, o payload pode não estar visível diretamente no Chrome DevTools, especialmente se a requisição for complexa ou usar métodos de envio de dados incomuns. Nesses casos, ferramentas de análise de rede podem ser necessárias.',
+  references: [
+    {
+      dateTime: 'Between 2025-04-20 and 2025-04-27',
+      exactQuote: 'If you need to debug your app requests, you can use the Payload Tab to see what information are the requests sending.',
+      url: 'https://tweak-extension.com/docs/rule/request-payload'
+    },
+    {
+      dateTime: 'Between 2025-04-20 and 2025-04-27',
+      exactQuote: 'O acesso ao payload de solicitação/resposta com streaming ativado faz com que a Apigee retorne ao modo de buffer padrão.',
+      url: 'https://cloud.google.com/apigee/docs/api-platform/antipatterns/payload-with-streaming?hl=pt-br'
+    },
+    {
+      dateTime: 'Between 2024-04-27 and 2025-04-27',
+      exactQuote: 'Além de capturar os cabeçalhos dos pacotes, um packet analyzer pode inspecionar e exibir o conteúdo dos pacotes ...',
+      url: 'https://www.comparitech.com/net-admin/packet-analysis/'
+    }
+  ]
+}
+Updated references: [
+  {
+    exactQuote: 'If you need to debug your app requests you can use the Payload Tab to see what information are the requests sending ',
+    title: 'Request payload - tweak',
+    url: 'https://tweak-extension.com/docs/rule/request-payload',
+    dateTime: 'Between 2025-04-20 and 2025-04-27'
+  },
+  {
+    exactQuote: 'O acesso ao payload de solicitação resposta com streaming ativado faz com que a Apigee retorne ao modo de buffer padrão ',
+    title: 'Antipadrão: acessar o payload de solicitação/resposta quando o ...',
+    url: 'https://cloud.google.com/apigee/docs/api-platform/antipatterns/payload-with-streaming?hl=pt-br',
+    dateTime: 'Between 2025-04-20 and 2025-04-27'
+  },
+  {
+    exactQuote: 'Além de capturar os cabeçalhos dos pacotes um packet analyzer pode inspecionar e exibir o conteúdo dos pacotes ',
+    title: '',
+    url: 'https://comparitech.com/net-admin/packet-analysis',
+    dateTime: 'Between 2024-04-27 and 2025-04-27'
+  }
+]
+Read: {
+  title: 'Request payload | tweak',
+  url: 'https://tweak-extension.com/docs/rule/request-payload',
+  tokens: 310
+}
+content is too short, dont bother
+Read: {
+  title: 'Page not found - Comparitech',
+  url: 'https://comparitech.com/net-admin/packet-analysis',
+  tokens: 1191
+}
+Guessed time for https://comparitech.com/net-admin/packet-analysis 1970-01-01T00:00:00.000Z
+content is too short, dont bother
+Read: {
+  title: 'Antipadrão: acessar o payload de solicitação/resposta quando o streaming estiver ativado',
+  url: 'https://cloud.google.com/apigee/docs/api-platform/antipatterns/payload-with-streaming?hl=pt-br',
+  tokens: 3885
+}
+Guessed time for https://cloud.google.com/apigee/docs/api-platform/antipatterns/payload-with-streaming?hl=pt-br 2025-04-24T00:00:00.000Z
+late chunking enabled! num chunks: 48
+Total length 14351 split 48 chunks into 1 batches of ~68 chunks each
+Processing batch 1/1 with 48 chunks
+por favor busque pra mim como achar o payload de uma requisição? [
+  { type: 'definitive', numEvalsRequired: 1 },
+  { type: 'plurality', numEvalsRequired: 1 },
+  { type: 'strict', numEvalsRequired: 1 }
+]
+definitive evaluator {
+  type: 'definitive',
+  think: 'A resposta fornece um guia claro e direto sobre como encontrar o payload de uma requisição usando diferentes métodos (Chrome DevTools e analisadores de rede). Ela explica os passos de forma concisa e oferece um exemplo prático, sem hesitações ou incertezas.',
+  pass: true
+}
+plurality evaluator {
+  type: 'plurality',
+  think: 'A resposta fornece três abordagens distintas para encontrar o payload de uma requisição: 1) Usando o Chrome DevTools, 2) Para requisições com streaming (Apigee) e 3) Ferramentas de análise de rede. Como o número de itens fornecidos (3) é maior ou igual ao número mínimo esperado (2, pois a pergunta implica múltiplos itens), a resposta é considerada adequada em termos de quantidade.',
+  plurality_analysis: { minimum_count_required: 2, actual_count_provided: 3 },
+  pass: true
+}
+Object not generated according to schema, fallback to manual parsing
+Both JSON and Hjson parsing failed: Error: End of input while parsing an object (missing '}') at line 2,901 >>>  "improvement_plan" ...
+    at error (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/hjson@3.2.2/node_modules/hjson/lib/hjson-parse.js:41:11)
+    at object (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/hjson@3.2.2/node_modules/hjson/lib/hjson-parse.js:379:12)
+    at legacyRootValue (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/hjson@3.2.2/node_modules/hjson/lib/hjson-parse.js:428:38)
+    at Object.module.exports [as parse] (/Users/williamduarte/Pesquisa_CMEX/node_modules/.pnpm/hjson@3.2.2/node_modules/hjson/lib/hjson-parse.js:454:23)
+    at ObjectGeneratorSafe.handleGenerateObjectError (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:303:39)
+    at ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:165:40)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async performEvaluation (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/tools/evaluator.ts:605:18)
+    at async evaluateAnswer (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/tools/evaluator.ts:655:16)
+    at async getResponse (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/agent.ts:840:12) {
+  hint: ''
+}
+Failed parsing text: {
+  "improvement_plan": "For get a pass, you "must":\n\n1.  **Expand on Chrome "DevTools":** Provide more detail on how to interpret the payload data in Chrome DevTools, including how to view different types of payloads (e.g., JSON, form data) and how to handle URL-encoded parameters.\n2.  **Clarify Streaming "Context":** Elaborate on when and why streaming might be used, and the implications of accessing the payload when streaming is enabled (e.g., performance impact). Explain how to identify if streaming is in use.\n3.  **Detail Network Analysis "Tools":** Provide specific examples of network analysis tools (e.g., Wireshark, Fiddler) and explain how to use them to capture and inspect network traffic, focusing on how to extract the payload from captured packets. Mention the limitations and ethical considerations of using such tools.\n4.  **Address Complex "Scenarios":** Give more guidance
+Attempting emergency parsing via regex...
+Emergency parsing failed: Error: Emergency parsing failed to extract action
+    at ObjectGeneratorSafe.handleGenerateObjectError (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:358:19)
+    at ObjectGeneratorSafe.generateObject (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/utils/safe-generator.ts:165:40)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async performEvaluation (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/tools/evaluator.ts:605:18)
+    at async evaluateAnswer (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/tools/evaluator.ts:655:16)
+    at async getResponse (/Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/agent.ts:840:12)
+    at async /Users/williamduarte/Pesquisa_CMEX/cmex_poc/node-DeepResearch-nexcode/src/app.ts:609:9
+evaluator failed on object generation -> manual parsing failed -> trying fallback with distilled schema
+Distilled schema parse success!
+strict evaluator {
+  type: 'strict',
+  think: "The provided text outlines a detailed plan for improving understanding and analysis of network payloads. However, without the actual implementation or a demonstration of these improvements, it's impossible to definitively say if it 'passes' a hypothetical evaluation. The plan itself seems comprehensive and addresses key areas for improvement.",
+  improvement_plan: 'For get a pass, you must:\n' +
+    '\n' +
+    '1.  **Expand on Chrome DevTools:** Provide more detail on how to interpret the payload data in Chrome DevTools, including how to view different types of payloads (e.g., JSON, form data) and how to handle URL-encoded parameters.\n' +
+    '2.  **Clarify Streaming Context:** Elaborate on when and why streaming might be used, and the implications of accessing the payload when streaming is enabled (e.g., performance impact). Explain how to identify if streaming is in use.\n' +
+    '3.  **Detail Network Analysis Tools:** Provide specific examples of network analysis tools (e.g., Wireshark, Fiddler) and explain how to use them to capture and inspect network traffic, focusing on how to extract the payload from captured packets. Mention the limitations and ethical considerations of using such tools.\n' +
+    '4.  **Address Complex Scenarios:** Give more guidanc',
+  pass: false
+}
+errorAnalyzer {
+  recap: 'No primeiro passo, realizei uma busca abrangente por termos relacionados à inspeção de payloads em requisições, utilizando o Chrome DevTools e outras ferramentas. Em seguida, tentei responder à pergunta com uma explicação detalhada das abordagens, mas a resposta foi considerada inadequada por ser muito teórica e não demonstrar a aplicação prática.',
+  blame: 'Acredito que o problema foi não ter testado as abordagens na prática e demonstrado como encontrar o payload em um cenário real. A resposta ficou muito teórica.',
+  improvement: 'Na próxima vez, vou simular um cenário de requisição e mostrar passo a passo como inspecionar o payload usando o Chrome DevTools, incluindo screenshots ou um vídeo curto.'
+}
+Waiting 1s...
+Step 3 / Budget used 24.93%
+Gaps: [ 'por favor busque pra mim como achar o payload de uma requisição?' ]
+rerank URLs: 454->395
+Weighted URLs: 79
+Object not generated according to schema, fallback to manual parsing
+JSON parse success!
+por favor busque pra mim como achar o payload de uma requisição?: search <- [search, read, reflect]
+{
+  action: 'search',
+  think: 'Para melhorar a resposta anterior, preciso detalhar mais sobre como interpretar o payload no Chrome DevTools, explicar quando o streaming é usado e suas implicações, fornecer exemplos de ferramentas de análise de rede e abordar cenários complexos. As buscas serão focadas em cada um desses pontos para refinar a resposta.',
+  searchRequests: [
+    'Chrome DevTools inspecionar payload JSON form data URL-encoded',
+    'streaming requisição implicações acessar payload',
+    'ferramentas análise rede capturar inspecionar payload exemplos',
+    'inspecionar payload requisição complexa cenários'
+  ]
+}
+Dedup: [
+  'Chrome DevTools inspecionar payload JSON form data URL-encoded',
+  'streaming requisição implicações acessar payload',
+  'ferramentas análise rede capturar inspecionar payload exemplos',
+  'inspecionar payload requisição complexa cenários'
+]
+Search query: { q: 'inspecionar payload requisição complexa cenários' }
+Total URLs: 10
+Waiting 1s...
+Search query: { q: 'Chrome DevTools inspecionar payload JSON form data URL-encoded' }
+Total URLs: 10
+Waiting 1s...
+Search query: { q: 'streaming requisição implicações acessar payload' }
+Total URLs: 10
+Waiting 1s...
+Search query: { q: 'ferramentas análise rede capturar inspecionar payload exemplos' }
+Total URLs: 10
+Waiting 1s...
+Utility/Queries: 26/4
