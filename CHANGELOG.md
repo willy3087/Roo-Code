@@ -1,5 +1,11 @@
 # Roo Code Changelog
 
+## 3.16.7
+
+### Patch Changes
+
+- Requesty: Fix token usage counts
+
 ## [3.16.6] - 2025-05-12
 
 - Restore "Improve provider profile management in the external API"
