@@ -735,7 +735,9 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 
 	const isAutoApproved = useCallback(
 		(message: ClineMessage | undefined) => {
-			if (!autoApprovalEnabled || !message || message.type !== "ask") return false
+			if (!autoApprovalEnabled || !message || message.type !== "ask") {
+				return false
+			}
 
 			if (message.ask === "browser_action_launch") {
 				return alwaysAllowBrowser
@@ -749,7 +751,8 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				return alwaysAllowExecute && isAllowedCommand(message)
 			}
 
-			// For read/write operations, check if it's outside workspace and if we have permission for that
+			// For read/write operations, check if it's outside workspace and if
+			// we have permission for that.
 			if (message.ask === "tool") {
 				let tool: any = {}
 
@@ -1114,13 +1117,26 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 		}
 
 		const autoApprove = async () => {
-			if (isAutoApproved(lastMessage)) {
+			if (lastMessage?.ask && isAutoApproved(lastMessage)) {
+				// Note that `isAutoApproved` can only return true if
+				// lastMessage is an ask of type "browser_action_launch",
+				// "use_mcp_server", "command", or "tool".
+
 				// Add delay for write operations.
-				if (lastMessage?.ask === "tool" && isWriteToolAction(lastMessage)) {
+				if (lastMessage.ask === "tool" && isWriteToolAction(lastMessage)) {
 					await new Promise((resolve) => setTimeout(resolve, writeDelayMs))
 				}
 
-				handlePrimaryButtonClick()
+				vscode.postMessage({ type: "askResponse", askResponse: "yesButtonClicked" })
+
+				// This is copied from `handlePrimaryButtonClick`, which we used
+				// to call from `autoApprove`. I'm not sure how many of these
+				// things are actually needed.
+				setInputValue("")
+				setSelectedImages([])
+				setTextAreaDisabled(true)
+				setClineAsk(undefined)
+				setEnableButtons(false)
 			}
 		}
 		autoApprove()
@@ -1237,7 +1253,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						{telemetrySetting === "unset" && <TelemetryBanner />}
 						{/* Show the task history preview if expanded and tasks exist */}
 						{taskHistory.length > 0 && isExpanded && <HistoryPreview />}
-						<p className="ext-vscode-editor-foreground leading-tight font-vscode text-center">
+						<p className="text-vscode-editor-foreground leading-tight font-vscode-font-family text-center">
 							<Trans
 								i18nKey="chat:about"
 								components={{
