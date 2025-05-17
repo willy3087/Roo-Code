@@ -5,6 +5,18 @@ out-*
 node_modules
 coverage/
 mock/
+storybook-static/
+.storybook/
+.vscode/
+assets/docs/
+.vite-port
+.vite-cache
+.vite-cache-vite
+.vite-cache-vite-plugin-vue
+.vite-cache-vite-plugin-vue-router
+.vite-cache-vite-plugin-vue-router-plugin
+.vite-cache-vite-plugin-vue-router-plugin-plugin
+.vite-cache-vite-plugin-vue-router-plugin-plugin-plugin
 
 .DS_Store
 
