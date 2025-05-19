@@ -1,8 +1,8 @@
 {
-	"name": "roo-cline",
-	"displayName": "%extension.displayName%",
-	"description": "%extension.description%",
-	"publisher": "RooVeterinaryInc",
+	"name": "elai-cline",
+	"displayName": "elai-cline",
+	"description": "elai-cline",
+	"publisher": "elai",
 	"version": "3.16.7",
 	"icon": "assets/icons/icon.png",
 	"galleryBanner": {
@@ -14,7 +14,7 @@
 		"node": "20.18.1"
 	},
 	"author": {
-		"name": "Roo Code"
+		"name": "elai"
 	},
 	"repository": {
 		"type": "git",
@@ -74,7 +74,7 @@
 			"roo-cline-ActivityBar": [
 				{
 					"type": "webview",
-					"id": "roo-cline.SidebarProvider",
+					"id": "elai-cline.SidebarProvider",
 					"name": ""
 				}
 			]
@@ -216,32 +216,32 @@
 				{
 					"command": "roo-cline.plusButtonClicked",
 					"group": "navigation@1",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				},
 				{
 					"command": "roo-cline.promptsButtonClicked",
 					"group": "navigation@2",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				},
 				{
 					"command": "roo-cline.mcpButtonClicked",
 					"group": "navigation@3",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				},
 				{
 					"command": "roo-cline.historyButtonClicked",
 					"group": "navigation@4",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				},
 				{
 					"command": "roo-cline.popoutButtonClicked",
 					"group": "navigation@5",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				},
 				{
 					"command": "roo-cline.settingsButtonClicked",
 					"group": "navigation@6",
-					"when": "view == roo-cline.SidebarProvider"
+					"when": "view == elai-cline.SidebarProvider"
 				}
 			],
 			"editor/title": [

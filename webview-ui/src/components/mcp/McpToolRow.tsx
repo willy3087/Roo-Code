@@ -27,7 +27,7 @@ const McpToolRow = ({ tool, serverName, serverSource, alwaysAllowMcp }: McpToolR
 		<div
 			key={tool.name}
 			style={{
-				padding: "3px 0",
+				padding: "4px",
 			}}>
 			<div
 				data-testid="tool-row-container"
@@ -62,8 +62,8 @@ const McpToolRow = ({ tool, serverName, serverSource, alwaysAllowMcp }: McpToolR
 							marginTop: "8px",
 							fontSize: "12px",
 							border: "1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 30%, transparent)",
-							borderRadius: "3px",
-							padding: "8px",
+							borderRadius: "16px",
+							padding: "4px",
 						}}>
 						<div
 							style={{ marginBottom: "4px", opacity: 0.8, fontSize: "11px", textTransform: "uppercase" }}>
@@ -88,7 +88,7 @@ const McpToolRow = ({ tool, serverName, serverSource, alwaysAllowMcp }: McpToolR
 										<code
 											style={{
 												color: "var(--vscode-textPreformat-foreground)",
-												marginRight: "8px",
+												marginRight: "4px",
 											}}>
 											{paramName}
 											{isRequired && (

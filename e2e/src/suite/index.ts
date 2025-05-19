@@ -26,7 +26,7 @@ export async function run() {
 		openRouterModelId: "google/gemini-2.0-flash-001",
 	})
 
-	await vscode.commands.executeCommand("roo-cline.SidebarProvider.focus")
+	await vscode.commands.executeCommand("elai-cline.SidebarProvider.focus")
 	await waitFor(() => api.isReady())
 
 	// Expose the API to the tests.

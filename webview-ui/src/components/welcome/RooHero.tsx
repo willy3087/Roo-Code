@@ -17,9 +17,10 @@ const RooHero = () => {
 					maskImage: `url('${imagesBaseUri}/roo-logo.svg')`,
 					maskRepeat: "no-repeat",
 					maskSize: "contain",
+					borderRadius: "8px",
 				}}
 				className="mx-auto">
-				<img src={imagesBaseUri + "/roo-logo.svg"} alt="Roo logo" className="h-8 opacity-0" />
+				<img src={imagesBaseUri + "/roo-logo.svg"} alt="eLai logo" className="h-36 opacity-0" />
 			</div>
 		</div>
 	)

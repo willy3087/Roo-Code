@@ -17,6 +17,8 @@ assets/docs/
 .vite-cache-vite-plugin-vue-router-plugin
 .vite-cache-vite-plugin-vue-router-plugin-plugin
 .vite-cache-vite-plugin-vue-router-plugin-plugin-plugin
+.env.sample
+.env.sample.local
 
 .DS_Store
 

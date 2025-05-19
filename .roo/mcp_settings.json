@@ -1,0 +1,84 @@
+{
+	"mcpServers": {
+		"puppeteer": {
+			"command": "npx",
+			"args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+			"env": {}
+		},
+		"github": {
+			"command": "npx",
+			"args": ["-y", "@modelcontextprotocol/server-github"],
+			"env": {
+				"GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+			}
+		},
+		"desktop-commander": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"@wonderwhy-er/desktop-commander",
+				"--key",
+				"37f9f03c-59a0-4623-a32b-9a18e9e9a19f"
+			]
+		},
+		"perplexity-search": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"@arjunkmrm/perplexity-search",
+				"--key",
+				"37f9f03c-59a0-4623-a32b-9a18e9e9a19f",
+				"--profile",
+				"big-worm-eN8bIH"
+			],
+			"alwaysAllow": ["search"]
+		},
+		"mcp-codex-keeper": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"@aindreyway/mcp-codex-keeper",
+				"--key",
+				"37f9f03c-59a0-4623-a32b-9a18e9e9a19f"
+			]
+		},
+		"gitingest-mcp": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"@puravparab/gitingest-mcp",
+				"--key",
+				"37f9f03c-59a0-4623-a32b-9a18e9e9a19f"
+			]
+		},
+		"jina-ai-mcp-server": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"jina-ai-mcp-server",
+				"--key",
+				"37f9f03c-59a0-4623-a32b-9a18e9e9a19f",
+				"--profile",
+				"big-worm-eN8bIH"
+			],
+			"alwaysAllow": ["read_webpage", "search_web", "fact_check"],
+			"timeout": 3600
+		},
+		"macos-use": {
+			"command": "/Users/williamduarte/NCMproduto/Roo-Code/mcp-servers/mcp-server-macos-use/.build/release/mcp-server-macos-use",
+			"args": [],
+			"env": {},
+			"cwd": "/Users/williamduarte/NCMproduto/Roo-Code/mcp-servers/mcp-server-macos-use"
+		}
+	}
+}

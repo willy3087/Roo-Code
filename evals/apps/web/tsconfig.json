@@ -1,5 +1,5 @@
 {
-	"extends": "@evals/typescript-config/nextjs.json",
+	"extends": "@evals/config/typescript/nextjs.json",
 	"compilerOptions": {
 		"plugins": [{ "name": "next" }],
 		"paths": { "@/*": ["./src/*"] }

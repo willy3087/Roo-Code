@@ -298,7 +298,7 @@ export function NewRun() {
 								onChange={onImportSettings}
 							/>
 							{settings && (
-								<ScrollArea className="max-h-64 border rounded-sm">
+								<ScrollArea className="max-h-64 border rounded-md">
 									<>
 										<div className="flex items-center gap-1 p-2 border-b">
 											<CircleCheck className="size-4 text-ring" />

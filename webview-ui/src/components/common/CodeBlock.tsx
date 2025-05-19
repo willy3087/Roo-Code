@@ -22,7 +22,7 @@ export const SCROLL_SNAP_TOLERANCE = 20
 /*
 overflowX: auto + inner div with padding results in an issue where the top/left/bottom padding renders but the right padding inside does not count as overflow as the width of the element is not exceeded. Once the inner div is outside the boundaries of the parent it counts as overflow.
 https://stackoverflow.com/questions/60778406/why-is-padding-right-clipped-with-overflowscroll/77292459#77292459
-this fixes the issue of right padding clipped off 
+this fixes the issue of right padding clipped off
 “ideal” size in a given axis when given infinite available space--allows the syntax highlighter to grow to largest possible width including its padding
 minWidth: "max-content",
 */
@@ -43,17 +43,17 @@ const CodeBlockButton = styled.button`
 	border: none;
 	color: var(--vscode-foreground);
 	cursor: var(--copy-button-cursor, default);
-	padding: 4px;
+	padding: 2px;
 	margin: 0 0px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	opacity: 0.4;
-	border-radius: 3px;
+	border-radius: 16px;
 	pointer-events: var(--copy-button-events, none);
 	margin-left: 4px;
-	height: 24px;
-	width: 24px;
+	height: 20px;
+	width: 20px;
 
 	&:hover {
 		background: var(--vscode-toolbar-hoverBackground);
@@ -76,8 +76,8 @@ const CodeBlockButtonWrapper = styled.div`
 	overflow: visible;
 	pointer-events: none;
 	opacity: var(--copy-button-opacity, 0);
-	padding: 4px 6px;
-	border-radius: 3px;
+	padding: 2px 4px;
+	border-radius: 16px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -122,15 +122,15 @@ export const StyledPre = styled.div<{
 	max-height: ${({ windowshade, collapsedHeight }) =>
 		windowshade === "true" ? `${collapsedHeight || WINDOW_SHADE_SETTINGS.collapsedHeight}px` : "none"};
 	overflow-y: auto;
-	padding: 10px;
-	border-radius: 5px;
+	padding: 4px;
+	border-radius: 16px;
 	${({ preStyle }) => preStyle && { ...preStyle }}
 
 	pre {
 		background-color: ${CODE_BLOCK_BG_COLOR};
-		border-radius: 5px;
+		border-radius: 16px;
 		margin: 0;
-		padding: 10px;
+		padding: 4px;
 		width: 100%;
 		box-sizing: border-box;
 	}
@@ -181,8 +181,8 @@ const LanguageSelect = styled.select`
 	& option {
 		background: var(--vscode-editor-background);
 		color: var(--vscode-foreground);
-		padding: 0;
-		margin: 0;
+		padding: 4px;
+		margin: 4px;
 	}
 
 	&::-webkit-scrollbar {
@@ -200,13 +200,13 @@ const LanguageSelect = styled.select`
 	&:hover {
 		opacity: 1;
 		background: var(--vscode-toolbar-hoverBackground);
-		border-radius: 3px;
+		border-radius: 16px;
 	}
 
 	&:focus {
 		opacity: 1;
 		outline: none;
-		border-radius: 3px;
+		border-radius: 16px;
 	}
 `
 
@@ -245,7 +245,7 @@ const CodeBlock = memo(
 
 		// Syntax highlighting with cached Shiki instance.
 		useEffect(() => {
-			const fallback = `<pre style="padding: 0; margin: 0;"><code class="hljs language-${currentLanguage || "txt"}">${source || ""}</code></pre>`
+			const fallback = `<pre style="padding: 8; margin: 0;"><code class="hljs language-${currentLanguage || "txt"}">${source || ""}</code></pre>`
 
 			const highlight = async () => {
 				// Show plain text if language needs to be loaded.
@@ -261,7 +261,7 @@ const CodeBlock = memo(
 					transformers: [
 						{
 							pre(node) {
-								node.properties.style = "padding: 0; margin: 0;"
+								node.properties.style = "padding: 8; margin: 0;"
 								return node
 							},
 							code(node) {

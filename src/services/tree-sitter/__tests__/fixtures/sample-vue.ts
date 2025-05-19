@@ -13,7 +13,7 @@ export const sampleVue = `
 <script>
 export default {
   name: 'ExampleComponent',
-  
+
   components: {
     ChildComponent,
     AnotherComponent,
@@ -84,10 +84,10 @@ export default {
 
 <style>
 .example-component {
-  padding: 20px;
-  margin: 10px;
+  padding: 8px;
+  margin: 16px;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 16px;
 }
 </style>
 `

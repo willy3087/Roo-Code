@@ -16,8 +16,8 @@ export default String.raw`
 /* Media query test - at least 4 lines long */
 @media screen and (min-width: 768px) and (max-width: 1024px) {
   .test-media-query-definition-container {
-    padding: 20px;
-    margin: 10px;
+    padding: 24px;
+    margin: 16px;
   }
 }
 
@@ -57,8 +57,8 @@ export default String.raw`
 
 /* Mixin test (using CSS custom properties as a proxy) - at least 4 lines long */
 .test-mixin-definition {
-  --button-padding: 10px 15px;
-  --button-border-radius: 4px;
+  --button-padding: 4px 8px;
+  --button-border-radius: 8px;
   --button-font-weight: bold;
   --button-transition: all 0.3s ease;
 }
@@ -83,12 +83,12 @@ export default String.raw`
 .test-nested-ruleset-definition {
   display: flex;
   flex-direction: column;
-  
+
   & > .nested-child {
-    margin-bottom: 10px;
-    padding: 15px;
+    margin-bottom: 16px;
+    padding: 8px;
   }
-  
+
   & .deeply-nested {
     color: blue;
     font-weight: bold;

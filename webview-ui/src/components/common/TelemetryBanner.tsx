@@ -8,16 +8,18 @@ import { Trans } from "react-i18next"
 
 const BannerContainer = styled.div`
 	background-color: var(--vscode-banner-background);
-	padding: 12px 20px;
+	padding: 16px 24px;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	flex-shrink: 0;
 	margin-bottom: 6px;
+	border-radius: 8px;
 `
 
 const ButtonContainer = styled.div`
 	display: flex;
+	border-radius: 8px;
 	gap: 8px;
 	width: 100%;
 	& > vscode-button {

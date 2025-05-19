@@ -197,7 +197,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 					{isErrorExpanded && (
 						<div
 							style={{
-								padding: "8px",
+								padding: "4px",
 								backgroundColor: "var(--vscode-editor-background)",
 								borderTop: "none",
 							}}>
@@ -272,7 +272,7 @@ const MermaidBlockContainer = styled.div`
 `
 
 const LoadingMessage = styled.div`
-	padding: 8px 0;
+	padding: 4px 0;
 	color: var(--vscode-descriptionForeground);
 	font-style: italic;
 	font-size: 0.9em;

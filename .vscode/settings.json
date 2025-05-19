@@ -20,5 +20,6 @@
 		"webview-ui/src/i18n",
 		"webview-ui/src/__mocks__/i18n",
 		"webview-ui/src/i18n/locales"
-	]
+	],
+	"i18n-ally.keystyle": "nested"
 }

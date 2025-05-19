@@ -16,6 +16,8 @@ jest.*
 **/*.map
 **/*.ts
 **/.gitignore
+.env.sample
+.env.sample.local
 
 # Custom
 .env.sample
@@ -68,3 +70,7 @@ assets/docs/**
 
 # Include .env file for telemetry
 !.env
+
+# Ignore MCP servers build directories that might not be ready
+mcp-servers/mcp-server-macos-use/**
+mcp-servers/MacosUseSDK/**

@@ -182,7 +182,7 @@ export const MultiSelect = React.forwardRef<HTMLDivElement, MultiSelectProps>(
 						{...props}
 						onClick={handleTogglePopover}
 						className={cn(
-							"flex w-full rounded-sm min-h-9 h-auto items-center justify-between [&_svg]:pointer-events-auto",
+							"flex w-full rounded-md min-h-9 h-auto items-center justify-between [&_svg]:pointer-events-auto",
 							"font-medium border border-input bg-input hover:opacity-80 cursor-pointer",
 							className,
 						)}>

@@ -1221,13 +1221,13 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 					/>
 
 					{hasSystemPromptOverride && (
-						<div className="px-3">
+						<div className="px-16">
 							<SystemPromptWarning />
 						</div>
 					)}
 
 					{showCheckpointWarning && (
-						<div className="px-3">
+						<div className="px-16">
 							<CheckpointWarning />
 						</div>
 					)}
@@ -1236,7 +1236,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				<div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4">
 					{/* Moved Task Bar Header Here */}
 					{tasks.length !== 0 && (
-						<div className="flex text-vscode-descriptionForeground w-full mx-auto px-5 pt-3">
+						<div className="flex text-vscode-descriptionForeground w-full mx-auto px-16 pt-16">
 							<div className="flex items-center gap-1 cursor-pointer" onClick={toggleExpanded}>
 								{tasks.length < 10 && (
 									<span className={`font-medium text-xs `}>{t("history:recentTasks")}</span>
@@ -1248,7 +1248,7 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 						</div>
 					)}
 					<div
-						className={` w-full flex flex-col gap-4 m-auto ${isExpanded && tasks.length > 0 ? "mt-0" : ""} px-3.5 min-[370px]:px-10 pt-5 transition-all duration-300`}>
+						className={` rounded-b-md w-full flex flex-col gap-4 m-auto ${isExpanded && tasks.length > 0 ? "mt-0" : ""} px-16 min-[370px]:px-16 pt-16 transition-all duration-300`}>
 						<RooHero />
 						{telemetrySetting === "unset" && <TelemetryBanner />}
 						{/* Show the task history preview if expanded and tasks exist */}
@@ -1270,17 +1270,17 @@ const ChatViewComponent: React.ForwardRefRenderFunction<ChatViewRef, ChatViewPro
 				</div>
 			)}
 
-			{/* 
+			{/*
 			// Flex layout explanation:
 			// 1. Content div above uses flex: "1 1 0" to:
-			//    - Grow to fill available space (flex-grow: 1) 
+			//    - Grow to fill available space (flex-grow: 1)
 			//    - Shrink when AutoApproveMenu needs space (flex-shrink: 1)
 			//    - Start from zero size (flex-basis: 0) to ensure proper distribution
 			//    minHeight: 0 allows it to shrink below its content height
 			//
 			// 2. AutoApproveMenu uses flex: "0 1 auto" to:
 			//    - Not grow beyond its content (flex-grow: 0)
-			//    - Shrink when viewport is small (flex-shrink: 1) 
+			//    - Shrink when viewport is small (flex-shrink: 1)
 			//    - Use its content size as basis (flex-basis: auto)
 			//    This ensures it takes its natural height when there's space
 			//    but becomes scrollable when the viewport is too small

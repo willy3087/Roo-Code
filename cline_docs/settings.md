@@ -152,7 +152,7 @@
           onChange={(e) => setPreferredLanguage(e.target.value)}
           style={{
             width: "100%",
-            padding: "4px 8px",
+            padding: "2px 4px",
             backgroundColor: "var(--vscode-input-background)",
             color: "var(--vscode-input-foreground)",
             border: "1px solid var(--vscode-input-border)",

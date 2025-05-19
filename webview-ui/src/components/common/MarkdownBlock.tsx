@@ -61,7 +61,7 @@ const StyledMarkdown = styled.div`
 		filter: saturation(110%) brightness(95%);
 		color: var(--vscode-textPreformat-foreground) !important;
 		background-color: var(--vscode-textPreformat-background) !important;
-		padding: 0px 2px;
+		padding: 8px 2px;
 		white-space: pre-line;
 		word-break: break-word;
 		overflow-wrap: anywhere;

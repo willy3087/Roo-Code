@@ -54,8 +54,8 @@
 	--color-chart-4: var(--chart-4);
 	--color-chart-5: var(--chart-5);
 	--radius-lg: var(--radius);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 8px);
+	--radius-sm: calc(var(--radius) - 16px);
 
 	/**
 	 * Allow VSCode colors to be used with Tailwind.
@@ -272,7 +272,7 @@ body:focus-within .code-block-scrollable {
 
 .code-block-scrollable::-webkit-scrollbar-thumb {
 	background-color: var(--vscode-scrollbarSlider-background);
-	border-radius: 5px;
+	border-radius: 16px;
 	border: 2px solid transparent;
 	background-clip: content-box;
 }
@@ -361,19 +361,19 @@ vscode-dropdown::part(listbox) {
 
 .mention-context-textarea-highlight {
 	background-color: color-mix(in srgb, var(--vscode-badge-foreground) 30%, transparent);
-	border-radius: 3px;
+	border-radius: 16px;
 	box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--vscode-badge-foreground) 30%, transparent);
 	color: transparent;
 }
 
 .mention-context-highlight {
 	background-color: color-mix(in srgb, var(--vscode-badge-foreground) 30%, transparent);
-	border-radius: 3px;
+	border-radius: 16px;
 }
 
 .mention-context-highlight-with-shadow {
 	background-color: color-mix(in srgb, var(--vscode-badge-foreground) 30%, transparent);
-	border-radius: 3px;
+	border-radius: 16px;
 	box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--vscode-badge-foreground) 30%, transparent);
 }
 
@@ -407,7 +407,7 @@ input[cmdk-input]:focus {
 }
 
 /*
- * Use geometric precision for codicons to avoid blurriness 
+ * Use geometric precision for codicons to avoid blurriness
  */
 
 .codicon[class*="codicon-"] {

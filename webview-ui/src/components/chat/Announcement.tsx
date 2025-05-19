@@ -45,8 +45,8 @@ const Announcement = ({ hideAnnouncement }: AnnouncementProps) => {
 			<div
 				style={{
 					backgroundColor: "var(--vscode-editor-background)",
-					borderRadius: "3px",
-					padding: "12px 16px",
+					borderRadius: "8px",
+					padding: "8px 16px",
 					margin: "5px 15px 5px 15px",
 					position: "relative",
 					flexShrink: 0,

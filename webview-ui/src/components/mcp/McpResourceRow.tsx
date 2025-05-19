@@ -12,7 +12,7 @@ const McpResourceRow = ({ item }: McpResourceRowProps) => {
 		<div
 			key={uri}
 			style={{
-				padding: "3px 0",
+				padding: "4px",
 			}}>
 			<div
 				style={{
@@ -46,8 +46,8 @@ const McpResourceRow = ({ item }: McpResourceRowProps) => {
 					style={{
 						color: "var(--vscode-textPreformat-foreground)",
 						background: "var(--vscode-textPreformat-background)",
-						padding: "1px 4px",
-						borderRadius: "3px",
+						padding: "4px 4px",
+						borderRadius: "16px",
 					}}>
 					{item.mimeType || "Unknown"}
 				</code>

@@ -119,7 +119,8 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 	return (
 		<div
 			style={{
-				padding: "0 15px",
+				padding: "0px 24px",
+				margin: "8px",
 				userSelect: "none",
 				borderTop: isExpanded
 					? `0.5px solid color-mix(in srgb, var(--vscode-titleBar-inactiveForeground) 20%, transparent)`
@@ -134,6 +135,7 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 					gap: "8px",
 					padding: isExpanded ? "8px 0" : "8px 0 0 0",
 					cursor: "pointer",
+					borderRadius: "8px",
 				}}
 				onClick={toggleExpanded}>
 				<div onClick={(e) => e.stopPropagation()}>
@@ -153,6 +155,8 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 						gap: "4px",
 						flex: 1,
 						minWidth: 0,
+						borderRadius: "8px",
+						margin: "8px",
 					}}>
 					<span
 						style={{
@@ -169,6 +173,8 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 							whiteSpace: "nowrap",
 							flex: 1,
 							minWidth: 0,
+							borderRadius: "8px",
+							margin: "8px",
 						}}>
 						{enabledActionsList || t("chat:autoApprove.none")}
 					</span>
@@ -187,7 +193,10 @@ const AutoApproveMenu = ({ style }: AutoApproveMenuProps) => {
 					<div
 						style={{
 							color: "var(--vscode-descriptionForeground)",
+							padding: "4px",
+							margin: "4px",
 							fontSize: "12px",
+							borderRadius: "8px",
 						}}>
 						<Trans
 							i18nKey="chat:autoApprove.description"
