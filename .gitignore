@@ -1,52 +1,89 @@
-.pnpm-store
-dist
-out
-out-*
-node_modules
+# Dependências
+node_modules/
+.pnpm-store/
+.pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build
+dist/
+out/
+out-*/
+build/
+.next/
+.vite/
+.vite-cache*
+
+# Cobertura de testes
 coverage/
+.nyc_output/
+
+# Mock data
 mock/
+
+# Storybook
 storybook-static/
 .storybook/
+
+# VS Code
 .vscode/
-assets/docs/
-.vite-port
-.vite-cache
-.vite-cache-vite
-.vite-cache-vite-plugin-vue
-.vite-cache-vite-plugin-vue-router
-.vite-cache-vite-plugin-vue-router-plugin
-.vite-cache-vite-plugin-vue-router-plugin-plugin
-.vite-cache-vite-plugin-vue-router-plugin-plugin-plugin
-.env.sample
-.env.sample.local
+.vscode-test/
 
+# Documentação
+docs/_site/
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Arquivos de configuração local
+.roo/*.json
+!.roo/example.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema
 .DS_Store
+Thumbs.db
 
-# Builds
+# Builds específicos
 bin/
 roo-cline-*.vsix
 
-# Local prompts and rules
+# Regras e prompts locais
 /local-prompts
 
-# Test environment
+# Testes
 .test_env
-.vscode-test/
+.nyc_output/
 
-# Docs
-docs/_site/
-
-# Dotenv
-.env
-.env.*
-!.env.*.sample
-
-
-#Local lint config
+# Configurações locais
 .eslintrc.local.json
 
-#Logging
-logs
+# Vite
+.vite-port
+.vite/
 
-# Vite development
+# Arquivos temporários
+*.tmp
+*.temp
+*~
+
+# Arquivos de IDE
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .vite-port
