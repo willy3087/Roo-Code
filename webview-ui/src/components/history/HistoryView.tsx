@@ -211,7 +211,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 					}}
 					itemContent={(index, item) => (
 						<div
-							data-testid={`ta***REMOVED***item-${item.id}`}
+							data-testid={`task-item-${item.id}`}
 							key={item.id}
 							className={cn("cursor-pointer", {
 								"border-b border-vscode-panel-border": index < tasks.length - 1,
@@ -229,7 +229,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 								{/* Show checkbox in selection mode */}
 								{isSelectionMode && (
 									<div
-										className="ta***REMOVED***checkbox mt-1"
+										className="task-checkbox mt-1"
 										onClick={(e) => {
 											e.stopPropagation()
 										}}>
@@ -254,7 +254,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 													variant="ghost"
 													size="sm"
 													title={t("history:deleteTaskTitle")}
-													data-testid="delete-ta***REMOVED***button"
+													data-testid="delete-task-button"
 													onClick={(e) => {
 														e.stopPropagation()
 
@@ -285,7 +285,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 											wordBreak: "break-word",
 											overflowWrap: "anywhere",
 										}}
-										data-testid="ta***REMOVED***content"
+										data-testid="task-content"
 										dangerouslySetInnerHTML={{ __html: item.task }}
 									/>
 									<div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>

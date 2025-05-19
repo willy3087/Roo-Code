@@ -108,7 +108,7 @@ describe("HistoryView", () => {
 		fireEvent.mouseEnter(taskContainer)
 		const copyButton = within(taskContainer).getByTestId("copy-prompt-button")
 		fireEvent.click(copyButton)
-		const taskContent = within(taskContainer).getByTestId("ta***REMOVED***content")
+		const taskContent = within(taskContainer).getByTestId("task-content")
 		expect(navigator.clipboard.writeText).toHaveBeenCalledWith(taskContent.textContent)
 	})
 
@@ -155,7 +155,7 @@ describe("HistoryView", () => {
 		// Go to selection mode
 		fireEvent.click(screen.getByTestId("toggle-selection-mode-button"))
 
-		const taskContainer = screen.getByTestId("ta***REMOVED***item-1")
+		const taskContainer = screen.getByTestId("task-item-1")
 
 		// Click anywhere in the task item
 		fireEvent.click(taskContainer)
@@ -175,7 +175,7 @@ describe("HistoryView", () => {
 			fireEvent.mouseEnter(taskContainer)
 
 			// Click delete button to open confirmation dialog
-			const deleteButton = within(taskContainer).getByTestId("delete-ta***REMOVED***button")
+			const deleteButton = within(taskContainer).getByTestId("delete-task-button")
 			fireEvent.click(deleteButton)
 
 			// Verify dialog is shown
@@ -202,7 +202,7 @@ describe("HistoryView", () => {
 			fireEvent.mouseEnter(taskContainer)
 
 			// Shift-click delete button
-			const deleteButton = within(taskContainer).getByTestId("delete-ta***REMOVED***button")
+			const deleteButton = within(taskContainer).getByTestId("delete-task-button")
 			fireEvent.click(deleteButton, { shiftKey: true })
 
 			// Verify no dialog is shown

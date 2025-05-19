@@ -34,7 +34,7 @@ jest.mock("../../../utils/path")
 jest.mock("../../prompts/responses")
 describe("getEnvironmentDetails", () => {
 	const mockCwd = "/test/path"
-	const mockTaskId = "test-ta***REMOVED***id"
+	const mockTaskId = "test-task-id"
 	let mockCline
 	let mockProvider
 	let mockState

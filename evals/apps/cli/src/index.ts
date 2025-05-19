@@ -176,7 +176,7 @@ const runExercise = async ({ run, task, server }: { run: Run; task: Task; server
 	const prompt = fs.readFileSync(path.resolve(exercisesPath, `prompts/${language}.md`), "utf-8")
 	const dirname = path.dirname(run.socketPath)
 	const workspacePath = path.resolve(exercisesPath, language, exercise)
-	const taskSocketPath = path.resolve(dirname, `${dirname}/ta***REMOVED***${task.id}.sock`)
+	const taskSocketPath = path.resolve(dirname, `${dirname}/task-${task.id}.sock`)
 
 	// If debugging:
 	// Use --wait --log trace or --verbose.

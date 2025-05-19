@@ -331,7 +331,7 @@ pnpm --filter @evals/db db:enable-wal &>/dev/null || exit 1
 echo "✅ Done"
 
 if ! grep -q "OPENROUTER_API_KEY" .env; then
-  read -p "🔐 Enter your OpenRouter API key (***REMOVED***or-v1-...): " openrouter_api_key
+  read -p "🔐 Enter your OpenRouter API key (sk-or-v1-...): " openrouter_api_key
   echo "🔑 Validating..."
   curl --silent --fail https://openrouter.ai/api/v1/key -H "Authorization: Bearer $openrouter_api_key" &>/dev/null || exit 1
   echo "OPENROUTER_API_KEY=$openrouter_api_key" >> .env || exit 1

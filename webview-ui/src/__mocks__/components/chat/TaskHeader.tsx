@@ -9,7 +9,7 @@ export { getMaxTokensForModel }
  * Mock version of the TaskHeader component
  */
 const TaskHeader: React.FC<any> = () => {
-	return <div data-testid="mocked-ta***REMOVED***header">Mocked TaskHeader</div>
+	return <div data-testid="mocked-task-header">Mocked TaskHeader</div>
 }
 
 export default TaskHeader

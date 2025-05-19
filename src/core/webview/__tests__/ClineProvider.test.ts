@@ -214,7 +214,7 @@ jest.mock("../../task/Task", () => ({
 				setTaskNumber: jest.fn(),
 				setParentTask: jest.fn(),
 				setRootTask: jest.fn(),
-				taskId: taskId || "test-ta***REMOVED***id",
+				taskId: taskId || "test-task-id",
 			}),
 		),
 }))
@@ -468,8 +468,8 @@ describe("ClineProvider", () => {
 		// Setup Cline instance with auto-mock from the top of the file
 		const mockCline1 = new Task(defaultTaskOptions) // Create a new mocked instance
 		const mockCline2 = new Task(defaultTaskOptions) // Create a new mocked instance
-		Object.defineProperty(mockCline1, "taskId", { value: "test-ta***REMOVED***id-1", writable: true })
-		Object.defineProperty(mockCline2, "taskId", { value: "test-ta***REMOVED***id-2", writable: true })
+		Object.defineProperty(mockCline1, "taskId", { value: "test-task-id-1", writable: true })
+		Object.defineProperty(mockCline2, "taskId", { value: "test-task-id-2", writable: true })
 
 		// add Cline instances to the stack
 		await provider.addClineToStack(mockCline1)
@@ -967,7 +967,7 @@ describe("ClineProvider", () => {
 
 			// Mock getTaskWithId
 			;(provider as any).getTaskWithId = jest.fn().mockResolvedValue({
-				historyItem: { id: "test-ta***REMOVED***id" },
+				historyItem: { id: "test-task-id" },
 			})
 
 			// Trigger message deletion
@@ -1020,7 +1020,7 @@ describe("ClineProvider", () => {
 
 			// Mock getTaskWithId
 			;(provider as any).getTaskWithId = jest.fn().mockResolvedValue({
-				historyItem: { id: "test-ta***REMOVED***id" },
+				historyItem: { id: "test-task-id" },
 			})
 
 			// Trigger message deletion

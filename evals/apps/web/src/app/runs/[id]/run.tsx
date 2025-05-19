@@ -9,7 +9,7 @@ import { formatCurrency, formatDuration, formatTokens } from "@/lib/formatters"
 import { useRunStatus } from "@/hooks/use-run-status"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui"
 
-import { TaskStatus } from "./ta***REMOVED***status"
+import { TaskStatus } from "./task-status"
 import { ConnectionStatus } from "./connection-status"
 
 type TaskMetrics = Pick<db.TaskMetrics, "tokensIn" | "tokensOut" | "tokensContext" | "duration" | "cost">

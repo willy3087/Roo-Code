@@ -44,7 +44,7 @@ jest.mock("../ChatRow", () => ({
 jest.mock("../TaskHeader", () => ({
 	__esModule: true,
 	default: function MockTaskHeader({ task }: { task: any }) {
-		return <div data-testid="ta***REMOVED***header">{JSON.stringify(task)}</div>
+		return <div data-testid="task-header">{JSON.stringify(task)}</div>
 	},
 }))
 

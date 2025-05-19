@@ -33,7 +33,7 @@ The test runner (`runTest.ts`) is responsible for:
 1. Create a `.env.local` file in the root directory with required environment variables:
 
 ```
-OPENROUTER_API_KEY=***REMOVED***or-v1-...
+OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
 2. The test suite (`suite/index.ts`) configures:

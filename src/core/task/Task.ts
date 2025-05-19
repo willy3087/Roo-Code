@@ -64,7 +64,7 @@ import { type AssistantMessageContent, parseAssistantMessage, presentAssistantMe
 import { truncateConversationIfNeeded } from "../sliding-window"
 import { ClineProvider } from "../webview/ClineProvider"
 import { MultiSearchReplaceDiffStrategy } from "../diff/strategies/multi-search-replace"
-import { readApiMessages, saveApiMessages, readTaskMessages, saveTaskMessages, taskMetadata } from "../ta***REMOVED***persistence"
+import { readApiMessages, saveApiMessages, readTaskMessages, saveTaskMessages, taskMetadata } from "../task-persistence"
 import { getEnvironmentDetails } from "../environment/getEnvironmentDetails"
 import {
 	type CheckpointDiffOptions,

@@ -52,7 +52,7 @@ export async function getEnvironmentDetails(cline, includeFileDetails = false) {
 	} else {
 		details += "\n(No open tabs)"
 	}
-	// Get ta***REMOVED***specific and background terminals.
+	// Get task-specific and background terminals.
 	const busyTerminals = [
 		...TerminalRegistry.getTerminals(true, cline.taskId),
 		...TerminalRegistry.getBackgroundTerminals(true),
